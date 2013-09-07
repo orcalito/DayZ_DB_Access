@@ -6,7 +6,7 @@ Simple tool to show some data from a DayZ database.
 Currently supporting:
 
  - selection of database and instance id.
- - custom map display. (can be set up in config.xml)
+ - custom map display. (can be set up in config.xml, bitmaps not included)
  - show alive players
  - show online players (will be refactored soon)
  - show valid and destroyed vehicles
