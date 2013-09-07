@@ -55,18 +55,17 @@
             this.textBoxBaseName = new System.Windows.Forms.TextBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.label11 = new System.Windows.Forms.Label();
-            this.textBoxSurvivors = new System.Windows.Forms.TextBox();
+            this.tbOnlinePlayers = new System.Windows.Forms.TextBox();
             this.label9 = new System.Windows.Forms.Label();
-            this.textBoxTents = new System.Windows.Forms.TextBox();
+            this.tbTents = new System.Windows.Forms.TextBox();
             this.label6 = new System.Windows.Forms.Label();
-            this.textBoxSpawn = new System.Windows.Forms.TextBox();
+            this.tbVehicleSpawn = new System.Windows.Forms.TextBox();
             this.label8 = new System.Windows.Forms.Label();
-            this.textBoxVehicles = new System.Windows.Forms.TextBox();
+            this.tbVehicles = new System.Windows.Forms.TextBox();
             this.label7 = new System.Windows.Forms.Label();
-            this.textBoxPlayers = new System.Windows.Forms.TextBox();
+            this.tbAlivePlayers = new System.Windows.Forms.TextBox();
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.radioButtonTents = new System.Windows.Forms.RadioButton();
-            this.radioButtonDestroyed = new System.Windows.Forms.RadioButton();
             this.radioButtonSpawn = new System.Windows.Forms.RadioButton();
             this.groupBoxInfo = new System.Windows.Forms.GroupBox();
             this.propertyGrid1 = new System.Windows.Forms.PropertyGrid();
@@ -82,7 +81,7 @@
             this.buttonRemoveBodies = new System.Windows.Forms.Button();
             this.buttonSpawnNew = new System.Windows.Forms.Button();
             this.buttonRemoveDestroyed = new System.Windows.Forms.Button();
-            this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
+            this.bgWorker = new System.ComponentModel.BackgroundWorker();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
@@ -335,15 +334,15 @@
             // groupBox1
             // 
             this.groupBox1.Controls.Add(this.label11);
-            this.groupBox1.Controls.Add(this.textBoxSurvivors);
-            this.groupBox1.Controls.Add(this.label9);
-            this.groupBox1.Controls.Add(this.textBoxTents);
-            this.groupBox1.Controls.Add(this.label6);
-            this.groupBox1.Controls.Add(this.textBoxSpawn);
-            this.groupBox1.Controls.Add(this.label8);
-            this.groupBox1.Controls.Add(this.textBoxVehicles);
+            this.groupBox1.Controls.Add(this.tbAlivePlayers);
             this.groupBox1.Controls.Add(this.label7);
-            this.groupBox1.Controls.Add(this.textBoxPlayers);
+            this.groupBox1.Controls.Add(this.tbOnlinePlayers);
+            this.groupBox1.Controls.Add(this.label9);
+            this.groupBox1.Controls.Add(this.tbTents);
+            this.groupBox1.Controls.Add(this.label6);
+            this.groupBox1.Controls.Add(this.tbVehicleSpawn);
+            this.groupBox1.Controls.Add(this.label8);
+            this.groupBox1.Controls.Add(this.tbVehicles);
             this.groupBox1.Location = new System.Drawing.Point(6, 214);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(202, 149);
@@ -354,19 +353,19 @@
             // label11
             // 
             this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(10, 48);
+            this.label11.Location = new System.Drawing.Point(10, 22);
             this.label11.Name = "label11";
-            this.label11.Size = new System.Drawing.Size(51, 13);
+            this.label11.Size = new System.Drawing.Size(72, 13);
             this.label11.TabIndex = 11;
-            this.label11.Text = "Survivors";
+            this.label11.Text = "Players online";
             // 
-            // textBoxSurvivors
+            // tbOnlinePlayers
             // 
-            this.textBoxSurvivors.Location = new System.Drawing.Point(93, 45);
-            this.textBoxSurvivors.Name = "textBoxSurvivors";
-            this.textBoxSurvivors.ReadOnly = true;
-            this.textBoxSurvivors.Size = new System.Drawing.Size(103, 20);
-            this.textBoxSurvivors.TabIndex = 10;
+            this.tbOnlinePlayers.Location = new System.Drawing.Point(93, 19);
+            this.tbOnlinePlayers.Name = "tbOnlinePlayers";
+            this.tbOnlinePlayers.ReadOnly = true;
+            this.tbOnlinePlayers.Size = new System.Drawing.Size(103, 20);
+            this.tbOnlinePlayers.TabIndex = 10;
             // 
             // label9
             // 
@@ -377,13 +376,13 @@
             this.label9.TabIndex = 9;
             this.label9.Text = "Tents";
             // 
-            // textBoxTents
+            // tbTents
             // 
-            this.textBoxTents.Location = new System.Drawing.Point(93, 123);
-            this.textBoxTents.Name = "textBoxTents";
-            this.textBoxTents.ReadOnly = true;
-            this.textBoxTents.Size = new System.Drawing.Size(103, 20);
-            this.textBoxTents.TabIndex = 8;
+            this.tbTents.Location = new System.Drawing.Point(93, 123);
+            this.tbTents.Name = "tbTents";
+            this.tbTents.ReadOnly = true;
+            this.tbTents.Size = new System.Drawing.Size(103, 20);
+            this.tbTents.TabIndex = 8;
             // 
             // label6
             // 
@@ -394,13 +393,13 @@
             this.label6.TabIndex = 7;
             this.label6.Text = "Spawn Points";
             // 
-            // textBoxSpawn
+            // tbVehicleSpawn
             // 
-            this.textBoxSpawn.Location = new System.Drawing.Point(93, 97);
-            this.textBoxSpawn.Name = "textBoxSpawn";
-            this.textBoxSpawn.ReadOnly = true;
-            this.textBoxSpawn.Size = new System.Drawing.Size(103, 20);
-            this.textBoxSpawn.TabIndex = 6;
+            this.tbVehicleSpawn.Location = new System.Drawing.Point(93, 97);
+            this.tbVehicleSpawn.Name = "tbVehicleSpawn";
+            this.tbVehicleSpawn.ReadOnly = true;
+            this.tbVehicleSpawn.Size = new System.Drawing.Size(103, 20);
+            this.tbVehicleSpawn.TabIndex = 6;
             // 
             // label8
             // 
@@ -411,36 +410,35 @@
             this.label8.TabIndex = 5;
             this.label8.Text = "Vehicles";
             // 
-            // textBoxVehicles
+            // tbVehicles
             // 
-            this.textBoxVehicles.Location = new System.Drawing.Point(93, 71);
-            this.textBoxVehicles.Name = "textBoxVehicles";
-            this.textBoxVehicles.ReadOnly = true;
-            this.textBoxVehicles.Size = new System.Drawing.Size(103, 20);
-            this.textBoxVehicles.TabIndex = 4;
+            this.tbVehicles.Location = new System.Drawing.Point(93, 71);
+            this.tbVehicles.Name = "tbVehicles";
+            this.tbVehicles.ReadOnly = true;
+            this.tbVehicles.Size = new System.Drawing.Size(103, 20);
+            this.tbVehicles.TabIndex = 4;
             // 
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(10, 22);
+            this.label7.Location = new System.Drawing.Point(10, 48);
             this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(41, 13);
+            this.label7.Size = new System.Drawing.Size(66, 13);
             this.label7.TabIndex = 3;
-            this.label7.Text = "Players";
+            this.label7.Text = "Players alive";
             // 
-            // textBoxPlayers
+            // tbAlivePlayers
             // 
-            this.textBoxPlayers.Location = new System.Drawing.Point(93, 19);
-            this.textBoxPlayers.Name = "textBoxPlayers";
-            this.textBoxPlayers.ReadOnly = true;
-            this.textBoxPlayers.Size = new System.Drawing.Size(103, 20);
-            this.textBoxPlayers.TabIndex = 2;
+            this.tbAlivePlayers.Location = new System.Drawing.Point(93, 45);
+            this.tbAlivePlayers.Name = "tbAlivePlayers";
+            this.tbAlivePlayers.ReadOnly = true;
+            this.tbAlivePlayers.Size = new System.Drawing.Size(103, 20);
+            this.tbAlivePlayers.TabIndex = 2;
             // 
             // tabPage2
             // 
             this.tabPage2.BackColor = System.Drawing.Color.Transparent;
             this.tabPage2.Controls.Add(this.radioButtonTents);
-            this.tabPage2.Controls.Add(this.radioButtonDestroyed);
             this.tabPage2.Controls.Add(this.radioButtonSpawn);
             this.tabPage2.Controls.Add(this.groupBoxInfo);
             this.tabPage2.Controls.Add(this.radioButtonVehicles);
@@ -464,18 +462,6 @@
             this.radioButtonTents.Text = "Tents";
             this.radioButtonTents.UseVisualStyleBackColor = true;
             this.radioButtonTents.CheckedChanged += new System.EventHandler(this.radioButton_CheckedChanged);
-            // 
-            // radioButtonDestroyed
-            // 
-            this.radioButtonDestroyed.AutoSize = true;
-            this.radioButtonDestroyed.Location = new System.Drawing.Point(91, 57);
-            this.radioButtonDestroyed.Name = "radioButtonDestroyed";
-            this.radioButtonDestroyed.Size = new System.Drawing.Size(116, 17);
-            this.radioButtonDestroyed.TabIndex = 5;
-            this.radioButtonDestroyed.TabStop = true;
-            this.radioButtonDestroyed.Text = "Destroyed Vehicles";
-            this.radioButtonDestroyed.UseVisualStyleBackColor = true;
-            this.radioButtonDestroyed.CheckedChanged += new System.EventHandler(this.radioButton_CheckedChanged);
             // 
             // radioButtonSpawn
             // 
@@ -653,10 +639,10 @@
             this.buttonRemoveDestroyed.UseVisualStyleBackColor = true;
             this.buttonRemoveDestroyed.Click += new System.EventHandler(this.buttonRemoveDestroyed_Click);
             // 
-            // backgroundWorker1
+            // bgWorker
             // 
-            this.backgroundWorker1.WorkerSupportsCancellation = true;
-            this.backgroundWorker1.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker1_DoWork);
+            this.bgWorker.WorkerSupportsCancellation = true;
+            this.bgWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker1_DoWork);
             // 
             // toolTip1
             // 
@@ -717,10 +703,9 @@
         private System.Windows.Forms.ToolStripPanel RightToolStripPanel;
         private System.Windows.Forms.ToolStripPanel LeftToolStripPanel;
         private System.Windows.Forms.ToolStripContentPanel ContentPanel;
-        private System.Windows.Forms.RadioButton radioButtonDestroyed;
         private System.Windows.Forms.GroupBox groupBoxInfo;
         private System.Windows.Forms.RadioButton radioButtonAlive;
-        private System.ComponentModel.BackgroundWorker backgroundWorker1;
+        private System.ComponentModel.BackgroundWorker bgWorker;
         private System.Windows.Forms.TabControl tabControl1;
         private System.Windows.Forms.TabPage tabPage1;
         private System.Windows.Forms.TabPage tabPage2;
@@ -728,13 +713,13 @@
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.Label label9;
-        private System.Windows.Forms.TextBox textBoxTents;
+        private System.Windows.Forms.TextBox tbTents;
         private System.Windows.Forms.Label label6;
-        private System.Windows.Forms.TextBox textBoxSpawn;
+        private System.Windows.Forms.TextBox tbVehicleSpawn;
         private System.Windows.Forms.Label label8;
-        private System.Windows.Forms.TextBox textBoxVehicles;
+        private System.Windows.Forms.TextBox tbVehicles;
         private System.Windows.Forms.Label label7;
-        private System.Windows.Forms.TextBox textBoxPlayers;
+        private System.Windows.Forms.TextBox tbAlivePlayers;
         private System.Windows.Forms.TextBox textBoxInstanceId;
         private System.Windows.Forms.Label label10;
         private System.Windows.Forms.TabPage tabPage3;
@@ -747,7 +732,7 @@
         private System.Windows.Forms.TextBox textBoxOldTentLimit;
         private System.Windows.Forms.Button buttonRemoveTents;
         private System.Windows.Forms.Label label11;
-        private System.Windows.Forms.TextBox textBoxSurvivors;
+        private System.Windows.Forms.TextBox tbOnlinePlayers;
         private System.Windows.Forms.ToolTip toolTip1;
 
     }

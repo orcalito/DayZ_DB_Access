@@ -4,6 +4,12 @@ DayZ DB Access
 Simple tool to show some data from a DayZ database.
 
 
+- v1.2.0
+
+	Refactored "Show Players Online"
+	Refactored mySQL queries
+	Refactored some code
+
 - v1.1.0
 
 	selection of database and instance id.
