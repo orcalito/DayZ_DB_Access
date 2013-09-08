@@ -55,6 +55,8 @@
             this.textBoxBaseName = new System.Windows.Forms.TextBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.label11 = new System.Windows.Forms.Label();
+            this.tbAlivePlayers = new System.Windows.Forms.TextBox();
+            this.label7 = new System.Windows.Forms.Label();
             this.tbOnlinePlayers = new System.Windows.Forms.TextBox();
             this.label9 = new System.Windows.Forms.Label();
             this.tbTents = new System.Windows.Forms.TextBox();
@@ -62,9 +64,8 @@
             this.tbVehicleSpawn = new System.Windows.Forms.TextBox();
             this.label8 = new System.Windows.Forms.Label();
             this.tbVehicles = new System.Windows.Forms.TextBox();
-            this.label7 = new System.Windows.Forms.Label();
-            this.tbAlivePlayers = new System.Windows.Forms.TextBox();
             this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.checkBoxShowTrail = new System.Windows.Forms.CheckBox();
             this.radioButtonTents = new System.Windows.Forms.RadioButton();
             this.radioButtonSpawn = new System.Windows.Forms.RadioButton();
             this.groupBoxInfo = new System.Windows.Forms.GroupBox();
@@ -154,14 +155,16 @@
             // 
             // imgMap
             // 
-            this.imgMap.Location = new System.Drawing.Point(0, 0);
+            this.imgMap.Location = new System.Drawing.Point(50, 47);
             this.imgMap.Name = "imgMap";
             this.imgMap.Size = new System.Drawing.Size(219, 210);
             this.imgMap.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.imgMap.TabIndex = 0;
             this.imgMap.TabStop = false;
+            this.imgMap.Paint += new System.Windows.Forms.PaintEventHandler(this.imgMap_Paint);
             this.imgMap.MouseDown += new System.Windows.Forms.MouseEventHandler(this.imgMap_MouseClick);
             this.imgMap.MouseMove += new System.Windows.Forms.MouseEventHandler(this.imgMap_MouseMove);
+            this.imgMap.MouseUp += new System.Windows.Forms.MouseEventHandler(this.imgMap_MouseUp);
             // 
             // tabControl1
             // 
@@ -359,6 +362,23 @@
             this.label11.TabIndex = 11;
             this.label11.Text = "Players online";
             // 
+            // tbAlivePlayers
+            // 
+            this.tbAlivePlayers.Location = new System.Drawing.Point(93, 45);
+            this.tbAlivePlayers.Name = "tbAlivePlayers";
+            this.tbAlivePlayers.ReadOnly = true;
+            this.tbAlivePlayers.Size = new System.Drawing.Size(103, 20);
+            this.tbAlivePlayers.TabIndex = 2;
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(10, 48);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(66, 13);
+            this.label7.TabIndex = 3;
+            this.label7.Text = "Players alive";
+            // 
             // tbOnlinePlayers
             // 
             this.tbOnlinePlayers.Location = new System.Drawing.Point(93, 19);
@@ -418,26 +438,10 @@
             this.tbVehicles.Size = new System.Drawing.Size(103, 20);
             this.tbVehicles.TabIndex = 4;
             // 
-            // label7
-            // 
-            this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(10, 48);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(66, 13);
-            this.label7.TabIndex = 3;
-            this.label7.Text = "Players alive";
-            // 
-            // tbAlivePlayers
-            // 
-            this.tbAlivePlayers.Location = new System.Drawing.Point(93, 45);
-            this.tbAlivePlayers.Name = "tbAlivePlayers";
-            this.tbAlivePlayers.ReadOnly = true;
-            this.tbAlivePlayers.Size = new System.Drawing.Size(103, 20);
-            this.tbAlivePlayers.TabIndex = 2;
-            // 
             // tabPage2
             // 
             this.tabPage2.BackColor = System.Drawing.Color.Transparent;
+            this.tabPage2.Controls.Add(this.checkBoxShowTrail);
             this.tabPage2.Controls.Add(this.radioButtonTents);
             this.tabPage2.Controls.Add(this.radioButtonSpawn);
             this.tabPage2.Controls.Add(this.groupBoxInfo);
@@ -451,6 +455,17 @@
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Display";
             // 
+            // checkBoxShowTrail
+            // 
+            this.checkBoxShowTrail.AutoSize = true;
+            this.checkBoxShowTrail.Location = new System.Drawing.Point(91, 58);
+            this.checkBoxShowTrail.Name = "checkBoxShowTrail";
+            this.checkBoxShowTrail.Size = new System.Drawing.Size(72, 17);
+            this.checkBoxShowTrail.TabIndex = 5;
+            this.checkBoxShowTrail.Text = "Show trail";
+            this.checkBoxShowTrail.UseVisualStyleBackColor = true;
+            this.checkBoxShowTrail.CheckedChanged += new System.EventHandler(this.checkBoxShowTrail_CheckedChanged);
+            // 
             // radioButtonTents
             // 
             this.radioButtonTents.AutoSize = true;
@@ -458,7 +473,6 @@
             this.radioButtonTents.Name = "radioButtonTents";
             this.radioButtonTents.Size = new System.Drawing.Size(52, 17);
             this.radioButtonTents.TabIndex = 4;
-            this.radioButtonTents.TabStop = true;
             this.radioButtonTents.Text = "Tents";
             this.radioButtonTents.UseVisualStyleBackColor = true;
             this.radioButtonTents.CheckedChanged += new System.EventHandler(this.radioButton_CheckedChanged);
@@ -470,7 +484,6 @@
             this.radioButtonSpawn.Name = "radioButtonSpawn";
             this.radioButtonSpawn.Size = new System.Drawing.Size(90, 17);
             this.radioButtonSpawn.TabIndex = 3;
-            this.radioButtonSpawn.TabStop = true;
             this.radioButtonSpawn.Text = "Spawn Points";
             this.radioButtonSpawn.UseVisualStyleBackColor = true;
             this.radioButtonSpawn.CheckedChanged += new System.EventHandler(this.radioButton_CheckedChanged);
@@ -493,8 +506,11 @@
             this.propertyGrid1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.propertyGrid1.Location = new System.Drawing.Point(3, 16);
             this.propertyGrid1.Name = "propertyGrid1";
+            this.propertyGrid1.PropertySort = System.Windows.Forms.PropertySort.Categorized;
             this.propertyGrid1.Size = new System.Drawing.Size(199, 331);
             this.propertyGrid1.TabIndex = 0;
+            this.propertyGrid1.ToolbarVisible = false;
+            this.propertyGrid1.ViewBackColor = System.Drawing.SystemColors.Control;
             // 
             // radioButtonVehicles
             // 
@@ -503,7 +519,6 @@
             this.radioButtonVehicles.Name = "radioButtonVehicles";
             this.radioButtonVehicles.Size = new System.Drawing.Size(65, 17);
             this.radioButtonVehicles.TabIndex = 2;
-            this.radioButtonVehicles.TabStop = true;
             this.radioButtonVehicles.Text = "Vehicles";
             this.radioButtonVehicles.UseVisualStyleBackColor = true;
             this.radioButtonVehicles.CheckedChanged += new System.EventHandler(this.radioButton_CheckedChanged);
@@ -511,6 +526,7 @@
             // radioButtonOnline
             // 
             this.radioButtonOnline.AutoSize = true;
+            this.radioButtonOnline.Checked = true;
             this.radioButtonOnline.Location = new System.Drawing.Point(17, 11);
             this.radioButtonOnline.Name = "radioButtonOnline";
             this.radioButtonOnline.Size = new System.Drawing.Size(55, 17);
@@ -527,7 +543,6 @@
             this.radioButtonAlive.Name = "radioButtonAlive";
             this.radioButtonAlive.Size = new System.Drawing.Size(48, 17);
             this.radioButtonAlive.TabIndex = 0;
-            this.radioButtonAlive.TabStop = true;
             this.radioButtonAlive.Text = "Alive";
             this.radioButtonAlive.UseVisualStyleBackColor = true;
             this.radioButtonAlive.CheckedChanged += new System.EventHandler(this.radioButton_CheckedChanged);
@@ -734,6 +749,7 @@
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.TextBox tbOnlinePlayers;
         private System.Windows.Forms.ToolTip toolTip1;
+        private System.Windows.Forms.CheckBox checkBoxShowTrail;
 
     }
 }

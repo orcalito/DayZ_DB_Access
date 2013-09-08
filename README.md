@@ -4,6 +4,12 @@ DayZ DB Access
 Simple tool to show some data from a DayZ database.
 
 
+- v1.3.0
+
+	Refactored handling of icons, drastically faster and correctly displayed.
+	Added trail on players & vehicles (refresh has to be fixed later)
+	Refactored property grid, now displayed in order, expanded and auto refreshed.
+
 - v1.2.0
 
 	Refactored "Show Players Online"
