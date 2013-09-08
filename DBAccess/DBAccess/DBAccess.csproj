@@ -27,8 +27,8 @@
     <PublisherName>orca</PublisherName>
     <CreateWebPageOnPublish>true</CreateWebPageOnPublish>
     <WebPage>publish.htm</WebPage>
-    <ApplicationRevision>6</ApplicationRevision>
-    <ApplicationVersion>1.4.0.%2a</ApplicationVersion>
+    <ApplicationRevision>1</ApplicationRevision>
+    <ApplicationVersion>1.5.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
     <BootstrapperEnabled>true</BootstrapperEnabled>
@@ -117,12 +117,6 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="bin\Debug\Alive.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="bin\Debug\Online.png" />
-  </ItemGroup>
-  <ItemGroup>
     <WCFMetadata Include="Service References\" />
   </ItemGroup>
   <ItemGroup>
@@ -141,6 +135,45 @@
       <ProductName>.NET Framework 3.5 SP1</ProductName>
       <Install>false</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\air.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\bike.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\boat.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\bus.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\car.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\helicopter.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\iconAlive.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\iconDestroyed.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\iconOnline.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\motorcycle.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\Tent.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="bin\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\truck.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

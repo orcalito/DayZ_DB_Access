@@ -35,7 +35,6 @@
             this.LeftToolStripPanel = new System.Windows.Forms.ToolStripPanel();
             this.ContentPanel = new System.Windows.Forms.ToolStripContentPanel();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
-            this.imgMap = new System.Windows.Forms.PictureBox();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
@@ -92,11 +91,19 @@
             this.ColumnChoosePath = new System.Windows.Forms.DataGridViewButtonColumn();
             this.ColumnWidth = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColumnHeight = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.contextMenuStripVehicle = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.toolStripMenuItemDeleteVehicle = new System.Windows.Forms.ToolStripMenuItem();
+            this.contextMenuStripSpawn = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.toolStripMenuItemDeleteSpawn = new System.Windows.Forms.ToolStripMenuItem();
+            this.tabPage5 = new System.Windows.Forms.TabPage();
+            this.dataGridViewVehicleTypes = new System.Windows.Forms.DataGridView();
+            this.imgMap = new System.Windows.Forms.PictureBox();
+            this.ColumnClassName = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColumnType = new System.Windows.Forms.DataGridViewComboBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.imgMap)).BeginInit();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -106,6 +113,11 @@
             this.tabPage3.SuspendLayout();
             this.tabPage4.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewMaps)).BeginInit();
+            this.contextMenuStripVehicle.SuspendLayout();
+            this.contextMenuStripSpawn.SuspendLayout();
+            this.tabPage5.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewVehicleTypes)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.imgMap)).BeginInit();
             this.SuspendLayout();
             // 
             // BottomToolStripPanel
@@ -164,25 +176,13 @@
             this.splitContainer1.SplitterDistance = 388;
             this.splitContainer1.TabIndex = 1;
             // 
-            // imgMap
-            // 
-            this.imgMap.Location = new System.Drawing.Point(50, 47);
-            this.imgMap.Name = "imgMap";
-            this.imgMap.Size = new System.Drawing.Size(219, 210);
-            this.imgMap.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
-            this.imgMap.TabIndex = 0;
-            this.imgMap.TabStop = false;
-            this.imgMap.Paint += new System.Windows.Forms.PaintEventHandler(this.imgMap_Paint);
-            this.imgMap.MouseDown += new System.Windows.Forms.MouseEventHandler(this.imgMap_MouseClick);
-            this.imgMap.MouseMove += new System.Windows.Forms.MouseEventHandler(this.imgMap_MouseMove);
-            this.imgMap.MouseUp += new System.Windows.Forms.MouseEventHandler(this.imgMap_MouseUp);
-            // 
             // tabControl1
             // 
             this.tabControl1.Controls.Add(this.tabPage1);
             this.tabControl1.Controls.Add(this.tabPage2);
             this.tabControl1.Controls.Add(this.tabPage3);
             this.tabControl1.Controls.Add(this.tabPage4);
+            this.tabControl1.Controls.Add(this.tabPage5);
             this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControl1.Location = new System.Drawing.Point(0, 0);
             this.tabControl1.Name = "tabControl1";
@@ -198,7 +198,7 @@
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(212, 433);
+            this.tabPage1.Size = new System.Drawing.Size(208, 429);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "Database";
             // 
@@ -735,6 +735,95 @@
             this.ColumnHeight.HeaderText = "Height";
             this.ColumnHeight.Name = "ColumnHeight";
             // 
+            // contextMenuStripVehicle
+            // 
+            this.contextMenuStripVehicle.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripMenuItemDeleteVehicle});
+            this.contextMenuStripVehicle.Name = "contextMenuStripVehicle";
+            this.contextMenuStripVehicle.Size = new System.Drawing.Size(148, 26);
+            // 
+            // toolStripMenuItemDeleteVehicle
+            // 
+            this.toolStripMenuItemDeleteVehicle.Name = "toolStripMenuItemDeleteVehicle";
+            this.toolStripMenuItemDeleteVehicle.Size = new System.Drawing.Size(147, 22);
+            this.toolStripMenuItemDeleteVehicle.Text = "Delete vehicle";
+            this.toolStripMenuItemDeleteVehicle.Click += new System.EventHandler(this.toolStripMenuItemDelete_Click);
+            // 
+            // contextMenuStripSpawn
+            // 
+            this.contextMenuStripSpawn.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripMenuItemDeleteSpawn});
+            this.contextMenuStripSpawn.Name = "contextMenuStripSpawn";
+            this.contextMenuStripSpawn.Size = new System.Drawing.Size(174, 26);
+            // 
+            // toolStripMenuItemDeleteSpawn
+            // 
+            this.toolStripMenuItemDeleteSpawn.Name = "toolStripMenuItemDeleteSpawn";
+            this.toolStripMenuItemDeleteSpawn.Size = new System.Drawing.Size(173, 22);
+            this.toolStripMenuItemDeleteSpawn.Text = "Delete Spawnpoint";
+            this.toolStripMenuItemDeleteSpawn.Click += new System.EventHandler(this.toolStripMenuItemDeleteSpawn_Click);
+            // 
+            // tabPage5
+            // 
+            this.tabPage5.BackColor = System.Drawing.Color.Transparent;
+            this.tabPage5.Controls.Add(this.dataGridViewVehicleTypes);
+            this.tabPage5.Location = new System.Drawing.Point(4, 22);
+            this.tabPage5.Name = "tabPage5";
+            this.tabPage5.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage5.Size = new System.Drawing.Size(208, 429);
+            this.tabPage5.TabIndex = 4;
+            this.tabPage5.Text = "Vehicles";
+            // 
+            // dataGridViewVehicleTypes
+            // 
+            this.dataGridViewVehicleTypes.AllowUserToAddRows = false;
+            this.dataGridViewVehicleTypes.AllowUserToDeleteRows = false;
+            this.dataGridViewVehicleTypes.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridViewVehicleTypes.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.ColumnClassName,
+            this.ColumnType});
+            this.dataGridViewVehicleTypes.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dataGridViewVehicleTypes.Location = new System.Drawing.Point(3, 3);
+            this.dataGridViewVehicleTypes.Name = "dataGridViewVehicleTypes";
+            this.dataGridViewVehicleTypes.RowHeadersVisible = false;
+            this.dataGridViewVehicleTypes.ShowEditingIcon = false;
+            this.dataGridViewVehicleTypes.Size = new System.Drawing.Size(202, 423);
+            this.dataGridViewVehicleTypes.TabIndex = 0;
+            // 
+            // imgMap
+            // 
+            this.imgMap.Location = new System.Drawing.Point(50, 47);
+            this.imgMap.Name = "imgMap";
+            this.imgMap.Size = new System.Drawing.Size(219, 210);
+            this.imgMap.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.imgMap.TabIndex = 0;
+            this.imgMap.TabStop = false;
+            this.imgMap.Paint += new System.Windows.Forms.PaintEventHandler(this.imgMap_Paint);
+            this.imgMap.MouseDown += new System.Windows.Forms.MouseEventHandler(this.imgMap_MouseClick);
+            this.imgMap.MouseMove += new System.Windows.Forms.MouseEventHandler(this.imgMap_MouseMove);
+            this.imgMap.MouseUp += new System.Windows.Forms.MouseEventHandler(this.imgMap_MouseUp);
+            // 
+            // ColumnClassName
+            // 
+            this.ColumnClassName.HeaderText = "ClassName";
+            this.ColumnClassName.Name = "ColumnClassName";
+            this.ColumnClassName.ReadOnly = true;
+            // 
+            // ColumnType
+            // 
+            this.ColumnType.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.ColumnType.HeaderText = "Type";
+            this.ColumnType.Items.AddRange(new object[] {
+            "Air",
+            "Bicycle",
+            "Boat",
+            "Bus",
+            "Car",
+            "Helicopter",
+            "Motorcycle",
+            "Truck"});
+            this.ColumnType.Name = "ColumnType";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -749,7 +838,6 @@
             this.splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.imgMap)).EndInit();
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
             this.groupBox2.ResumeLayout(false);
@@ -763,6 +851,11 @@
             this.tabPage3.PerformLayout();
             this.tabPage4.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewMaps)).EndInit();
+            this.contextMenuStripVehicle.ResumeLayout(false);
+            this.contextMenuStripSpawn.ResumeLayout(false);
+            this.tabPage5.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewVehicleTypes)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.imgMap)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -832,6 +925,14 @@
         private System.Windows.Forms.DataGridViewButtonColumn ColumnChoosePath;
         private System.Windows.Forms.DataGridViewTextBoxColumn ColumnWidth;
         private System.Windows.Forms.DataGridViewTextBoxColumn ColumnHeight;
+        private System.Windows.Forms.ContextMenuStrip contextMenuStripVehicle;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemDeleteVehicle;
+        private System.Windows.Forms.ContextMenuStrip contextMenuStripSpawn;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemDeleteSpawn;
+        private System.Windows.Forms.TabPage tabPage5;
+        private System.Windows.Forms.DataGridView dataGridViewVehicleTypes;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColumnClassName;
+        private System.Windows.Forms.DataGridViewComboBoxColumn ColumnType;
 
     }
 }

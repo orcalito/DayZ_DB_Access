@@ -387,14 +387,14 @@ namespace DBAccess
                 {
                     InvisibleControl icon = new InvisibleControl();
                     icon.Image = null;
-                    icon.Size = new Size(16, 16);
+                    icon.Size = new Size(24, 24);
                     icon.Tag = null;
                     icon.Click += OnPlayerClick;
                     iconPlayers.Add(icon);
                 }
 
                 idb.icon = iconPlayers[idx];
-                idb.icon.Image = global::DBAccess.Properties.Resources.Online;
+                idb.icon.Image = global::DBAccess.Properties.Resources.iconOnline;
                 idb.icon.Tag = idb;
 
                 toolTip1.SetToolTip(idb.icon, row.Field<string>("name"));
@@ -427,14 +427,14 @@ namespace DBAccess
                 {
                     InvisibleControl icon = new InvisibleControl();
                     icon.Image = null;
-                    icon.Size = new Size(16, 16);
+                    icon.Size = new Size(24, 24);
                     icon.Tag = null;
                     icon.Click += OnPlayerClick;
                     iconPlayers.Add(icon);
                 }
 
                 idb.icon = iconPlayers[idx];
-                idb.icon.Image = global::DBAccess.Properties.Resources.Alive;
+                idb.icon.Image = global::DBAccess.Properties.Resources.iconAlive;
                 idb.icon.Tag = idb;
 
                 toolTip1.SetToolTip(idb.icon, row.Field<string>("name"));
@@ -469,15 +469,39 @@ namespace DBAccess
                 {
                     InvisibleControl icon = new InvisibleControl();
                     icon.Image = null;
-                    icon.Size = new Size(16, 16);
                     icon.Tag = null;
+                    icon.Size = new Size(24, 24);
                     icon.Click += OnVehicleClick;
                     iconVehicles.Add(icon);
                 }
 
                 idb.icon = iconVehicles[idx];
-                idb.icon.Image = (damage < 1.0f) ? global::DBAccess.Properties.Resources.Vehicle : global::DBAccess.Properties.Resources.Destroyed;
+
+                if(damage < 1.0f)
+                {
+                    DataRow rowT = mycfg.vehicle_types.Tables[0].Rows.Find(row.Field<string>("class_name"));
+
+                    string classname = (rowT != null) ? rowT.Field<string>("Type") : "";
+                    switch (classname)
+                    {
+                        case "Air": idb.icon.Image = global::DBAccess.Properties.Resources.air; break;
+                        case "Bicycle": idb.icon.Image = global::DBAccess.Properties.Resources.bike; break;
+                        case "Boat": idb.icon.Image = global::DBAccess.Properties.Resources.boat; break;
+                        case "Bus": idb.icon.Image = global::DBAccess.Properties.Resources.bus; break;
+                        case "Car": idb.icon.Image = global::DBAccess.Properties.Resources.car; break;
+                        case "Helicopter": idb.icon.Image = global::DBAccess.Properties.Resources.helicopter; break;
+                        case "Motorcycle": idb.icon.Image = global::DBAccess.Properties.Resources.motorcycle; break;
+                        case "Truck": idb.icon.Image = global::DBAccess.Properties.Resources.truck; break;
+                        default: idb.icon.Image = global::DBAccess.Properties.Resources.car; break;
+                    }
+                }
+                else
+                {
+                    idb.icon.Image = global::DBAccess.Properties.Resources.iconDestroyed;
+                }
+
                 idb.icon.Tag = idb;
+                idb.icon.ContextMenuStrip = contextMenuStripVehicle;
 
                 toolTip1.SetToolTip(idb.icon, row.Field<UInt64>("id").ToString() + ": "+ row.Field<string>("class_name"));
 
@@ -509,15 +533,32 @@ namespace DBAccess
                 {
                     InvisibleControl icon = new InvisibleControl();
                     icon.Image = null;
-                    icon.Size = new Size(16, 16);
                     icon.Tag = null;
+                    icon.Size = new Size(24, 24);
                     icon.Click += OnVehicleClick;
                     iconVehicles.Add(icon);
                 }
 
                 idb.icon = iconVehicles[idx];
-                idb.icon.Image = global::DBAccess.Properties.Resources.Spawn;
+
+                DataRow rowT = mycfg.vehicle_types.Tables[0].Rows.Find(row.Field<string>("class_name"));
+
+                string classname = (rowT != null) ? rowT.Field<string>("Type") : "";
+                switch (classname)
+                {
+                    case "Air": idb.icon.Image = global::DBAccess.Properties.Resources.air; break;
+                    case "Bicycle": idb.icon.Image = global::DBAccess.Properties.Resources.bike; break;
+                    case "Boat": idb.icon.Image = global::DBAccess.Properties.Resources.boat; break;
+                    case "Bus": idb.icon.Image = global::DBAccess.Properties.Resources.bus; break;
+                    case "Car": idb.icon.Image = global::DBAccess.Properties.Resources.car; break;
+                    case "Helicopter": idb.icon.Image = global::DBAccess.Properties.Resources.helicopter; break;
+                    case "Motorcycle": idb.icon.Image = global::DBAccess.Properties.Resources.motorcycle; break;
+                    case "Truck": idb.icon.Image = global::DBAccess.Properties.Resources.truck; break;
+                    default: idb.icon.Image = global::DBAccess.Properties.Resources.car; break;
+                }
+
                 idb.icon.Tag = idb;
+                idb.icon.ContextMenuStrip = contextMenuStripSpawn;
 
                 toolTip1.SetToolTip(idb.icon, row.Field<UInt64>("id").ToString() + ": " + row.Field<string>("class_name"));
 
@@ -545,8 +586,8 @@ namespace DBAccess
                 if (idx >= iconTents.Count)
                 {
                     InvisibleControl icon = new InvisibleControl();
-                    icon.Image = global::DBAccess.Properties.Resources.Tent;
-                    icon.Size = new Size(16, 16);
+                    icon.Image = global::DBAccess.Properties.Resources.tent;
+                    icon.Size = new Size(24, 24);
                     icon.Tag = null;
                     icon.Click += OnTentClick;
                     iconTents.Add(icon);
@@ -651,6 +692,15 @@ namespace DBAccess
 
                 table.Rows.Add(1, "", 12288, 12288);
             }
+            if (mycfg.vehicle_types.Tables.Count == 0)
+            {
+                DataTable table = mycfg.vehicle_types.Tables.Add();
+                table.Columns.Add(new DataColumn("ClassName", typeof(string)));
+                table.Columns.Add(new DataColumn("Type", typeof(string)));
+                DataColumn[] keys = new DataColumn[1];
+                keys[0] = mycfg.vehicle_types.Tables[0].Columns[0];
+                mycfg.vehicle_types.Tables[0].PrimaryKey = keys;
+            }
 
             try
             {
@@ -669,6 +719,10 @@ namespace DBAccess
                 dataGridViewMaps.Columns["ColumnWidth"].DataPropertyName = "Width";
                 dataGridViewMaps.Columns["ColumnHeight"].DataPropertyName = "Height";
                 dataGridViewMaps.DataSource = mycfg.set.Tables[0];
+
+                dataGridViewVehicleTypes.Columns["ColumnClassName"].DataPropertyName = "ClassName";
+                dataGridViewVehicleTypes.Columns["ColumnType"].DataPropertyName = "Type";
+                dataGridViewVehicleTypes.DataSource = mycfg.vehicle_types.Tables[0];
 
                 DataRow row = mycfg.set.Tables[0].Rows.Find(UInt16.Parse(mycfg.instance_id));
                 if( row != null )
@@ -727,8 +781,8 @@ namespace DBAccess
         }
         private Point GetMapPosFromIcon(iconDB from)
         {
-            float x = from.pos.X * MapSize.Width - 8;
-            float y = from.pos.Y * MapSize.Height - 8;
+            float x = from.pos.X * MapSize.Width - 12;
+            float y = from.pos.Y * MapSize.Height - 12;
 
             return new Point((int)x, (int)y);
         }
@@ -741,6 +795,7 @@ namespace DBAccess
                 DataSet _dsTents = new DataSet();
                 DataSet _dsVehicles = new DataSet();
                 DataSet _dsVehicleSpawnPoints = new DataSet();
+                DataSet _dsAllVehicleTypes = new DataSet();
 
                 mtxUpdateDB.WaitOne();
 
@@ -750,6 +805,13 @@ namespace DBAccess
                     MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
 
                     //
+                    //  Vehicle types
+                    //
+                    cmd.CommandText = "SELECT class_name FROM vehicle";
+                    _dsAllVehicleTypes.Clear();
+                    adapter.Fill(_dsAllVehicleTypes);
+
+                    //
                     //  Players alive
                     //
                     cmd.CommandText = "SELECT s.id id, s.unique_id unique_id, p.name name, p.humanity humanity, s.worldspace worldspace,"
@@ -757,9 +819,6 @@ namespace DBAccess
                                     + " FROM survivor as s, profile as p WHERE s.unique_id=p.unique_id AND s.world_id=" + mycfg.instance_id + " AND s.is_dead=0";
                     _dsAlivePlayers.Clear();
                     adapter.Fill(_dsAlivePlayers);
-                    //DataColumn[] keyAlive = new DataColumn[1];
-                    //keyProfiles[0] = _dsAlivePlayers.Tables[0].Columns[1];
-                    //_dsAlivePlayers.Tables[0].PrimaryKey = keyProfiles;
 
                     //
                     //  Players online
@@ -809,6 +868,22 @@ namespace DBAccess
                 dsVehicles = _dsVehicles.Copy();
                 dsVehicleSpawnPoints = _dsVehicleSpawnPoints.Copy();
 
+                foreach(DataRow row in _dsAllVehicleTypes.Tables[0].Rows)
+                {
+                    try
+                    {
+                        string name = row.Field<string>("class_name");
+
+                        DataRow rowVT = mycfg.vehicle_types.Tables[0].Rows.Find(name);
+                        if (rowVT == null)
+                            mycfg.vehicle_types.Tables[0].Rows.Add(name, "Car");
+                    }
+                    catch (Exception ex)
+                    {
+                        textBoxCmdStatus.Text = ex.ToString();
+                    }
+                }
+
                 mtxUseDS.ReleaseMutex();
             }
         }
@@ -832,28 +907,9 @@ namespace DBAccess
         }
         private void buttonRemoveDestroyed_Click(object sender, EventArgs e)
         {
-            if (bConnected)
-            {
-                this.Cursor = Cursors.WaitCursor;
-                mtxUpdateDB.WaitOne();
+            int res = ExecuteSqlNonQuery("DELETE FROM instance_vehicle WHERE instance_id=" + mycfg.instance_id + " AND damage=1");
 
-                try
-                {
-                    MySqlCommand cmd = cnx.CreateCommand();
-                    MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
-
-                    cmd.CommandText = "DELETE FROM instance_vehicle WHERE instance_id=" + mycfg.instance_id + " AND damage=1";
-                    int res = cmd.ExecuteNonQuery();
-                    textBoxCmdStatus.Text = "removed " + res + " destroyed vehicles.";
-                }
-                catch (Exception ex)
-                {
-                    textBoxCmdStatus.Text = ex.ToString();
-                }
-
-                mtxUpdateDB.ReleaseMutex();
-                this.Cursor = Cursors.Arrow;
-            }
+            textBoxCmdStatus.Text = "removed " + res + " destroyed vehicles.";
         }
         private void buttonSpawnNew_Click(object sender, EventArgs e)
         {
@@ -941,60 +997,50 @@ namespace DBAccess
         }
         private void buttonRemoveBodies_Click(object sender, EventArgs e)
         {
-            if (bConnected)
+            int limit = int.Parse(textBoxOldBodyLimit.Text);
+
+            string query = "DELETE FROM survivor WHERE world_id=" + mycfg.instance_id + " AND is_dead=1 AND last_updated < now() - interval " + limit + " day";
+            int res = ExecuteSqlNonQuery(query);
+
+            textBoxCmdStatus.Text = "removed " + res + " bodies older than " + limit + " days.";
+        }
+
+        private int ExecuteSqlNonQuery(string query)
+        {
+            if (!bConnected)
+                return 0;
+
+            int res = 0;
+
+            this.Cursor = Cursors.WaitCursor;
+            mtxUpdateDB.WaitOne();
+
+            try
             {
-                this.Cursor = Cursors.WaitCursor;
-                mtxUpdateDB.WaitOne();
+                MySqlCommand cmd = cnx.CreateCommand();
 
-                try
-                {
-                    MySqlCommand cmd = cnx.CreateCommand();
-                    MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
+                cmd.CommandText = query;
 
-                    int limit = int.Parse(textBoxOldBodyLimit.Text);
-
-                    cmd.CommandText = "DELETE FROM survivor WHERE world_id=" + mycfg.instance_id + " AND is_dead=1 AND last_updated < now() - interval " + limit + " day";
-                    int res = cmd.ExecuteNonQuery();
-                    textBoxCmdStatus.Text = "removed " + res + " bodies older than " + limit + " days.";
-                }
-                catch (Exception ex)
-                {
-                    textBoxCmdStatus.Text = ex.ToString();
-                }
-
-                mtxUpdateDB.ReleaseMutex();
-                this.Cursor = Cursors.Arrow;
+                res = cmd.ExecuteNonQuery();
             }
+            catch (Exception ex)
+            {
+                textBoxCmdStatus.Text = ex.ToString();
+            }
+
+            mtxUpdateDB.ReleaseMutex();
+            this.Cursor = Cursors.Arrow;
+
+            return res;
         }
         private void buttonRemoveTents_Click(object sender, EventArgs e)
         {
-            if (bConnected)
-            {
-                this.Cursor = Cursors.WaitCursor;
-                mtxUpdateDB.WaitOne();
+            int limit = int.Parse(textBoxOldTentLimit.Text);
 
-                try
-                {
-                    MySqlCommand cmd = cnx.CreateCommand();
-                    MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
-
-                    int limit = int.Parse(textBoxOldBodyLimit.Text);
-
-                    cmd.CommandText = "DELETE FROM id using instance_deployable id inner join deployable d on id.deployable_id = d.id"
-                                    + " inner join survivor s on id.owner_id = s.id and s.is_dead=1"
-                                    + " WHERE id.instance_id=" + mycfg.instance_id + " AND d.class_name = 'TentStorage' AND id.last_updated < now() - interval " + limit + " day";
-                    int res = cmd.ExecuteNonQuery();
-                    textBoxCmdStatus.Text = "removed " + res + " tents older than " + limit + " days.";
-                }
-                catch (Exception ex)
-                {
-                    textBoxCmdStatus.Text = ex.ToString();
-                }
-
-                mtxUpdateDB.ReleaseMutex();
-                this.Cursor = Cursors.Arrow;
-            }
-
+            string query = "DELETE FROM id using instance_deployable id inner join deployable d on id.deployable_id = d.id"
+                         + " inner join survivor s on id.owner_id = s.id and s.is_dead=1"
+                         + " WHERE id.instance_id=" + mycfg.instance_id + " AND d.class_name = 'TentStorage' AND id.last_updated < now() - interval " + limit + " day";
+            int res = ExecuteSqlNonQuery(query);
         }
         private void imgMap_Paint(object sender, PaintEventArgs e)
         {
@@ -1013,7 +1059,7 @@ namespace DBAccess
 
                 foreach (iconDB idb in listIcons)
                 {
-                    e.Graphics.DrawImage(idb.icon.Image, idb.icon.Location.X, idb.icon.Location.Y);
+                    e.Graphics.DrawImage(idb.icon.Image, idb.icon.Location.X, idb.icon.Location.Y, 24, 24);
                 }
             }
             catch (Exception ex)
@@ -1534,21 +1580,14 @@ namespace DBAccess
         public delegate void DlgUpdateIcons();
         public class myConfig
         {
-            public DataSet set { get; set; }
-
-            //public class MapDef
-            //{
-            //    public UInt16 instance_id { get; set; }
-            //    public string filepath { get; set; }
-            //    public UInt32 map_width { get; set; }
-            //    public UInt32 map_height { get; set; }
-            //}
             public myConfig()
             {
                 set = new DataSet();
+                vehicle_types = new DataSet();
                 db_from = Point.Empty;
                 db_to = Point.Empty;
             }
+            public DataSet set { get; set; }
             public string url { get; set; }
             public string port { get; set; }
             public string basename { get; set; }
@@ -1563,7 +1602,7 @@ namespace DBAccess
             public string body_time_limit { get; set; }
             public string tent_time_limit { get; set; }
             public string online_time_limit { get; set; }
-//            public List<MapDef> map_defs { get; set; }
+            public DataSet vehicle_types { get; set; }
         }
         public class InvisibleControl : Control
         {
@@ -1638,11 +1677,14 @@ namespace DBAccess
             TypeTent = 0x800000000,
             TypeMask = 0xffff00000000
         };
+        internal UInt64 GetUIDData(UInt64 uid)
+        {
+            return (UInt64)(uid & ~(UInt64)UIDType.TypeMask);
+        }
         internal UIDType GetUIDType(UInt64 uid)
         {
             return (UIDType)(uid & (UInt64)UIDType.TypeMask);
         }
-
         private void dataGridViewMaps_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             // Ignore clicks that are not on button cells.  
@@ -1653,8 +1695,45 @@ namespace DBAccess
 
             if (res == DialogResult.OK)
             {
-                // Retrieve the task ID.
                 dataGridViewMaps["ColumnPath", e.RowIndex].Value = openFileDialog1.FileName;
+            }
+        }
+        private void toolStripMenuItemDelete_Click(object sender, EventArgs e)
+        {
+            ToolStripItem menuItem = sender as ToolStripItem;
+            if (menuItem != null)
+            {
+                ContextMenuStrip owner = menuItem.Owner as ContextMenuStrip;
+                if (owner != null)
+                {
+                    Control sourceControl = owner.SourceControl;
+
+                    iconDB idb = sourceControl.Tag as iconDB;
+
+                    UInt64 id = GetUIDData(idb.uid);
+                    int res = ExecuteSqlNonQuery("DELETE FROM instance_vehicle WHERE id=" + id + " AND instance_id=" + mycfg.instance_id);
+                    if (res == 1)
+                        textBoxCmdStatus.Text = "removed vehicle id " + id;
+                }
+            }
+        }
+        private void toolStripMenuItemDeleteSpawn_Click(object sender, EventArgs e)
+        {
+            ToolStripItem menuItem = sender as ToolStripItem;
+            if (menuItem != null)
+            {
+                ContextMenuStrip owner = menuItem.Owner as ContextMenuStrip;
+                if (owner != null)
+                {
+                    Control sourceControl = owner.SourceControl;
+
+                    iconDB idb = sourceControl.Tag as iconDB;
+
+                    UInt64 id = GetUIDData(idb.uid);
+                    int res = ExecuteSqlNonQuery("DELETE FROM world_vehicle WHERE id=" + id + " AND world_id=" + mycfg.instance_id);
+                    if (res == 1)
+                        textBoxCmdStatus.Text = "removed vehicle spawnpoint id " + id;
+                }
             }
         }
     }
