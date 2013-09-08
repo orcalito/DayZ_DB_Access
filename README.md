@@ -4,6 +4,11 @@ DayZ DB Access
 Simple tool to show some data from a DayZ database.
 
 
+- v1.3.5
+
+	Added medical states, hunger & thirst percent in player's property grid
+	Added cargo's total count in property grid
+
 - v1.3.0
 
 	Refactored handling of icons, drastically faster and correctly displayed.

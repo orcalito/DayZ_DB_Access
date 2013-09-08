@@ -1098,7 +1098,18 @@ namespace DBAccess
         {
             public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destType)
             {
-                if (destType == typeof(string) && value is T) { return ""; }
+                if (destType == typeof(string))
+                {
+                    if (value is Cargo)
+                    {
+                        Cargo cargo = value as Cargo;
+                        return "total = " + cargo.Total;
+                    }
+                    else if (value is T)
+                    {
+                        return "";
+                    }
+                }
                 return base.ConvertTo(context, culture, value, destType);
             }
         }
@@ -1196,6 +1207,17 @@ namespace DBAccess
             }
 
             #endregion
+
+            public int Total
+            {
+                get
+                {
+                    int total = 0;
+                    foreach (Entry entry in List)
+                        total += entry.count;
+                    return total;
+                }
+            }
         }
         [TypeConverter(typeof(EntryConverter))]
         public class Entry
@@ -1253,6 +1275,12 @@ namespace DBAccess
             [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
             public int blood { get; set; }
             [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
+            public string hunger { get; set; }
+            [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
+            public string thirst { get; set; }
+            [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
+            public string medical { get; set; }
+            [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
             public string weapon { get; set; }
             [CategoryAttribute("Inventory"), ReadOnlyAttribute(true)]
             public Cargo inventory { get; set; }
@@ -1268,10 +1296,34 @@ namespace DBAccess
                 this.backpack.Clear();
                 this.tools.Clear();
 
-                ArrayList arr = ParseInventoryString(idb.row.Field<string>("medical"));
                 Dictionary<string, int> dicInventory = new Dictionary<string, int>();
 
+                ArrayList arr = ParseInventoryString(idb.row.Field<string>("medical"));
+                // arr[0] = is dead
+                // arr[1] = unconscious
+                // arr[2] = infected
+                // arr[3] = injured
+                // arr[4] = in pain
+                // arr[5] = is cardiac
+                // arr[6] = low blood
+                // arr[7] = blood quantity
+                // arr[8] = [wounds]
+                // arr[9] = [legs, arms]
+                // arr[10] = unconscious time
+                // arr[11] = [hunger, thirst]
+                
+                this.medical = "";
+                if (bool.Parse(arr[1] as string)) this.medical += " unconscious, ";
+                if (bool.Parse(arr[2] as string)) this.medical += " infected, ";
+                if (bool.Parse(arr[3] as string)) this.medical += " injured, ";
+                if (bool.Parse(arr[4] as string)) this.medical += " in pain, ";
+                if (bool.Parse(arr[6] as string)) this.medical += " low blood, ";
+                this.medical = this.medical.Trim();
+                this.medical = this.medical.TrimEnd(',');
+
                 this.blood = (int)float.Parse(arr[7] as string);
+                this.hunger = ((int)(float.Parse((arr[11] as ArrayList)[0] as string) / 21.60f)).ToString() + "%";
+                this.thirst = ((int)(float.Parse((arr[11] as ArrayList)[1] as string) / 14.40f)).ToString() + "%";
 
                 arr = ParseInventoryString(idb.row.Field<string>("inventory"));
 
@@ -1419,6 +1471,10 @@ namespace DBAccess
             public Storage inventory { get; set; }
             public override void Rebuild()
             {
+                this.inventory.weapons.Clear();
+                this.inventory.items.Clear();
+                this.inventory.bags.Clear();
+
                 this.uid = idb.row.Field<UInt64>("id");
                 this.fuel = idb.row.Field<double>("fuel");
                 this.damage = idb.row.Field<double>("damage");
