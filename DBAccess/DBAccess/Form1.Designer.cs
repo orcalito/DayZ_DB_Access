@@ -84,6 +84,14 @@
             this.buttonRemoveDestroyed = new System.Windows.Forms.Button();
             this.bgWorker = new System.ComponentModel.BackgroundWorker();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+            this.tabPage4 = new System.Windows.Forms.TabPage();
+            this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
+            this.dataGridViewMaps = new System.Windows.Forms.DataGridView();
+            this.ColumnID = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColumnPath = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColumnChoosePath = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.ColumnWidth = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColumnHeight = new System.Windows.Forms.DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -96,6 +104,8 @@
             this.tabPage2.SuspendLayout();
             this.groupBoxInfo.SuspendLayout();
             this.tabPage3.SuspendLayout();
+            this.tabPage4.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewMaps)).BeginInit();
             this.SuspendLayout();
             // 
             // BottomToolStripPanel
@@ -137,6 +147,7 @@
             // 
             // splitContainer1
             // 
+            this.splitContainer1.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.splitContainer1.Location = new System.Drawing.Point(0, 0);
             this.splitContainer1.Name = "splitContainer1";
@@ -171,11 +182,12 @@
             this.tabControl1.Controls.Add(this.tabPage1);
             this.tabControl1.Controls.Add(this.tabPage2);
             this.tabControl1.Controls.Add(this.tabPage3);
+            this.tabControl1.Controls.Add(this.tabPage4);
             this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControl1.Location = new System.Drawing.Point(0, 0);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(220, 459);
+            this.tabControl1.Size = new System.Drawing.Size(216, 455);
             this.tabControl1.TabIndex = 4;
             // 
             // tabPage1
@@ -451,7 +463,7 @@
             this.tabPage2.Location = new System.Drawing.Point(4, 22);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(212, 433);
+            this.tabPage2.Size = new System.Drawing.Size(208, 429);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Display";
             // 
@@ -496,7 +508,7 @@
             this.groupBoxInfo.Controls.Add(this.propertyGrid1);
             this.groupBoxInfo.Location = new System.Drawing.Point(3, 80);
             this.groupBoxInfo.Name = "groupBoxInfo";
-            this.groupBoxInfo.Size = new System.Drawing.Size(205, 350);
+            this.groupBoxInfo.Size = new System.Drawing.Size(201, 346);
             this.groupBoxInfo.TabIndex = 3;
             this.groupBoxInfo.TabStop = false;
             this.groupBoxInfo.Text = "Info";
@@ -507,7 +519,7 @@
             this.propertyGrid1.Location = new System.Drawing.Point(3, 16);
             this.propertyGrid1.Name = "propertyGrid1";
             this.propertyGrid1.PropertySort = System.Windows.Forms.PropertySort.Categorized;
-            this.propertyGrid1.Size = new System.Drawing.Size(199, 331);
+            this.propertyGrid1.Size = new System.Drawing.Size(195, 327);
             this.propertyGrid1.TabIndex = 0;
             this.propertyGrid1.ToolbarVisible = false;
             this.propertyGrid1.ViewBackColor = System.Drawing.SystemColors.Control;
@@ -561,7 +573,7 @@
             this.tabPage3.Location = new System.Drawing.Point(4, 22);
             this.tabPage3.Name = "tabPage3";
             this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage3.Size = new System.Drawing.Size(212, 433);
+            this.tabPage3.Size = new System.Drawing.Size(208, 429);
             this.tabPage3.TabIndex = 2;
             this.tabPage3.Text = "Scripts";
             // 
@@ -599,7 +611,7 @@
             this.textBoxCmdStatus.Name = "textBoxCmdStatus";
             this.textBoxCmdStatus.ReadOnly = true;
             this.textBoxCmdStatus.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.textBoxCmdStatus.Size = new System.Drawing.Size(199, 303);
+            this.textBoxCmdStatus.Size = new System.Drawing.Size(195, 299);
             this.textBoxCmdStatus.TabIndex = 8;
             // 
             // textBoxOldBodyLimit
@@ -663,6 +675,66 @@
             // 
             this.toolTip1.AutomaticDelay = 250;
             // 
+            // tabPage4
+            // 
+            this.tabPage4.BackColor = System.Drawing.Color.Transparent;
+            this.tabPage4.Controls.Add(this.dataGridViewMaps);
+            this.tabPage4.Location = new System.Drawing.Point(4, 22);
+            this.tabPage4.Name = "tabPage4";
+            this.tabPage4.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage4.Size = new System.Drawing.Size(208, 429);
+            this.tabPage4.TabIndex = 3;
+            this.tabPage4.Text = "Maps";
+            // 
+            // openFileDialog1
+            // 
+            this.openFileDialog1.FileName = "openFileDialog1";
+            // 
+            // dataGridViewMaps
+            // 
+            this.dataGridViewMaps.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridViewMaps.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.ColumnID,
+            this.ColumnPath,
+            this.ColumnChoosePath,
+            this.ColumnWidth,
+            this.ColumnHeight});
+            this.dataGridViewMaps.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dataGridViewMaps.Location = new System.Drawing.Point(3, 3);
+            this.dataGridViewMaps.MultiSelect = false;
+            this.dataGridViewMaps.Name = "dataGridViewMaps";
+            this.dataGridViewMaps.Size = new System.Drawing.Size(202, 423);
+            this.dataGridViewMaps.TabIndex = 0;
+            this.dataGridViewMaps.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewMaps_CellClick);
+            // 
+            // ColumnID
+            // 
+            this.ColumnID.HeaderText = "Instance ID";
+            this.ColumnID.Name = "ColumnID";
+            // 
+            // ColumnPath
+            // 
+            this.ColumnPath.HeaderText = "Path";
+            this.ColumnPath.Name = "ColumnPath";
+            // 
+            // ColumnChoosePath
+            // 
+            this.ColumnChoosePath.HeaderText = "Select";
+            this.ColumnChoosePath.Name = "ColumnChoosePath";
+            this.ColumnChoosePath.Text = "...";
+            this.ColumnChoosePath.ToolTipText = "Select your file on disk";
+            this.ColumnChoosePath.UseColumnTextForButtonValue = true;
+            // 
+            // ColumnWidth
+            // 
+            this.ColumnWidth.HeaderText = "Width";
+            this.ColumnWidth.Name = "ColumnWidth";
+            // 
+            // ColumnHeight
+            // 
+            this.ColumnHeight.HeaderText = "Height";
+            this.ColumnHeight.Name = "ColumnHeight";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -689,6 +761,8 @@
             this.groupBoxInfo.ResumeLayout(false);
             this.tabPage3.ResumeLayout(false);
             this.tabPage3.PerformLayout();
+            this.tabPage4.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewMaps)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -750,6 +824,14 @@
         private System.Windows.Forms.TextBox tbOnlinePlayers;
         private System.Windows.Forms.ToolTip toolTip1;
         private System.Windows.Forms.CheckBox checkBoxShowTrail;
+        private System.Windows.Forms.TabPage tabPage4;
+        private System.Windows.Forms.OpenFileDialog openFileDialog1;
+        private System.Windows.Forms.DataGridView dataGridViewMaps;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColumnID;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColumnPath;
+        private System.Windows.Forms.DataGridViewButtonColumn ColumnChoosePath;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColumnWidth;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColumnHeight;
 
     }
 }

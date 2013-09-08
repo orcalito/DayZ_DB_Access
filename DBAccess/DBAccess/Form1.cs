@@ -22,19 +22,6 @@ namespace DBAccess
 {
     public partial class Form1 : Form
     {
-        public enum UIDType : ulong
-        {
-            TypePlayer = 0x100000000,
-            TypeVehicle = 0x200000000,
-            TypeSpawn = 0x400000000,
-            TypeTent = 0x800000000,
-            TypeMask = 0xffff00000000
-        };
-        internal UIDType GetUIDType(UInt64 uid)
-        {
-            return (UIDType)(uid & (UInt64)UIDType.TypeMask);
-        }
-
         private MySqlConnection cnx;
         private bool bConnected = false;
         private static int bUserAction = 0;
@@ -68,8 +55,19 @@ namespace DBAccess
         {
             InitializeComponent();
 
-            Assembly asb = System.Reflection.Assembly.GetExecutingAssembly();
-            this.Text = asb.GetName().Name + " - v" + asb.GetName().Version.ToString();
+            try
+            {
+                Assembly asb = System.Reflection.Assembly.GetExecutingAssembly();
+                Version version = asb.GetName().Version;
+                if (System.Deployment.Application.ApplicationDeployment.IsNetworkDeployed)
+                    version = System.Deployment.Application.ApplicationDeployment.CurrentDeployment.CurrentVersion;
+
+                this.Text = asb.GetName().Name + " - v" + version.ToString();
+            }
+            catch
+            {
+                this.Text = "DayZ DB Access unknown version";
+            }
 
             this.Resize += Form1Resize;
             this.MouseWheel += imgMap_MouseWheel;
@@ -198,9 +196,10 @@ namespace DBAccess
 
                 textBoxStatus.Text = "connected";
             }
-            catch(Exception)
+            catch(Exception ex)
             {
                 textBoxStatus.Text = "Error !";
+                textBoxCmdStatus.Text = ex.ToString();
                 Enable(false);
             }
 
@@ -291,8 +290,9 @@ namespace DBAccess
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                textBoxCmdStatus.Text = ex.ToString();
             }
             mtxUseDS.ReleaseMutex();
 
@@ -319,9 +319,9 @@ namespace DBAccess
 
                 RefreshIcons();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                textBoxStatus.Text = "Error !";
+                textBoxCmdStatus.Text = ex.ToString();
             }
 
             mtxUseDS.ReleaseMutex();
@@ -638,6 +638,19 @@ namespace DBAccess
             //if (mycfg.map_path_LQ == null) mycfg.map_path_LQ = "Celle_LQ.jpg";
             if (mycfg.db_from == Point.Empty) mycfg.db_from = new Point(0, 0);
             if (mycfg.db_to == Point.Empty) mycfg.db_to = new Point(12288, 12288);
+            if (mycfg.set.Tables.Count == 0)
+            {
+                DataTable table = mycfg.set.Tables.Add();
+                table.Columns.Add(new DataColumn("Instance ID", typeof(UInt16)));
+                table.Columns.Add(new DataColumn("Filepath", typeof(string)));
+                table.Columns.Add(new DataColumn("Width", typeof(UInt32)));
+                table.Columns.Add(new DataColumn("Height", typeof(UInt32)));
+                DataColumn[] keys = new DataColumn[1];
+                keys[0] = mycfg.set.Tables[0].Columns[0];
+                mycfg.set.Tables[0].PrimaryKey = keys;
+
+                table.Rows.Add(1, "", 12288, 12288);
+            }
 
             try
             {
@@ -651,12 +664,21 @@ namespace DBAccess
                 textBoxOldBodyLimit.Text = mycfg.body_time_limit;
                 textBoxOldTentLimit.Text = mycfg.tent_time_limit;
 
-                bitmapHQ = new Bitmap(mycfg.map_path_HQ);
+                dataGridViewMaps.Columns["ColumnID"].DataPropertyName = "Instance ID";
+                dataGridViewMaps.Columns["ColumnPath"].DataPropertyName = "Filepath";
+                dataGridViewMaps.Columns["ColumnWidth"].DataPropertyName = "Width";
+                dataGridViewMaps.Columns["ColumnHeight"].DataPropertyName = "Height";
+                dataGridViewMaps.DataSource = mycfg.set.Tables[0];
+
+                DataRow row = mycfg.set.Tables[0].Rows.Find(UInt16.Parse(mycfg.instance_id));
+                if( row != null )
+                    bitmapHQ = new Bitmap(row.Field<string>("Filepath"));
                 imgMap.Image = bitmapHQ;
                 //bitmapLQ = new Bitmap(mycfg.map_path_LQ);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                textBoxCmdStatus.Text = ex.ToString();
             }
         }
         private void SaveConfigFile()
@@ -685,26 +707,23 @@ namespace DBAccess
         }
         private PointF GetMapPosFromString(string from)
         {
+            ArrayList arr = ParseInventoryString(from);
             // [angle, [X, Y, Z]]
-            string posStr = from;
+            
+            double x = 0;
+            double y = 0;
 
-            posStr = posStr.Replace('[', ' ');
-            posStr = posStr.Replace(']', ' ');
-            string[] raw = posStr.Split(',');
-
-            float x = 0;
-            float y = 0;
-
-            if (raw.Count() >= 2)
+            if (arr.Count >= 2)
             {
-                x = float.Parse(raw[1]);
-                y = float.Parse(raw[2]);
+                arr = arr[1] as ArrayList;
+                x = double.Parse(arr[0] as string, CultureInfo.InvariantCulture.NumberFormat);
+                y = double.Parse(arr[1] as string, CultureInfo.InvariantCulture.NumberFormat);
             }
 
             x = (x - mycfg.db_from.X) / (mycfg.db_to.X - mycfg.db_from.X);
             y = 1.0f - ((y - mycfg.db_from.Y) / (mycfg.db_to.Y - mycfg.db_from.Y));
 
-            return new PointF(x, y);
+            return new PointF((float)x, (float)y);
         }
         private Point GetMapPosFromIcon(iconDB from)
         {
@@ -777,7 +796,7 @@ namespace DBAccess
                 }
                 catch (Exception ex)
                 {
-                    textBoxCmdStatus.Text = ex.Message;
+                    textBoxCmdStatus.Text = ex.ToString();
                 }
 
                 mtxUpdateDB.ReleaseMutex();
@@ -829,7 +848,7 @@ namespace DBAccess
                 }
                 catch (Exception ex)
                 {
-                    textBoxCmdStatus.Text = ex.Message;
+                    textBoxCmdStatus.Text = ex.ToString();
                 }
 
                 mtxUpdateDB.ReleaseMutex();
@@ -913,7 +932,7 @@ namespace DBAccess
                 }
                 catch (Exception ex)
                 {
-                    textBoxCmdStatus.Text = ex.Message;
+                    textBoxCmdStatus.Text = ex.ToString();
                 }
 
                 mtxUpdateDB.ReleaseMutex();
@@ -940,7 +959,7 @@ namespace DBAccess
                 }
                 catch (Exception ex)
                 {
-                    textBoxCmdStatus.Text = ex.Message;
+                    textBoxCmdStatus.Text = ex.ToString();
                 }
 
                 mtxUpdateDB.ReleaseMutex();
@@ -969,7 +988,7 @@ namespace DBAccess
                 }
                 catch (Exception ex)
                 {
-                    textBoxCmdStatus.Text = ex.Message;
+                    textBoxCmdStatus.Text = ex.ToString();
                 }
 
                 mtxUpdateDB.ReleaseMutex();
@@ -997,8 +1016,9 @@ namespace DBAccess
                     e.Graphics.DrawImage(idb.icon.Image, idb.icon.Location.X, idb.icon.Location.Y);
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                textBoxCmdStatus.Text = ex.ToString();
             }
         }
         private void checkBoxShowTrail_CheckedChanged(object sender, EventArgs e)
@@ -1321,9 +1341,9 @@ namespace DBAccess
                 this.medical = this.medical.Trim();
                 this.medical = this.medical.TrimEnd(',');
 
-                this.blood = (int)float.Parse(arr[7] as string);
-                this.hunger = ((int)(float.Parse((arr[11] as ArrayList)[0] as string) / 21.60f)).ToString() + "%";
-                this.thirst = ((int)(float.Parse((arr[11] as ArrayList)[1] as string) / 14.40f)).ToString() + "%";
+                this.blood = (int)double.Parse(arr[7] as string, CultureInfo.InvariantCulture.NumberFormat);
+                this.hunger = ((int)(double.Parse((arr[11] as ArrayList)[0] as string, CultureInfo.InvariantCulture.NumberFormat) / 21.60f)).ToString() + "%";
+                this.thirst = ((int)(double.Parse((arr[11] as ArrayList)[1] as string, CultureInfo.InvariantCulture.NumberFormat) / 14.40f)).ToString() + "%";
 
                 arr = ParseInventoryString(idb.row.Field<string>("inventory"));
 
@@ -1514,8 +1534,18 @@ namespace DBAccess
         public delegate void DlgUpdateIcons();
         public class myConfig
         {
+            public DataSet set { get; set; }
+
+            //public class MapDef
+            //{
+            //    public UInt16 instance_id { get; set; }
+            //    public string filepath { get; set; }
+            //    public UInt32 map_width { get; set; }
+            //    public UInt32 map_height { get; set; }
+            //}
             public myConfig()
             {
+                set = new DataSet();
                 db_from = Point.Empty;
                 db_to = Point.Empty;
             }
@@ -1533,6 +1563,7 @@ namespace DBAccess
             public string body_time_limit { get; set; }
             public string tent_time_limit { get; set; }
             public string online_time_limit { get; set; }
+//            public List<MapDef> map_defs { get; set; }
         }
         public class InvisibleControl : Control
         {
@@ -1598,6 +1629,33 @@ namespace DBAccess
             public GraphicsPath path = new GraphicsPath();
             public Pen pen;
             public List<PointF> unitPositions = new List<PointF>();
+        }
+        public enum UIDType : ulong
+        {
+            TypePlayer = 0x100000000,
+            TypeVehicle = 0x200000000,
+            TypeSpawn = 0x400000000,
+            TypeTent = 0x800000000,
+            TypeMask = 0xffff00000000
+        };
+        internal UIDType GetUIDType(UInt64 uid)
+        {
+            return (UIDType)(uid & (UInt64)UIDType.TypeMask);
+        }
+
+        private void dataGridViewMaps_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            // Ignore clicks that are not on button cells.  
+            if (e.RowIndex < 0 || e.ColumnIndex != dataGridViewMaps.Columns["ColumnChoosePath"].Index)
+                return;
+
+            DialogResult res = openFileDialog1.ShowDialog();
+
+            if (res == DialogResult.OK)
+            {
+                // Retrieve the task ID.
+                dataGridViewMaps["ColumnPath", e.RowIndex].Value = openFileDialog1.FileName;
+            }
         }
     }
 }

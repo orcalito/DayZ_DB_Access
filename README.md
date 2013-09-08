@@ -4,6 +4,11 @@ DayZ DB Access
 Simple tool to show some data from a DayZ database.
 
 
+- v1.4.0
+
+	Using a dataset to manage maps data, allowing to define a map per instance id 
+
+
 - v1.3.5
 
 	Added medical states, hunger & thirst percent in player's property grid
