@@ -29,12 +29,14 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.BottomToolStripPanel = new System.Windows.Forms.ToolStripPanel();
             this.TopToolStripPanel = new System.Windows.Forms.ToolStripPanel();
             this.RightToolStripPanel = new System.Windows.Forms.ToolStripPanel();
             this.LeftToolStripPanel = new System.Windows.Forms.ToolStripPanel();
             this.ContentPanel = new System.Windows.Forms.ToolStripContentPanel();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.imgMap = new System.Windows.Forms.PictureBox();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
@@ -53,6 +55,8 @@
             this.label5 = new System.Windows.Forms.Label();
             this.textBoxBaseName = new System.Windows.Forms.TextBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.label12 = new System.Windows.Forms.Label();
+            this.textBoxWorld = new System.Windows.Forms.TextBox();
             this.label11 = new System.Windows.Forms.Label();
             this.tbAlivePlayers = new System.Windows.Forms.TextBox();
             this.label7 = new System.Windows.Forms.Label();
@@ -81,29 +85,30 @@
             this.buttonRemoveBodies = new System.Windows.Forms.Button();
             this.buttonSpawnNew = new System.Windows.Forms.Button();
             this.buttonRemoveDestroyed = new System.Windows.Forms.Button();
-            this.bgWorker = new System.ComponentModel.BackgroundWorker();
-            this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.tabPage4 = new System.Windows.Forms.TabPage();
-            this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.dataGridViewMaps = new System.Windows.Forms.DataGridView();
             this.ColumnID = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ColumnPath = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ColumnChoosePath = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.ColumnName = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColumnWidth = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColumnHeight = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColumnChoosePath = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.ColumnPath = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.tabPage5 = new System.Windows.Forms.TabPage();
+            this.dataGridViewVehicleTypes = new System.Windows.Forms.DataGridView();
+            this.ColumnClassName = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColumnType = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            this.bgWorker = new System.ComponentModel.BackgroundWorker();
+            this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+            this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.contextMenuStripVehicle = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.toolStripMenuItemDeleteVehicle = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStripSpawn = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.toolStripMenuItemDeleteSpawn = new System.Windows.Forms.ToolStripMenuItem();
-            this.tabPage5 = new System.Windows.Forms.TabPage();
-            this.dataGridViewVehicleTypes = new System.Windows.Forms.DataGridView();
-            this.imgMap = new System.Windows.Forms.PictureBox();
-            this.ColumnClassName = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ColumnType = new System.Windows.Forms.DataGridViewComboBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.imgMap)).BeginInit();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -113,11 +118,10 @@
             this.tabPage3.SuspendLayout();
             this.tabPage4.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewMaps)).BeginInit();
-            this.contextMenuStripVehicle.SuspendLayout();
-            this.contextMenuStripSpawn.SuspendLayout();
             this.tabPage5.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewVehicleTypes)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.imgMap)).BeginInit();
+            this.contextMenuStripVehicle.SuspendLayout();
+            this.contextMenuStripSpawn.SuspendLayout();
             this.SuspendLayout();
             // 
             // BottomToolStripPanel
@@ -175,6 +179,19 @@
             this.splitContainer1.Size = new System.Drawing.Size(612, 459);
             this.splitContainer1.SplitterDistance = 388;
             this.splitContainer1.TabIndex = 1;
+            // 
+            // imgMap
+            // 
+            this.imgMap.Location = new System.Drawing.Point(50, 47);
+            this.imgMap.Name = "imgMap";
+            this.imgMap.Size = new System.Drawing.Size(219, 210);
+            this.imgMap.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.imgMap.TabIndex = 0;
+            this.imgMap.TabStop = false;
+            this.imgMap.Paint += new System.Windows.Forms.PaintEventHandler(this.imgMap_Paint);
+            this.imgMap.MouseDown += new System.Windows.Forms.MouseEventHandler(this.imgMap_MouseClick);
+            this.imgMap.MouseMove += new System.Windows.Forms.MouseEventHandler(this.imgMap_MouseMove);
+            this.imgMap.MouseUp += new System.Windows.Forms.MouseEventHandler(this.imgMap_MouseUp);
             // 
             // tabControl1
             // 
@@ -348,6 +365,8 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.label12);
+            this.groupBox1.Controls.Add(this.textBoxWorld);
             this.groupBox1.Controls.Add(this.label11);
             this.groupBox1.Controls.Add(this.tbAlivePlayers);
             this.groupBox1.Controls.Add(this.label7);
@@ -360,15 +379,32 @@
             this.groupBox1.Controls.Add(this.tbVehicles);
             this.groupBox1.Location = new System.Drawing.Point(6, 214);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(202, 149);
+            this.groupBox1.Size = new System.Drawing.Size(199, 182);
             this.groupBox1.TabIndex = 8;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "General Info";
             // 
+            // label12
+            // 
+            this.label12.AutoSize = true;
+            this.label12.Location = new System.Drawing.Point(6, 26);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(35, 13);
+            this.label12.TabIndex = 13;
+            this.label12.Text = "World";
+            // 
+            // textBoxWorld
+            // 
+            this.textBoxWorld.Location = new System.Drawing.Point(89, 23);
+            this.textBoxWorld.Name = "textBoxWorld";
+            this.textBoxWorld.ReadOnly = true;
+            this.textBoxWorld.Size = new System.Drawing.Size(104, 20);
+            this.textBoxWorld.TabIndex = 12;
+            // 
             // label11
             // 
             this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(10, 22);
+            this.label11.Location = new System.Drawing.Point(6, 52);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(72, 13);
             this.label11.TabIndex = 11;
@@ -376,16 +412,16 @@
             // 
             // tbAlivePlayers
             // 
-            this.tbAlivePlayers.Location = new System.Drawing.Point(93, 45);
+            this.tbAlivePlayers.Location = new System.Drawing.Point(89, 75);
             this.tbAlivePlayers.Name = "tbAlivePlayers";
             this.tbAlivePlayers.ReadOnly = true;
-            this.tbAlivePlayers.Size = new System.Drawing.Size(103, 20);
+            this.tbAlivePlayers.Size = new System.Drawing.Size(104, 20);
             this.tbAlivePlayers.TabIndex = 2;
             // 
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(10, 48);
+            this.label7.Location = new System.Drawing.Point(6, 78);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(66, 13);
             this.label7.TabIndex = 3;
@@ -393,16 +429,16 @@
             // 
             // tbOnlinePlayers
             // 
-            this.tbOnlinePlayers.Location = new System.Drawing.Point(93, 19);
+            this.tbOnlinePlayers.Location = new System.Drawing.Point(89, 49);
             this.tbOnlinePlayers.Name = "tbOnlinePlayers";
             this.tbOnlinePlayers.ReadOnly = true;
-            this.tbOnlinePlayers.Size = new System.Drawing.Size(103, 20);
+            this.tbOnlinePlayers.Size = new System.Drawing.Size(104, 20);
             this.tbOnlinePlayers.TabIndex = 10;
             // 
             // label9
             // 
             this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(10, 126);
+            this.label9.Location = new System.Drawing.Point(6, 156);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(34, 13);
             this.label9.TabIndex = 9;
@@ -410,16 +446,16 @@
             // 
             // tbTents
             // 
-            this.tbTents.Location = new System.Drawing.Point(93, 123);
+            this.tbTents.Location = new System.Drawing.Point(89, 153);
             this.tbTents.Name = "tbTents";
             this.tbTents.ReadOnly = true;
-            this.tbTents.Size = new System.Drawing.Size(103, 20);
+            this.tbTents.Size = new System.Drawing.Size(104, 20);
             this.tbTents.TabIndex = 8;
             // 
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(10, 100);
+            this.label6.Location = new System.Drawing.Point(6, 130);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(72, 13);
             this.label6.TabIndex = 7;
@@ -427,16 +463,16 @@
             // 
             // tbVehicleSpawn
             // 
-            this.tbVehicleSpawn.Location = new System.Drawing.Point(93, 97);
+            this.tbVehicleSpawn.Location = new System.Drawing.Point(89, 127);
             this.tbVehicleSpawn.Name = "tbVehicleSpawn";
             this.tbVehicleSpawn.ReadOnly = true;
-            this.tbVehicleSpawn.Size = new System.Drawing.Size(103, 20);
+            this.tbVehicleSpawn.Size = new System.Drawing.Size(104, 20);
             this.tbVehicleSpawn.TabIndex = 6;
             // 
             // label8
             // 
             this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(10, 74);
+            this.label8.Location = new System.Drawing.Point(6, 104);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(47, 13);
             this.label8.TabIndex = 5;
@@ -444,10 +480,10 @@
             // 
             // tbVehicles
             // 
-            this.tbVehicles.Location = new System.Drawing.Point(93, 71);
+            this.tbVehicles.Location = new System.Drawing.Point(89, 101);
             this.tbVehicles.Name = "tbVehicles";
             this.tbVehicles.ReadOnly = true;
-            this.tbVehicles.Size = new System.Drawing.Size(103, 20);
+            this.tbVehicles.Size = new System.Drawing.Size(104, 20);
             this.tbVehicles.TabIndex = 4;
             // 
             // tabPage2
@@ -666,15 +702,6 @@
             this.buttonRemoveDestroyed.UseVisualStyleBackColor = true;
             this.buttonRemoveDestroyed.Click += new System.EventHandler(this.buttonRemoveDestroyed_Click);
             // 
-            // bgWorker
-            // 
-            this.bgWorker.WorkerSupportsCancellation = true;
-            this.bgWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker1_DoWork);
-            // 
-            // toolTip1
-            // 
-            this.toolTip1.AutomaticDelay = 250;
-            // 
             // tabPage4
             // 
             this.tabPage4.BackColor = System.Drawing.Color.Transparent;
@@ -686,54 +713,130 @@
             this.tabPage4.TabIndex = 3;
             this.tabPage4.Text = "Maps";
             // 
-            // openFileDialog1
-            // 
-            this.openFileDialog1.FileName = "openFileDialog1";
-            // 
             // dataGridViewMaps
             // 
+            this.dataGridViewMaps.AllowUserToAddRows = false;
+            this.dataGridViewMaps.AllowUserToDeleteRows = false;
             this.dataGridViewMaps.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridViewMaps.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.ColumnID,
-            this.ColumnPath,
-            this.ColumnChoosePath,
+            this.ColumnName,
             this.ColumnWidth,
-            this.ColumnHeight});
+            this.ColumnHeight,
+            this.ColumnChoosePath,
+            this.ColumnPath});
             this.dataGridViewMaps.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dataGridViewMaps.Location = new System.Drawing.Point(3, 3);
             this.dataGridViewMaps.MultiSelect = false;
             this.dataGridViewMaps.Name = "dataGridViewMaps";
+            this.dataGridViewMaps.RowHeadersVisible = false;
             this.dataGridViewMaps.Size = new System.Drawing.Size(202, 423);
             this.dataGridViewMaps.TabIndex = 0;
             this.dataGridViewMaps.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewMaps_CellClick);
             // 
             // ColumnID
             // 
-            this.ColumnID.HeaderText = "Instance ID";
+            this.ColumnID.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
+            this.ColumnID.HeaderText = "World ID";
             this.ColumnID.Name = "ColumnID";
+            this.ColumnID.ReadOnly = true;
+            this.ColumnID.Width = 74;
+            // 
+            // ColumnName
+            // 
+            this.ColumnName.HeaderText = "Name";
+            this.ColumnName.Name = "ColumnName";
+            this.ColumnName.ReadOnly = true;
+            // 
+            // ColumnWidth
+            // 
+            this.ColumnWidth.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
+            this.ColumnWidth.HeaderText = "Width";
+            this.ColumnWidth.Name = "ColumnWidth";
+            this.ColumnWidth.Width = 60;
+            // 
+            // ColumnHeight
+            // 
+            this.ColumnHeight.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
+            this.ColumnHeight.HeaderText = "Height";
+            this.ColumnHeight.Name = "ColumnHeight";
+            this.ColumnHeight.Width = 63;
+            // 
+            // ColumnChoosePath
+            // 
+            this.ColumnChoosePath.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
+            this.ColumnChoosePath.HeaderText = "Select";
+            this.ColumnChoosePath.Name = "ColumnChoosePath";
+            this.ColumnChoosePath.Text = "...";
+            this.ColumnChoosePath.ToolTipText = "Select your file on disk";
+            this.ColumnChoosePath.UseColumnTextForButtonValue = true;
+            this.ColumnChoosePath.Width = 43;
             // 
             // ColumnPath
             // 
             this.ColumnPath.HeaderText = "Path";
             this.ColumnPath.Name = "ColumnPath";
             // 
-            // ColumnChoosePath
+            // tabPage5
             // 
-            this.ColumnChoosePath.HeaderText = "Select";
-            this.ColumnChoosePath.Name = "ColumnChoosePath";
-            this.ColumnChoosePath.Text = "...";
-            this.ColumnChoosePath.ToolTipText = "Select your file on disk";
-            this.ColumnChoosePath.UseColumnTextForButtonValue = true;
+            this.tabPage5.BackColor = System.Drawing.Color.Transparent;
+            this.tabPage5.Controls.Add(this.dataGridViewVehicleTypes);
+            this.tabPage5.Location = new System.Drawing.Point(4, 22);
+            this.tabPage5.Name = "tabPage5";
+            this.tabPage5.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage5.Size = new System.Drawing.Size(208, 429);
+            this.tabPage5.TabIndex = 4;
+            this.tabPage5.Text = "Vehicles";
             // 
-            // ColumnWidth
+            // dataGridViewVehicleTypes
             // 
-            this.ColumnWidth.HeaderText = "Width";
-            this.ColumnWidth.Name = "ColumnWidth";
+            this.dataGridViewVehicleTypes.AllowUserToAddRows = false;
+            this.dataGridViewVehicleTypes.AllowUserToDeleteRows = false;
+            this.dataGridViewVehicleTypes.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridViewVehicleTypes.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.ColumnClassName,
+            this.ColumnType});
+            this.dataGridViewVehicleTypes.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dataGridViewVehicleTypes.Location = new System.Drawing.Point(3, 3);
+            this.dataGridViewVehicleTypes.Name = "dataGridViewVehicleTypes";
+            this.dataGridViewVehicleTypes.RowHeadersVisible = false;
+            this.dataGridViewVehicleTypes.ShowEditingIcon = false;
+            this.dataGridViewVehicleTypes.Size = new System.Drawing.Size(202, 423);
+            this.dataGridViewVehicleTypes.TabIndex = 0;
             // 
-            // ColumnHeight
+            // ColumnClassName
             // 
-            this.ColumnHeight.HeaderText = "Height";
-            this.ColumnHeight.Name = "ColumnHeight";
+            this.ColumnClassName.HeaderText = "ClassName";
+            this.ColumnClassName.Name = "ColumnClassName";
+            this.ColumnClassName.ReadOnly = true;
+            // 
+            // ColumnType
+            // 
+            this.ColumnType.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.ColumnType.HeaderText = "Type";
+            this.ColumnType.Items.AddRange(new object[] {
+            "Air",
+            "Bicycle",
+            "Boat",
+            "Bus",
+            "Car",
+            "Helicopter",
+            "Motorcycle",
+            "Truck"});
+            this.ColumnType.Name = "ColumnType";
+            // 
+            // bgWorker
+            // 
+            this.bgWorker.WorkerSupportsCancellation = true;
+            this.bgWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker1_DoWork);
+            // 
+            // toolTip1
+            // 
+            this.toolTip1.AutomaticDelay = 250;
+            // 
+            // openFileDialog1
+            // 
+            this.openFileDialog1.FileName = "openFileDialog1";
             // 
             // contextMenuStripVehicle
             // 
@@ -763,73 +866,13 @@
             this.toolStripMenuItemDeleteSpawn.Text = "Delete Spawnpoint";
             this.toolStripMenuItemDeleteSpawn.Click += new System.EventHandler(this.toolStripMenuItemDeleteSpawn_Click);
             // 
-            // tabPage5
-            // 
-            this.tabPage5.BackColor = System.Drawing.Color.Transparent;
-            this.tabPage5.Controls.Add(this.dataGridViewVehicleTypes);
-            this.tabPage5.Location = new System.Drawing.Point(4, 22);
-            this.tabPage5.Name = "tabPage5";
-            this.tabPage5.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage5.Size = new System.Drawing.Size(208, 429);
-            this.tabPage5.TabIndex = 4;
-            this.tabPage5.Text = "Vehicles";
-            // 
-            // dataGridViewVehicleTypes
-            // 
-            this.dataGridViewVehicleTypes.AllowUserToAddRows = false;
-            this.dataGridViewVehicleTypes.AllowUserToDeleteRows = false;
-            this.dataGridViewVehicleTypes.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridViewVehicleTypes.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.ColumnClassName,
-            this.ColumnType});
-            this.dataGridViewVehicleTypes.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.dataGridViewVehicleTypes.Location = new System.Drawing.Point(3, 3);
-            this.dataGridViewVehicleTypes.Name = "dataGridViewVehicleTypes";
-            this.dataGridViewVehicleTypes.RowHeadersVisible = false;
-            this.dataGridViewVehicleTypes.ShowEditingIcon = false;
-            this.dataGridViewVehicleTypes.Size = new System.Drawing.Size(202, 423);
-            this.dataGridViewVehicleTypes.TabIndex = 0;
-            // 
-            // imgMap
-            // 
-            this.imgMap.Location = new System.Drawing.Point(50, 47);
-            this.imgMap.Name = "imgMap";
-            this.imgMap.Size = new System.Drawing.Size(219, 210);
-            this.imgMap.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
-            this.imgMap.TabIndex = 0;
-            this.imgMap.TabStop = false;
-            this.imgMap.Paint += new System.Windows.Forms.PaintEventHandler(this.imgMap_Paint);
-            this.imgMap.MouseDown += new System.Windows.Forms.MouseEventHandler(this.imgMap_MouseClick);
-            this.imgMap.MouseMove += new System.Windows.Forms.MouseEventHandler(this.imgMap_MouseMove);
-            this.imgMap.MouseUp += new System.Windows.Forms.MouseEventHandler(this.imgMap_MouseUp);
-            // 
-            // ColumnClassName
-            // 
-            this.ColumnClassName.HeaderText = "ClassName";
-            this.ColumnClassName.Name = "ColumnClassName";
-            this.ColumnClassName.ReadOnly = true;
-            // 
-            // ColumnType
-            // 
-            this.ColumnType.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.ColumnType.HeaderText = "Type";
-            this.ColumnType.Items.AddRange(new object[] {
-            "Air",
-            "Bicycle",
-            "Boat",
-            "Bus",
-            "Car",
-            "Helicopter",
-            "Motorcycle",
-            "Truck"});
-            this.ColumnType.Name = "ColumnType";
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(612, 459);
             this.Controls.Add(this.splitContainer1);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MinimumSize = new System.Drawing.Size(628, 497);
             this.Name = "Form1";
             this.Text = "Form1";
@@ -838,6 +881,7 @@
             this.splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.imgMap)).EndInit();
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
             this.groupBox2.ResumeLayout(false);
@@ -851,11 +895,10 @@
             this.tabPage3.PerformLayout();
             this.tabPage4.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewMaps)).EndInit();
-            this.contextMenuStripVehicle.ResumeLayout(false);
-            this.contextMenuStripSpawn.ResumeLayout(false);
             this.tabPage5.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewVehicleTypes)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.imgMap)).EndInit();
+            this.contextMenuStripVehicle.ResumeLayout(false);
+            this.contextMenuStripSpawn.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -920,11 +963,6 @@
         private System.Windows.Forms.TabPage tabPage4;
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
         private System.Windows.Forms.DataGridView dataGridViewMaps;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ColumnID;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ColumnPath;
-        private System.Windows.Forms.DataGridViewButtonColumn ColumnChoosePath;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ColumnWidth;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ColumnHeight;
         private System.Windows.Forms.ContextMenuStrip contextMenuStripVehicle;
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemDeleteVehicle;
         private System.Windows.Forms.ContextMenuStrip contextMenuStripSpawn;
@@ -933,6 +971,14 @@
         private System.Windows.Forms.DataGridView dataGridViewVehicleTypes;
         private System.Windows.Forms.DataGridViewTextBoxColumn ColumnClassName;
         private System.Windows.Forms.DataGridViewComboBoxColumn ColumnType;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColumnID;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColumnName;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColumnWidth;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColumnHeight;
+        private System.Windows.Forms.DataGridViewButtonColumn ColumnChoosePath;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColumnPath;
+        private System.Windows.Forms.Label label12;
+        private System.Windows.Forms.TextBox textBoxWorld;
 
     }
 }

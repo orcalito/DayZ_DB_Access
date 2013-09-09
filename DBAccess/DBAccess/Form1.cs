@@ -30,7 +30,7 @@ namespace DBAccess
         public DlgUpdateIcons dlgUpdateIcons;
         public myConfig mycfg = new myConfig();
         private Bitmap bitmapHQ;
-        //private Bitmap bitmapLQ;
+        private DataSet dsInstances = new DataSet();
         private DataSet dsTents = new DataSet();
         private DataSet dsAlivePlayers = new DataSet();
         private DataSet dsOnlinePlayers = new DataSet();
@@ -51,9 +51,15 @@ namespace DBAccess
         private List<InvisibleControl> iconVehicles = new List<InvisibleControl>();
         private List<InvisibleControl> iconTents = new List<InvisibleControl>();
 
+        private string configPath;
+        private string configFile;
+
         public Form1()
         {
             InitializeComponent();
+
+            configPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\DayZDBAccess";
+            configFile = configPath + "\\config.xml";
 
             try
             {
@@ -78,15 +84,6 @@ namespace DBAccess
             bgWorker.RunWorkerAsync();
 
             Enable(false);
-
-            if( imgMap.Image != null )
-                zoomFactor = MapSize.Width / (float)imgMap.Image.Size.Width;
-
-            Size sizePanel = splitContainer1.Panel1.Size;
-            Point halfPanel = new Point((int)(sizePanel.Width * 0.5f), (int)(sizePanel.Height * 0.5f));
-            MapPos.X = (int)(halfPanel.X - MapSize.Width * 0.5f);
-            MapPos.Y = (int)(halfPanel.Y - MapSize.Height * 0.5f);
-            ApplyMapChanges();
         }
         void ApplyMapChanges()
         {
@@ -192,24 +189,24 @@ namespace DBAccess
 
                 Enable(true);
 
-                _DoWork();
+                DB_OnConnection();
+                DB_OnRefresh();
 
-                textBoxStatus.Text = "connected";
             }
             catch(Exception ex)
             {
-                textBoxStatus.Text = "Error !";
                 textBoxCmdStatus.Text = ex.ToString();
                 Enable(false);
             }
 
+            if (bConnected)
+                textBoxStatus.Text = "connected";
+            else
+                textBoxStatus.Text = "Error !";
+
             this.Cursor = Cursors.Arrow;
 
             mtxUpdateDB.ReleaseMutex();
-        }
-        private void buttonDisconnect_Click(object sender, EventArgs e)
-        {
-            CloseConnection();
         }
         private void CloseConnection()
         {
@@ -257,6 +254,7 @@ namespace DBAccess
             if (!bConnected)
                 return;
 
+            this.Cursor = Cursors.WaitCursor;
             RadioButton senderRB = sender as RadioButton;
             if (senderRB.Checked)
             {
@@ -266,6 +264,7 @@ namespace DBAccess
 
                 BuildIcons();
             }
+            this.Cursor = Cursors.Arrow;
         }
         private void BuildIcons()
         {
@@ -651,11 +650,13 @@ namespace DBAccess
         }
         private void LoadConfigFile()
         {
-            // Read file if exist
             try
             {
+                if (Directory.Exists(configPath) == false)
+                    Directory.CreateDirectory(configPath);
+
                 XmlSerializer xs = new XmlSerializer(typeof(myConfig));
-                using (StreamReader re = new StreamReader("config.xml"))
+                using (StreamReader re = new StreamReader(configFile))
                 {
                     mycfg = xs.Deserialize(re) as myConfig;
                 }
@@ -675,22 +676,28 @@ namespace DBAccess
             if (NullOrEmpty(mycfg.body_time_limit)) mycfg.body_time_limit = "7";
             if (NullOrEmpty(mycfg.tent_time_limit)) mycfg.tent_time_limit = "7";
             if (NullOrEmpty(mycfg.online_time_limit)) mycfg.online_time_limit = "5";
-            if (mycfg.map_path_HQ == null) mycfg.map_path_HQ = "Celle_HQ.jpg";
-            //if (mycfg.map_path_LQ == null) mycfg.map_path_LQ = "Celle_LQ.jpg";
-            if (mycfg.db_from == Point.Empty) mycfg.db_from = new Point(0, 0);
-            if (mycfg.db_to == Point.Empty) mycfg.db_to = new Point(12288, 12288);
-            if (mycfg.set.Tables.Count == 0)
+            if (mycfg.worlds_def.Tables.Count == 0)
             {
-                DataTable table = mycfg.set.Tables.Add();
-                table.Columns.Add(new DataColumn("Instance ID", typeof(UInt16)));
-                table.Columns.Add(new DataColumn("Filepath", typeof(string)));
+                DataTable table = mycfg.worlds_def.Tables.Add();
+                table.Columns.Add(new DataColumn("World ID", typeof(UInt16)));
+                table.Columns.Add(new DataColumn("World Name", typeof(string)));
                 table.Columns.Add(new DataColumn("Width", typeof(UInt32)));
                 table.Columns.Add(new DataColumn("Height", typeof(UInt32)));
+                table.Columns.Add(new DataColumn("Filepath", typeof(string)));
                 DataColumn[] keys = new DataColumn[1];
-                keys[0] = mycfg.set.Tables[0].Columns[0];
-                mycfg.set.Tables[0].PrimaryKey = keys;
+                keys[0] = mycfg.worlds_def.Tables[0].Columns[0];
+                mycfg.worlds_def.Tables[0].PrimaryKey = keys;
 
-                table.Rows.Add(1, "", 12288, 12288);
+                //table.Rows.Add(1, "not connected", 1, 1, "");
+                //table.Rows.Add(2, "not connected", 1, 1, "");
+                //table.Rows.Add(3, "not connected", 1, 1, "");
+                //table.Rows.Add(4, "not connected", 1, 1, "");
+                //table.Rows.Add(5, "not connected", 1, 1, "");
+                //table.Rows.Add(6, "not connected", 1, 1, "");
+                //table.Rows.Add(7, "not connected", 1, 1, "");
+                //table.Rows.Add(8, "not connected", 1, 1, "");
+                table.Rows.Add(9, "not connected", 12288, 12288, "");
+                //table.Rows.Add(10, "not connected", 1, 1, "");
             }
             if (mycfg.vehicle_types.Tables.Count == 0)
             {
@@ -714,21 +721,18 @@ namespace DBAccess
                 textBoxOldBodyLimit.Text = mycfg.body_time_limit;
                 textBoxOldTentLimit.Text = mycfg.tent_time_limit;
 
-                dataGridViewMaps.Columns["ColumnID"].DataPropertyName = "Instance ID";
+                dataGridViewMaps.Columns["ColumnID"].DataPropertyName = "World ID";
+                dataGridViewMaps.Columns["ColumnName"].DataPropertyName = "World Name";
                 dataGridViewMaps.Columns["ColumnPath"].DataPropertyName = "Filepath";
                 dataGridViewMaps.Columns["ColumnWidth"].DataPropertyName = "Width";
                 dataGridViewMaps.Columns["ColumnHeight"].DataPropertyName = "Height";
-                dataGridViewMaps.DataSource = mycfg.set.Tables[0];
+                dataGridViewMaps.DataSource = mycfg.worlds_def.Tables[0];
+                dataGridViewMaps.Sort(dataGridViewMaps.Columns["ColumnID"], ListSortDirection.Ascending);
 
                 dataGridViewVehicleTypes.Columns["ColumnClassName"].DataPropertyName = "ClassName";
                 dataGridViewVehicleTypes.Columns["ColumnType"].DataPropertyName = "Type";
                 dataGridViewVehicleTypes.DataSource = mycfg.vehicle_types.Tables[0];
-
-                DataRow row = mycfg.set.Tables[0].Rows.Find(UInt16.Parse(mycfg.instance_id));
-                if( row != null )
-                    bitmapHQ = new Bitmap(row.Field<string>("Filepath"));
-                imgMap.Image = bitmapHQ;
-                //bitmapLQ = new Bitmap(mycfg.map_path_LQ);
+                dataGridViewVehicleTypes.Sort(dataGridViewVehicleTypes.Columns["ColumnClassName"], ListSortDirection.Ascending);
             }
             catch (Exception ex)
             {
@@ -750,7 +754,7 @@ namespace DBAccess
                 mycfg.tent_time_limit = textBoxOldTentLimit.Text;
 
                 XmlSerializer xs = new XmlSerializer(typeof(myConfig));
-                using (StreamWriter wr = new StreamWriter("config.xml"))
+                using (StreamWriter wr = new StreamWriter(configFile))
                 {
                     xs.Serialize(wr, mycfg);
                 }
@@ -774,8 +778,8 @@ namespace DBAccess
                 y = double.Parse(arr[1] as string, CultureInfo.InvariantCulture.NumberFormat);
             }
 
-            x = (x - mycfg.db_from.X) / (mycfg.db_to.X - mycfg.db_from.X);
-            y = 1.0f - ((y - mycfg.db_from.Y) / (mycfg.db_to.Y - mycfg.db_from.Y));
+            x = x / mycfg.db_map_size.Width;
+            y = 1.0f - (y / mycfg.db_map_size.Height);
 
             return new PointF((float)x, (float)y);
         }
@@ -786,7 +790,146 @@ namespace DBAccess
 
             return new Point((int)x, (int)y);
         }
-        private void _DoWork()
+        private void DB_OnConnection()
+        {
+            if (!bConnected)
+                return;
+
+            mtxUpdateDB.WaitOne();
+
+            DataSet _dsWorlds = new DataSet();
+            DataSet _dsAllVehicleTypes = new DataSet();
+
+            this.textBoxCmdStatus.Text = "";
+
+            try
+            {
+                MySqlCommand cmd = cnx.CreateCommand();
+                MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
+
+                //
+                //  Instance -> World Id
+                //
+                cmd.CommandText = "SELECT * FROM instance";
+                this.dsInstances.Clear();
+                adapter.Fill(this.dsInstances);
+                DataColumn[] keys = new DataColumn[1];
+                keys[0] = dsInstances.Tables[0].Columns[0];
+                dsInstances.Tables[0].PrimaryKey = keys;
+
+                //
+                //  Worlds
+                //
+                cmd.CommandText = "SELECT * FROM world";
+                _dsWorlds.Clear();
+                adapter.Fill(_dsWorlds);
+
+                //
+                //  Vehicle types
+                //
+                cmd.CommandText = "SELECT class_name FROM vehicle";
+                _dsAllVehicleTypes.Clear();
+                adapter.Fill(_dsAllVehicleTypes);
+            }
+            catch (Exception ex)
+            {
+                this.textBoxCmdStatus.Text += ex.ToString();
+            }
+
+            mtxUpdateDB.ReleaseMutex();
+
+            mtxUseDS.WaitOne();
+
+            try
+            {
+                foreach(DataRow row in _dsAllVehicleTypes.Tables[0].Rows)
+                {
+                    string name = row.Field<string>("class_name");
+
+                    if (mycfg.vehicle_types.Tables[0].Rows.Find(name) == null)
+                        mycfg.vehicle_types.Tables[0].Rows.Add(name, "Car");
+                }
+
+                foreach (DataRow row in _dsWorlds.Tables[0].Rows)
+                {
+                    DataRow rowWD = mycfg.worlds_def.Tables[0].Rows.Find(row.Field<UInt16>("id"));
+                    if (rowWD == null)
+                    {
+                        mycfg.worlds_def.Tables[0].Rows.Add(row.Field<UInt16>("id"),
+                                                            row.Field<string>("name"),
+                                                            (UInt32)row.Field<Int32>("max_x"),
+                                                            (UInt32)row.Field<Int32>("max_y"),
+                                                            "");
+                    }
+                    else
+                    {
+                        rowWD.SetField<string>("World Name", row.Field<string>("name"));
+                    }
+                }
+
+                DataRow rowI = this.dsInstances.Tables[0].Rows.Find(UInt16.Parse(mycfg.instance_id));
+                if (rowI != null)
+                {
+                    mycfg.world_id = rowI.Field<UInt16>("world_id");
+
+                    DataRow rowW = mycfg.worlds_def.Tables[0].Rows.Find(mycfg.world_id);
+                    if (rowW != null)
+                        textBoxWorld.Text = rowW.Field<string>("World Name");
+
+                    SetCurrentMap();
+                }
+            }
+            catch (Exception ex)
+            {
+                textBoxCmdStatus.Text += ex.ToString();
+            }
+
+            mtxUseDS.ReleaseMutex();
+
+            if (mycfg.world_id == 0)
+            {
+                CloseConnection();
+                MessageBox.Show("Instance id '" + mycfg.instance_id + "' not found in database", "Warning");
+            }
+        }
+        private void SetCurrentMap()
+        {
+            try
+            {
+                DataRow rowW = mycfg.worlds_def.Tables[0].Rows.Find(mycfg.world_id);
+                if (rowW != null)
+                {
+                    textBoxWorld.Text = rowW.Field<string>("World Name");
+
+                    string filepath = rowW.Field<string>("Filepath");
+
+                    if (File.Exists(filepath))
+                        bitmapHQ = new Bitmap(filepath);
+                    else
+                        bitmapHQ = global::DBAccess.Properties.Resources.InvalidMap;
+                }
+
+                imgMap.Image = bitmapHQ;
+
+                mycfg.db_map_size = new Size((int)rowW.Field<UInt32>("Width"), (int)rowW.Field<UInt32>("Height"));
+
+                if (imgMap.Image != null)
+                    zoomFactor = MapSize.Width / (float)imgMap.Image.Size.Width;
+
+                Size sizePanel = splitContainer1.Panel1.Size;
+                Point halfPanel = new Point((int)(sizePanel.Width * 0.5f), (int)(sizePanel.Height * 0.5f));
+                MapPos.X = (int)(halfPanel.X - MapSize.Width * 0.5f);
+                MapPos.Y = (int)(halfPanel.Y - MapSize.Height * 0.5f);
+
+                ApplyMapChanges();
+            }
+            catch (Exception ex)
+            {
+                imgMap.Image = null;
+                textBoxCmdStatus.Text += ex.ToString();
+            }
+        }
+        private void DB_OnRefresh()
         {
             if (bConnected)
             {
@@ -795,7 +938,6 @@ namespace DBAccess
                 DataSet _dsTents = new DataSet();
                 DataSet _dsVehicles = new DataSet();
                 DataSet _dsVehicleSpawnPoints = new DataSet();
-                DataSet _dsAllVehicleTypes = new DataSet();
 
                 mtxUpdateDB.WaitOne();
 
@@ -805,18 +947,11 @@ namespace DBAccess
                     MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
 
                     //
-                    //  Vehicle types
-                    //
-                    cmd.CommandText = "SELECT class_name FROM vehicle";
-                    _dsAllVehicleTypes.Clear();
-                    adapter.Fill(_dsAllVehicleTypes);
-
-                    //
                     //  Players alive
                     //
                     cmd.CommandText = "SELECT s.id id, s.unique_id unique_id, p.name name, p.humanity humanity, s.worldspace worldspace,"
                                     + " s.inventory inventory, s.backpack backpack, s.medical medical, s.state state, s.last_updated last_updated"
-                                    + " FROM survivor as s, profile as p WHERE s.unique_id=p.unique_id AND s.world_id=" + mycfg.instance_id + " AND s.is_dead=0";
+                                    + " FROM survivor as s, profile as p WHERE s.unique_id=p.unique_id AND s.world_id=" + mycfg.world_id + " AND s.is_dead=0";
                     _dsAlivePlayers.Clear();
                     adapter.Fill(_dsAlivePlayers);
 
@@ -830,7 +965,7 @@ namespace DBAccess
                     //
                     //  Vehicles
                     //
-                    cmd.CommandText = "SELECT iv.id id, v.class_name class_name, iv.worldspace worldspace, iv.inventory inventory,"
+                    cmd.CommandText = "SELECT iv.id id, wv.id spawn_id, v.class_name class_name, iv.worldspace worldspace, iv.inventory inventory,"
                                     + " iv.fuel fuel, iv.damage damage, iv.last_updated last_updated"
                                     + " FROM vehicle as v, world_vehicle as wv, instance_vehicle as iv"
                                     + " WHERE iv.instance_id=" + mycfg.instance_id
@@ -842,7 +977,7 @@ namespace DBAccess
                     //  Vehicle Spawn points
                     //
                     cmd.CommandText = "SELECT w.id id, w.worldspace worldspace, v.class_name class_name FROM world_vehicle as w, vehicle as v"
-                                    + " WHERE w.world_id=" + mycfg.instance_id + " AND w.vehicle_id=v.id";
+                                    + " WHERE w.world_id=" + mycfg.world_id + " AND w.vehicle_id=v.id";
                     _dsVehicleSpawnPoints.Clear();
                     adapter.Fill(_dsVehicleSpawnPoints);
 
@@ -868,22 +1003,6 @@ namespace DBAccess
                 dsVehicles = _dsVehicles.Copy();
                 dsVehicleSpawnPoints = _dsVehicleSpawnPoints.Copy();
 
-                foreach(DataRow row in _dsAllVehicleTypes.Tables[0].Rows)
-                {
-                    try
-                    {
-                        string name = row.Field<string>("class_name");
-
-                        DataRow rowVT = mycfg.vehicle_types.Tables[0].Rows.Find(name);
-                        if (rowVT == null)
-                            mycfg.vehicle_types.Tables[0].Rows.Add(name, "Car");
-                    }
-                    catch (Exception ex)
-                    {
-                        textBoxCmdStatus.Text = ex.ToString();
-                    }
-                }
-
                 mtxUseDS.ReleaseMutex();
             }
         }
@@ -895,7 +1014,7 @@ namespace DBAccess
             {
                 Thread.Sleep(5000);
 
-                _DoWork();
+                DB_OnRefresh();
 
                 if (System.Threading.Interlocked.CompareExchange(ref bUserAction, 1, 0) == 0)
                 {
@@ -932,7 +1051,7 @@ namespace DBAccess
                                     + " FROM world_vehicle wv JOIN vehicle v ON wv.vehicle_id = v.id LEFT JOIN instance_vehicle iv ON iv.world_vehicle_id = wv.id AND iv.instance_id = "+mycfg.instance_id
                                     + " LEFT JOIN ( SELECT count(iv.id) AS count, wv.vehicle_id FROM instance_vehicle iv JOIN world_vehicle wv ON iv.world_vehicle_id = wv.id"
                                     + " WHERE instance_id ="+mycfg.instance_id+" GROUP BY wv.vehicle_id) vc ON vc.vehicle_id = v.id"
-                                    + " WHERE wv.world_id ="+mycfg.instance_id+" AND iv.id IS null AND (round(rand(), 3) < wv.chance)"
+                                    + " WHERE wv.world_id ="+mycfg.world_id+" AND iv.id IS null AND (round(rand(), 3) < wv.chance)"
                                     + " and (vc.count IS null OR vc.count BETWEEN v.limit_min AND v.limit_max) GROUP BY wv.worldspace";
                     MySqlDataReader reader = cmd.ExecuteReader();
 
@@ -999,39 +1118,10 @@ namespace DBAccess
         {
             int limit = int.Parse(textBoxOldBodyLimit.Text);
 
-            string query = "DELETE FROM survivor WHERE world_id=" + mycfg.instance_id + " AND is_dead=1 AND last_updated < now() - interval " + limit + " day";
+            string query = "DELETE FROM survivor WHERE world_id=" + mycfg.world_id + " AND is_dead=1 AND last_updated < now() - interval " + limit + " day";
             int res = ExecuteSqlNonQuery(query);
 
             textBoxCmdStatus.Text = "removed " + res + " bodies older than " + limit + " days.";
-        }
-
-        private int ExecuteSqlNonQuery(string query)
-        {
-            if (!bConnected)
-                return 0;
-
-            int res = 0;
-
-            this.Cursor = Cursors.WaitCursor;
-            mtxUpdateDB.WaitOne();
-
-            try
-            {
-                MySqlCommand cmd = cnx.CreateCommand();
-
-                cmd.CommandText = query;
-
-                res = cmd.ExecuteNonQuery();
-            }
-            catch (Exception ex)
-            {
-                textBoxCmdStatus.Text = ex.ToString();
-            }
-
-            mtxUpdateDB.ReleaseMutex();
-            this.Cursor = Cursors.Arrow;
-
-            return res;
         }
         private void buttonRemoveTents_Click(object sender, EventArgs e)
         {
@@ -1073,6 +1163,88 @@ namespace DBAccess
             {
                 foreach (KeyValuePair<UInt64, UIDdata> pair in dicUIDdata)
                     pair.Value.path.Reset();
+            }
+        }
+        private int ExecuteSqlNonQuery(string query)
+        {
+            if (!bConnected)
+                return 0;
+
+            int res = 0;
+
+            this.Cursor = Cursors.WaitCursor;
+            mtxUpdateDB.WaitOne();
+
+            try
+            {
+                MySqlCommand cmd = cnx.CreateCommand();
+
+                cmd.CommandText = query;
+
+                res = cmd.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                textBoxCmdStatus.Text = ex.ToString();
+            }
+
+            mtxUpdateDB.ReleaseMutex();
+            this.Cursor = Cursors.Arrow;
+
+            return res;
+        }
+        private void dataGridViewMaps_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            // Ignore clicks that are not on button cells.  
+            if (e.RowIndex < 0 || e.ColumnIndex != dataGridViewMaps.Columns["ColumnChoosePath"].Index)
+                return;
+
+            DialogResult res = openFileDialog1.ShowDialog();
+
+            if (res == DialogResult.OK)
+            {
+                dataGridViewMaps["ColumnPath", e.RowIndex].Value = openFileDialog1.FileName;
+
+                if (dataGridViewMaps["ColumnID", e.RowIndex].Value.ToString() == mycfg.world_id.ToString())
+                    SetCurrentMap();
+            }
+        }
+        private void toolStripMenuItemDelete_Click(object sender, EventArgs e)
+        {
+            ToolStripItem menuItem = sender as ToolStripItem;
+            if (menuItem != null)
+            {
+                ContextMenuStrip owner = menuItem.Owner as ContextMenuStrip;
+                if (owner != null)
+                {
+                    Control sourceControl = owner.SourceControl;
+
+                    iconDB idb = sourceControl.Tag as iconDB;
+
+                    UInt64 id = GetUIDData(idb.uid);
+                    int res = ExecuteSqlNonQuery("DELETE FROM instance_vehicle WHERE id=" + id + " AND instance_id=" + mycfg.instance_id);
+                    if (res == 1)
+                        textBoxCmdStatus.Text = "removed vehicle id " + id;
+                }
+            }
+        }
+        private void toolStripMenuItemDeleteSpawn_Click(object sender, EventArgs e)
+        {
+            ToolStripItem menuItem = sender as ToolStripItem;
+            if (menuItem != null)
+            {
+                ContextMenuStrip owner = menuItem.Owner as ContextMenuStrip;
+                if (owner != null)
+                {
+                    Control sourceControl = owner.SourceControl;
+
+                    iconDB idb = sourceControl.Tag as iconDB;
+
+                    UInt64 id = GetUIDData(idb.uid);
+                    int res = ExecuteSqlNonQuery("DELETE FROM world_vehicle WHERE id=" + id + " AND world_id=" + mycfg.world_id);
+                    if (res == 1)
+                        textBoxCmdStatus.Text = "removed vehicle spawnpoint id " + id;
+                }
             }
         }
         internal UIDdata GetUIDdata(UInt64 uid)
@@ -1530,6 +1702,8 @@ namespace DBAccess
             [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
             public UInt64 uid { get; set; }
             [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
+            public UInt64 spawn_id { get; set; }
+            [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
             public double fuel { get; set; }
             [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
             public double damage { get; set; }
@@ -1542,6 +1716,7 @@ namespace DBAccess
                 this.inventory.bags.Clear();
 
                 this.uid = idb.row.Field<UInt64>("id");
+                this.spawn_id = idb.row.Field<UInt64>("spawn_id");
                 this.fuel = idb.row.Field<double>("fuel");
                 this.damage = idb.row.Field<double>("damage");
                 this.classname = idb.row.Field<string>("class_name");
@@ -1582,27 +1757,27 @@ namespace DBAccess
         {
             public myConfig()
             {
-                set = new DataSet();
+                worlds_def = new DataSet();
                 vehicle_types = new DataSet();
-                db_from = Point.Empty;
-                db_to = Point.Empty;
+                db_map_size = Size.Empty;
             }
-            public DataSet set { get; set; }
             public string url { get; set; }
             public string port { get; set; }
             public string basename { get; set; }
             public string username { get; set; }
             public string password { get; set; }
             public string instance_id { get; set; }
-            public string map_path_HQ { get; set; }
-            public string map_path_LQ { get; set; }
-            public Point db_from { get; set; }
-            public Point db_to { get; set; }
             public string vehicle_limit { get; set; }
             public string body_time_limit { get; set; }
             public string tent_time_limit { get; set; }
             public string online_time_limit { get; set; }
+            public DataSet worlds_def { get; set; }
             public DataSet vehicle_types { get; set; }
+            //
+            [XmlIgnore]
+            public UInt16 world_id = 0;
+            [XmlIgnore]
+            public Size db_map_size;
         }
         public class InvisibleControl : Control
         {
@@ -1637,7 +1812,7 @@ namespace DBAccess
                 byte[] rgb = { 0, 0, 0 };
                 rnd.NextBytes(rgb);
 
-                pen = new Pen(Color.FromArgb(128, 255/*rgb[0]*/, 0/*rgb[1]*/, 0/*rgb[2]*/), 3);
+                pen = new Pen(Color.FromArgb(128, 128 + rgb[0] / 2, 128 + rgb[1] / 2, 128 + rgb[2] / 2), 3);
             }
 
             public void AddPoint(PointF pos)
@@ -1684,57 +1859,6 @@ namespace DBAccess
         internal UIDType GetUIDType(UInt64 uid)
         {
             return (UIDType)(uid & (UInt64)UIDType.TypeMask);
-        }
-        private void dataGridViewMaps_CellClick(object sender, DataGridViewCellEventArgs e)
-        {
-            // Ignore clicks that are not on button cells.  
-            if (e.RowIndex < 0 || e.ColumnIndex != dataGridViewMaps.Columns["ColumnChoosePath"].Index)
-                return;
-
-            DialogResult res = openFileDialog1.ShowDialog();
-
-            if (res == DialogResult.OK)
-            {
-                dataGridViewMaps["ColumnPath", e.RowIndex].Value = openFileDialog1.FileName;
-            }
-        }
-        private void toolStripMenuItemDelete_Click(object sender, EventArgs e)
-        {
-            ToolStripItem menuItem = sender as ToolStripItem;
-            if (menuItem != null)
-            {
-                ContextMenuStrip owner = menuItem.Owner as ContextMenuStrip;
-                if (owner != null)
-                {
-                    Control sourceControl = owner.SourceControl;
-
-                    iconDB idb = sourceControl.Tag as iconDB;
-
-                    UInt64 id = GetUIDData(idb.uid);
-                    int res = ExecuteSqlNonQuery("DELETE FROM instance_vehicle WHERE id=" + id + " AND instance_id=" + mycfg.instance_id);
-                    if (res == 1)
-                        textBoxCmdStatus.Text = "removed vehicle id " + id;
-                }
-            }
-        }
-        private void toolStripMenuItemDeleteSpawn_Click(object sender, EventArgs e)
-        {
-            ToolStripItem menuItem = sender as ToolStripItem;
-            if (menuItem != null)
-            {
-                ContextMenuStrip owner = menuItem.Owner as ContextMenuStrip;
-                if (owner != null)
-                {
-                    Control sourceControl = owner.SourceControl;
-
-                    iconDB idb = sourceControl.Tag as iconDB;
-
-                    UInt64 id = GetUIDData(idb.uid);
-                    int res = ExecuteSqlNonQuery("DELETE FROM world_vehicle WHERE id=" + id + " AND world_id=" + mycfg.instance_id);
-                    if (res == 1)
-                        textBoxCmdStatus.Text = "removed vehicle spawnpoint id " + id;
-                }
-            }
         }
     }
 }
