@@ -183,6 +183,16 @@ namespace DBAccess.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap stach {
+            get {
+                object obj = ResourceManager.GetObject("stach", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap tent {
             get {
                 object obj = ResourceManager.GetObject("tent", resourceCulture);

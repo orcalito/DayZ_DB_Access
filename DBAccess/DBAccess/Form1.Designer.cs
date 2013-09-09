@@ -62,14 +62,14 @@
             this.label7 = new System.Windows.Forms.Label();
             this.tbOnlinePlayers = new System.Windows.Forms.TextBox();
             this.label9 = new System.Windows.Forms.Label();
-            this.tbTents = new System.Windows.Forms.TextBox();
+            this.tbDeployables = new System.Windows.Forms.TextBox();
             this.label6 = new System.Windows.Forms.Label();
             this.tbVehicleSpawn = new System.Windows.Forms.TextBox();
             this.label8 = new System.Windows.Forms.Label();
             this.tbVehicles = new System.Windows.Forms.TextBox();
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.checkBoxShowTrail = new System.Windows.Forms.CheckBox();
-            this.radioButtonTents = new System.Windows.Forms.RadioButton();
+            this.radioButtonDeployables = new System.Windows.Forms.RadioButton();
             this.radioButtonSpawn = new System.Windows.Forms.RadioButton();
             this.groupBoxInfo = new System.Windows.Forms.GroupBox();
             this.propertyGrid1 = new System.Windows.Forms.PropertyGrid();
@@ -372,7 +372,7 @@
             this.groupBox1.Controls.Add(this.label7);
             this.groupBox1.Controls.Add(this.tbOnlinePlayers);
             this.groupBox1.Controls.Add(this.label9);
-            this.groupBox1.Controls.Add(this.tbTents);
+            this.groupBox1.Controls.Add(this.tbDeployables);
             this.groupBox1.Controls.Add(this.label6);
             this.groupBox1.Controls.Add(this.tbVehicleSpawn);
             this.groupBox1.Controls.Add(this.label8);
@@ -440,17 +440,17 @@
             this.label9.AutoSize = true;
             this.label9.Location = new System.Drawing.Point(6, 156);
             this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(34, 13);
+            this.label9.Size = new System.Drawing.Size(82, 13);
             this.label9.TabIndex = 9;
-            this.label9.Text = "Tents";
+            this.label9.Text = "Tents - Staches";
             // 
-            // tbTents
+            // tbDeployables
             // 
-            this.tbTents.Location = new System.Drawing.Point(89, 153);
-            this.tbTents.Name = "tbTents";
-            this.tbTents.ReadOnly = true;
-            this.tbTents.Size = new System.Drawing.Size(104, 20);
-            this.tbTents.TabIndex = 8;
+            this.tbDeployables.Location = new System.Drawing.Point(89, 153);
+            this.tbDeployables.Name = "tbDeployables";
+            this.tbDeployables.ReadOnly = true;
+            this.tbDeployables.Size = new System.Drawing.Size(104, 20);
+            this.tbDeployables.TabIndex = 8;
             // 
             // label6
             // 
@@ -490,7 +490,7 @@
             // 
             this.tabPage2.BackColor = System.Drawing.Color.Transparent;
             this.tabPage2.Controls.Add(this.checkBoxShowTrail);
-            this.tabPage2.Controls.Add(this.radioButtonTents);
+            this.tabPage2.Controls.Add(this.radioButtonDeployables);
             this.tabPage2.Controls.Add(this.radioButtonSpawn);
             this.tabPage2.Controls.Add(this.groupBoxInfo);
             this.tabPage2.Controls.Add(this.radioButtonVehicles);
@@ -506,7 +506,7 @@
             // checkBoxShowTrail
             // 
             this.checkBoxShowTrail.AutoSize = true;
-            this.checkBoxShowTrail.Location = new System.Drawing.Point(91, 58);
+            this.checkBoxShowTrail.Location = new System.Drawing.Point(114, 58);
             this.checkBoxShowTrail.Name = "checkBoxShowTrail";
             this.checkBoxShowTrail.Size = new System.Drawing.Size(72, 17);
             this.checkBoxShowTrail.TabIndex = 5;
@@ -514,21 +514,21 @@
             this.checkBoxShowTrail.UseVisualStyleBackColor = true;
             this.checkBoxShowTrail.CheckedChanged += new System.EventHandler(this.checkBoxShowTrail_CheckedChanged);
             // 
-            // radioButtonTents
+            // radioButtonDeployables
             // 
-            this.radioButtonTents.AutoSize = true;
-            this.radioButtonTents.Location = new System.Drawing.Point(17, 57);
-            this.radioButtonTents.Name = "radioButtonTents";
-            this.radioButtonTents.Size = new System.Drawing.Size(52, 17);
-            this.radioButtonTents.TabIndex = 4;
-            this.radioButtonTents.Text = "Tents";
-            this.radioButtonTents.UseVisualStyleBackColor = true;
-            this.radioButtonTents.CheckedChanged += new System.EventHandler(this.radioButton_CheckedChanged);
+            this.radioButtonDeployables.AutoSize = true;
+            this.radioButtonDeployables.Location = new System.Drawing.Point(6, 57);
+            this.radioButtonDeployables.Name = "radioButtonDeployables";
+            this.radioButtonDeployables.Size = new System.Drawing.Size(100, 17);
+            this.radioButtonDeployables.TabIndex = 4;
+            this.radioButtonDeployables.Text = "Tents - Staches";
+            this.radioButtonDeployables.UseVisualStyleBackColor = true;
+            this.radioButtonDeployables.CheckedChanged += new System.EventHandler(this.radioButton_CheckedChanged);
             // 
             // radioButtonSpawn
             // 
             this.radioButtonSpawn.AutoSize = true;
-            this.radioButtonSpawn.Location = new System.Drawing.Point(91, 34);
+            this.radioButtonSpawn.Location = new System.Drawing.Point(114, 34);
             this.radioButtonSpawn.Name = "radioButtonSpawn";
             this.radioButtonSpawn.Size = new System.Drawing.Size(90, 17);
             this.radioButtonSpawn.TabIndex = 3;
@@ -563,7 +563,7 @@
             // radioButtonVehicles
             // 
             this.radioButtonVehicles.AutoSize = true;
-            this.radioButtonVehicles.Location = new System.Drawing.Point(17, 34);
+            this.radioButtonVehicles.Location = new System.Drawing.Point(6, 34);
             this.radioButtonVehicles.Name = "radioButtonVehicles";
             this.radioButtonVehicles.Size = new System.Drawing.Size(65, 17);
             this.radioButtonVehicles.TabIndex = 2;
@@ -575,7 +575,7 @@
             // 
             this.radioButtonOnline.AutoSize = true;
             this.radioButtonOnline.Checked = true;
-            this.radioButtonOnline.Location = new System.Drawing.Point(17, 11);
+            this.radioButtonOnline.Location = new System.Drawing.Point(6, 11);
             this.radioButtonOnline.Name = "radioButtonOnline";
             this.radioButtonOnline.Size = new System.Drawing.Size(55, 17);
             this.radioButtonOnline.TabIndex = 0;
@@ -587,7 +587,7 @@
             // radioButtonAlive
             // 
             this.radioButtonAlive.AutoSize = true;
-            this.radioButtonAlive.Location = new System.Drawing.Point(91, 11);
+            this.radioButtonAlive.Location = new System.Drawing.Point(114, 11);
             this.radioButtonAlive.Name = "radioButtonAlive";
             this.radioButtonAlive.Size = new System.Drawing.Size(48, 17);
             this.radioButtonAlive.TabIndex = 0;
@@ -907,7 +907,7 @@
 
         private System.Windows.Forms.SplitContainer splitContainer1;
         private System.Windows.Forms.PictureBox imgMap;
-        private System.Windows.Forms.RadioButton radioButtonTents;
+        private System.Windows.Forms.RadioButton radioButtonDeployables;
         private System.Windows.Forms.RadioButton radioButtonVehicles;
         private System.Windows.Forms.RadioButton radioButtonOnline;
         private System.Windows.Forms.TextBox textBoxStatus;
@@ -938,7 +938,7 @@
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.Label label9;
-        private System.Windows.Forms.TextBox tbTents;
+        private System.Windows.Forms.TextBox tbDeployables;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.TextBox tbVehicleSpawn;
         private System.Windows.Forms.Label label8;

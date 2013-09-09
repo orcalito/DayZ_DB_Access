@@ -27,8 +27,9 @@
     <PublisherName>orca</PublisherName>
     <CreateWebPageOnPublish>true</CreateWebPageOnPublish>
     <WebPage>publish.htm</WebPage>
+    <OpenBrowserOnPublish>false</OpenBrowserOnPublish>
     <ApplicationRevision>2</ApplicationRevision>
-    <ApplicationVersion>1.6.0.%2a</ApplicationVersion>
+    <ApplicationVersion>1.6.1.%2a</ApplicationVersion>
     <UseApplicationTrust>true</UseApplicationTrust>
     <CreateDesktopShortcut>true</CreateDesktopShortcut>
     <PublishWizardCompleted>true</PublishWizardCompleted>
@@ -180,10 +181,8 @@
     <None Include="Properties\truck.png" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Properties\icon.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="Application.ico" />
+    <None Include="Properties\stach.png" />
     <None Include="Resources\InvalidMap.jpg" />
     <None Include="Resources\Application.ico" />
   </ItemGroup>

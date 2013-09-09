@@ -17,6 +17,7 @@ using System.IO;
 using System.Xml;
 using System.Xml.Serialization;
 using MySql.Data.MySqlClient;
+using System.Drawing.Imaging;
 
 namespace DBAccess
 {
@@ -31,7 +32,7 @@ namespace DBAccess
         public myConfig mycfg = new myConfig();
         private Bitmap bitmapHQ;
         private DataSet dsInstances = new DataSet();
-        private DataSet dsTents = new DataSet();
+        private DataSet dsDeployables = new DataSet();
         private DataSet dsAlivePlayers = new DataSet();
         private DataSet dsOnlinePlayers = new DataSet();
         private DataSet dsVehicles = new DataSet();
@@ -49,11 +50,132 @@ namespace DBAccess
         private List<iconDB> iconsDB = new List<iconDB>();
         private List<InvisibleControl> iconPlayers = new List<InvisibleControl>();
         private List<InvisibleControl> iconVehicles = new List<InvisibleControl>();
-        private List<InvisibleControl> iconTents = new List<InvisibleControl>();
+        private List<InvisibleControl> iconDeployables = new List<InvisibleControl>();
 
         private string configPath;
         private string configFile;
 
+        private void saveJpeg(string path, Bitmap img, long quality)
+        {
+            // Encoder parameter for image quality
+            EncoderParameter qualityParam = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, quality);
+
+            // Jpeg image codec
+            ImageCodecInfo jpegCodec = this.getEncoderInfo("image/jpeg");
+
+            if (jpegCodec == null)
+                return;
+
+            EncoderParameters encoderParams = new EncoderParameters(1);
+            encoderParams.Param[0] = qualityParam;
+
+            img.Save(path, jpegCodec, encoderParams);
+        }
+        private ImageCodecInfo getEncoderInfo(string mimeType)
+        {
+            // Get image codecs for all image formats
+            ImageCodecInfo[] codecs = ImageCodecInfo.GetImageEncoders();
+
+            // Find the correct image codec
+            for (int i = 0; i < codecs.Length; i++)
+                if (codecs[i].MimeType == mimeType)
+                    return codecs[i];
+            return null;
+        }
+        internal static Bitmap resizeImage(Bitmap imgToResize, Size size)
+        {
+            int sourceWidth = imgToResize.Width;
+            int sourceHeight = imgToResize.Height;
+
+            float nPercent = 0;
+            float nPercentW = 0;
+            float nPercentH = 0;
+
+            nPercentW = ((float)size.Width / (float)sourceWidth);
+            nPercentH = ((float)size.Height / (float)sourceHeight);
+
+            if (nPercentH < nPercentW)
+                nPercent = nPercentH;
+            else
+                nPercent = nPercentW;
+
+            int destWidth = (int)(sourceWidth * nPercent);
+            int destHeight = (int)(sourceHeight * nPercent);
+
+            Bitmap b = new Bitmap(destWidth, destHeight);
+            Graphics g = Graphics.FromImage((Image)b);
+            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+
+            g.DrawImage(imgToResize, 0, 0, destWidth, destHeight);
+            g.Dispose();
+
+            return b;
+        }
+        private static Bitmap cropImage(Bitmap img, Rectangle cropArea)
+        {
+           Bitmap bmpImage = new Bitmap(img);
+           Bitmap bmpCrop = bmpImage.Clone(cropArea,
+           bmpImage.PixelFormat);
+           return bmpCrop;
+        }
+        internal static Bitmap increaseImageSize(Bitmap imgToResize, Size newSize)
+         {
+            Bitmap b = new Bitmap(newSize.Width, newSize.Height);
+            Graphics g = Graphics.FromImage((Image)b);
+            g.InterpolationMode = InterpolationMode.NearestNeighbor;
+            
+            g.Clear(Color.White);
+            g.DrawImage(imgToResize, 0, 0, imgToResize.Width, imgToResize.Height);
+            g.Dispose();
+
+            return b;
+        }
+        internal int nextMultiple(int v, int m)
+        {
+            int r = 0;
+            while( v > (r*m) )
+                r++;
+            return r*m;
+        }
+        internal int nextPowerOf2(int v)
+        {
+            int r = 0;
+            while( v > (1<<r) )
+                r++;
+            return (1 << r);
+        }
+        public void CreateTiles(string basepath, Bitmap input, int limit)
+        {
+            Size sqSize = new Size(nextPowerOf2(input.Width), nextPowerOf2(input.Height));
+
+            Bitmap image = increaseImageSize(input, sqSize);
+
+            RecursCreateTiles(basepath, "Tile", image, limit, 0);
+            image.Dispose();
+        }
+        public void RecursCreateTiles(string basepath, string name, Bitmap input, int limit, int recCnt)
+        {
+            if (Directory.Exists(basepath + recCnt) == false)
+                Directory.CreateDirectory(basepath + recCnt);
+
+            Bitmap resized = resizeImage(input, new Size(limit, limit));
+            saveJpeg(basepath + recCnt + "\\" + name + ".jpg", resized, 90);
+            resized.Dispose();
+
+            if ((input.Width <= limit) && (input.Height <= limit))
+            {
+                input.Dispose();
+                return;
+            }
+
+            int half = input.Width / 2;
+
+            RecursCreateTiles(basepath, name + "00", cropImage(input, new Rectangle(0, 0, half, half)), limit, recCnt + 1);
+            RecursCreateTiles(basepath, name + "10", cropImage(input, new Rectangle(half, 0, half, half)), limit, recCnt + 1);
+            RecursCreateTiles(basepath, name + "01", cropImage(input, new Rectangle(0, half, half, half)), limit, recCnt + 1);
+            RecursCreateTiles(basepath, name + "11", cropImage(input, new Rectangle(half, half, half, half)), limit, recCnt + 1);
+            input.Dispose();
+        }
         public Form1()
         {
             InitializeComponent();
@@ -102,7 +224,7 @@ namespace DBAccess
 
             imgMap.Size = MapSize;
             imgMap.Location = MapPos;
-            
+
             RefreshIcons();
         }
         void Form1Resize(object sender, EventArgs e)
@@ -216,7 +338,7 @@ namespace DBAccess
 
             currDisplayedItems = null;
 
-            dsTents.Clear();
+            dsDeployables.Clear();
             dsAlivePlayers.Clear();
             dsOnlinePlayers.Clear();
             dsVehicleSpawnPoints.Clear();
@@ -277,7 +399,7 @@ namespace DBAccess
                     tbAlivePlayers.Text = dsAlivePlayers.Tables[0].Rows.Count.ToString();
                     tbVehicles.Text = dsVehicles.Tables[0].Rows.Count.ToString();
                     tbVehicleSpawn.Text = dsVehicleSpawnPoints.Tables[0].Rows.Count.ToString();
-                    tbTents.Text = dsTents.Tables[0].Rows.Count.ToString();
+                    tbDeployables.Text = dsDeployables.Tables[0].Rows.Count.ToString();
 
                     if ((propertyGrid1.SelectedObject != null) && (propertyGrid1.SelectedObject is PropObjectBase))
                     {
@@ -313,7 +435,7 @@ namespace DBAccess
                     case "radioButtonAlive": BuildAliveIcons(); break;
                     case "radioButtonVehicles": BuildVehicleIcons(); break;
                     case "radioButtonSpawn": BuildSpawnIcons(); break;
-                    case "radioButtonTents": BuildTentIcons(); break;
+                    case "radioButtonDeployables": BuildDeployableIcons(); break;
                 }
 
                 RefreshIcons();
@@ -347,13 +469,13 @@ namespace DBAccess
                 propertyGrid1.ExpandAllGridItems();
             }
         }
-        private void OnTentClick(object sender, EventArgs e)
+        private void OnDeployableClick(object sender, EventArgs e)
         {
             InvisibleControl pb = sender as InvisibleControl;
 
-            Tent tent = new Tent(pb.Tag as iconDB);
-            tent.Rebuild();
-            propertyGrid1.SelectedObject = tent;
+            Deployable deployable = new Deployable(pb.Tag as iconDB);
+            deployable.Rebuild();
+            propertyGrid1.SelectedObject = deployable;
             propertyGrid1.ExpandAllGridItems();
         }
         private void RefreshIcons()
@@ -568,32 +690,32 @@ namespace DBAccess
                 idx++;
             }
         }
-        private void BuildTentIcons()
+        private void BuildDeployableIcons()
         {
             int idx = 0;
-            foreach (DataRow row in dsTents.Tables[0].Rows)
+            foreach (DataRow row in dsDeployables.Tables[0].Rows)
             {
                 if (idx >= iconsDB.Count)
                     iconsDB.Add(new iconDB());
 
                 iconDB idb = iconsDB[idx];
 
-                idb.uid = row.Field<UInt64>("id") | (UInt64)UIDType.TypeTent;
+                idb.uid = row.Field<UInt64>("id") | (UInt64)UIDType.TypeDeployable;
                 idb.row = row;
                 idb.pos = GetMapPosFromString(row.Field<string>("worldspace"));
 
-                if (idx >= iconTents.Count)
+                if (idx >= iconDeployables.Count)
                 {
                     InvisibleControl icon = new InvisibleControl();
-                    icon.Image = global::DBAccess.Properties.Resources.tent;
                     icon.Size = new Size(24, 24);
                     icon.Tag = null;
-                    icon.Click += OnTentClick;
-                    iconTents.Add(icon);
+                    icon.Click += OnDeployableClick;
+                    iconDeployables.Add(icon);
                 }
 
-                idb.icon = iconTents[idx];
+                idb.icon = iconDeployables[idx];
                 idb.icon.Tag = idb;
+                idb.icon.Image = row.Field<UInt16>("deployable_id") == 1 ? global::DBAccess.Properties.Resources.tent : global::DBAccess.Properties.Resources.stach;
 
                 imgMap.Controls.Add(idb.icon);
 
@@ -612,7 +734,7 @@ namespace DBAccess
             radioButtonAlive.Enabled = bState;
             radioButtonVehicles.Enabled = bState;
             radioButtonSpawn.Enabled = bState;
-            radioButtonTents.Enabled = bState;
+            radioButtonDeployables.Enabled = bState;
 
             textBoxURL.Enabled = !bState;
             textBoxBaseName.Enabled = !bState;
@@ -632,13 +754,13 @@ namespace DBAccess
                 radioButtonAlive.Checked = false;
                 radioButtonVehicles.Checked = false;
                 radioButtonSpawn.Checked = false;
-                radioButtonTents.Checked = false;
+                radioButtonDeployables.Checked = false;
 
                 tbAlivePlayers.Text = "";
                 tbOnlinePlayers.Text = "";
                 tbVehicles.Text = "";
                 tbVehicleSpawn.Text = "";
-                tbTents.Text = "";
+                tbDeployables.Text = "";
             }
         }
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
@@ -904,7 +1026,13 @@ namespace DBAccess
                     string filepath = rowW.Field<string>("Filepath");
 
                     if (File.Exists(filepath))
+                    {
                         bitmapHQ = new Bitmap(filepath);
+
+                        //FileInfo fi = new FileInfo(filepath);
+                        //if(File.Exists(configPath + "\\" + fi.Name + "Tiles") == false)
+                        //    CreateTiles(configPath + "\\" + fi.Name + "Tiles", bitmapHQ, 256);
+                    }
                     else
                         bitmapHQ = global::DBAccess.Properties.Resources.InvalidMap;
                 }
@@ -935,7 +1063,7 @@ namespace DBAccess
             {
                 DataSet _dsAlivePlayers = new DataSet();
                 DataSet _dsOnlinePlayers = new DataSet();
-                DataSet _dsTents = new DataSet();
+                DataSet _dsDeployables = new DataSet();
                 DataSet _dsVehicles = new DataSet();
                 DataSet _dsVehicleSpawnPoints = new DataSet();
 
@@ -982,11 +1110,11 @@ namespace DBAccess
                     adapter.Fill(_dsVehicleSpawnPoints);
 
                     //
-                    //  Tents
+                    //  Deployables
                     //
-                    cmd.CommandText = "SELECT * FROM instance_deployable WHERE instance_id=" + mycfg.instance_id + " AND deployable_id=1";
-                    _dsTents.Clear();
-                    adapter.Fill(_dsTents);
+                    cmd.CommandText = "SELECT * FROM instance_deployable WHERE instance_id=" + mycfg.instance_id + " AND (deployable_id=1 OR deployable_id=66 OR deployable_id=67)";
+                    _dsDeployables.Clear();
+                    adapter.Fill(_dsDeployables);
                 }
                 catch (Exception ex)
                 {
@@ -997,7 +1125,7 @@ namespace DBAccess
 
                 mtxUseDS.WaitOne();
 
-                dsTents = _dsTents.Copy();
+                dsDeployables = _dsDeployables.Copy();
                 dsAlivePlayers = _dsAlivePlayers.Copy();
                 dsOnlinePlayers = _dsOnlinePlayers.Copy();
                 dsVehicles = _dsVehicles.Copy();
@@ -1639,9 +1767,9 @@ namespace DBAccess
                 this.humanity = idb.row.Field<int>("humanity");
             }
         }
-        public class Tent : PropObjectBase
+        public class Deployable : PropObjectBase
         {
-            public Tent(iconDB idb)
+            public Deployable(iconDB idb)
                 : base(idb)
             {
                 this.inventory = new Storage();
@@ -1812,7 +1940,7 @@ namespace DBAccess
                 byte[] rgb = { 0, 0, 0 };
                 rnd.NextBytes(rgb);
 
-                pen = new Pen(Color.FromArgb(128, 128 + rgb[0] / 2, 128 + rgb[1] / 2, 128 + rgb[2] / 2), 3);
+                pen = new Pen(Color.FromArgb(192, rgb[0], rgb[1], rgb[2]), 3);
             }
 
             public void AddPoint(PointF pos)
@@ -1849,7 +1977,7 @@ namespace DBAccess
             TypePlayer = 0x100000000,
             TypeVehicle = 0x200000000,
             TypeSpawn = 0x400000000,
-            TypeTent = 0x800000000,
+            TypeDeployable = 0x800000000,
             TypeMask = 0xffff00000000
         };
         internal UInt64 GetUIDData(UInt64 uid)

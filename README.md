@@ -4,6 +4,23 @@ DayZ DB Access
 Simple tool to show some data from a DayZ database.
 
 
+- v1.6.1
+
+	modified tent display to add staches.
+
+- v1.6.0
+
+	using new method to store config file, won't be lost when new update is published.
+	changed handling of instances & worlds, now using world id from instance.
+	bitmaps are set per world id, and reloaded when changed.
+
+- v1.5.0
+
+	added customizable vehicle type per class, with corresponding icon.
+	added contextual menu :
+		- delete vehicle
+		- delete spawnpoint (if no instanciated vehicles for this spawnpoint)
+
 - v1.4.0
 
 	Using a dataset to manage maps data, allowing to define a map per instance id 
