@@ -18,170 +18,49 @@ using System.Xml;
 using System.Xml.Serialization;
 using MySql.Data.MySqlClient;
 using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
 
 namespace DBAccess
 {
     public partial class Form1 : Form
     {
-        private MySqlConnection cnx;
-        private bool bConnected = false;
         private static int bUserAction = 0;
         private static Mutex mtxUpdateDB = new Mutex();
         private static Mutex mtxUseDS = new Mutex();
         public DlgUpdateIcons dlgUpdateIcons;
+        //
+        private MySqlConnection cnx;
+        private bool bConnected = false;
+        private RadioButton currDisplayedItems;
+        private Point lastPositionMouse;
+        //
         public myConfig mycfg = new myConfig();
-        private Bitmap bitmapHQ;
+        private string configPath;
+        private string configFilePath;
+        private VirtualMap virtualMap = new VirtualMap();
+        private double zoomFactor = 1.0;
+        //
         private DataSet dsInstances = new DataSet();
         private DataSet dsDeployables = new DataSet();
         private DataSet dsAlivePlayers = new DataSet();
         private DataSet dsOnlinePlayers = new DataSet();
         private DataSet dsVehicles = new DataSet();
         private DataSet dsVehicleSpawnPoints = new DataSet();
-        private float zoomFactor;
-        private List<iconDB> listIcons = new List<iconDB>();
-        private RadioButton currDisplayedItems;
-        private Point lastPositionMouse;
-        private Point MapPos = new Point(0, 0);
-        private Size MapSize = new Size(400, 400);
-        private Point MapPosTmp = new Point(0, 0);
-        private Size offsetMap = new Size(0, 0);
+
         private Dictionary<UInt64, UIDdata> dicUIDdata = new Dictionary<UInt64, UIDdata>();
-
+        private List<iconDB> listIcons = new List<iconDB>();
         private List<iconDB> iconsDB = new List<iconDB>();
-        private List<InvisibleControl> iconPlayers = new List<InvisibleControl>();
-        private List<InvisibleControl> iconVehicles = new List<InvisibleControl>();
-        private List<InvisibleControl> iconDeployables = new List<InvisibleControl>();
+        private List<myIcon> iconPlayers = new List<myIcon>();
+        private List<myIcon> iconVehicles = new List<myIcon>();
+        private List<myIcon> iconDeployables = new List<myIcon>();
 
-        private string configPath;
-        private string configFile;
-
-        private void saveJpeg(string path, Bitmap img, long quality)
-        {
-            // Encoder parameter for image quality
-            EncoderParameter qualityParam = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, quality);
-
-            // Jpeg image codec
-            ImageCodecInfo jpegCodec = this.getEncoderInfo("image/jpeg");
-
-            if (jpegCodec == null)
-                return;
-
-            EncoderParameters encoderParams = new EncoderParameters(1);
-            encoderParams.Param[0] = qualityParam;
-
-            img.Save(path, jpegCodec, encoderParams);
-        }
-        private ImageCodecInfo getEncoderInfo(string mimeType)
-        {
-            // Get image codecs for all image formats
-            ImageCodecInfo[] codecs = ImageCodecInfo.GetImageEncoders();
-
-            // Find the correct image codec
-            for (int i = 0; i < codecs.Length; i++)
-                if (codecs[i].MimeType == mimeType)
-                    return codecs[i];
-            return null;
-        }
-        internal static Bitmap resizeImage(Bitmap imgToResize, Size size)
-        {
-            int sourceWidth = imgToResize.Width;
-            int sourceHeight = imgToResize.Height;
-
-            float nPercent = 0;
-            float nPercentW = 0;
-            float nPercentH = 0;
-
-            nPercentW = ((float)size.Width / (float)sourceWidth);
-            nPercentH = ((float)size.Height / (float)sourceHeight);
-
-            if (nPercentH < nPercentW)
-                nPercent = nPercentH;
-            else
-                nPercent = nPercentW;
-
-            int destWidth = (int)(sourceWidth * nPercent);
-            int destHeight = (int)(sourceHeight * nPercent);
-
-            Bitmap b = new Bitmap(destWidth, destHeight);
-            Graphics g = Graphics.FromImage((Image)b);
-            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-
-            g.DrawImage(imgToResize, 0, 0, destWidth, destHeight);
-            g.Dispose();
-
-            return b;
-        }
-        private static Bitmap cropImage(Bitmap img, Rectangle cropArea)
-        {
-           Bitmap bmpImage = new Bitmap(img);
-           Bitmap bmpCrop = bmpImage.Clone(cropArea,
-           bmpImage.PixelFormat);
-           return bmpCrop;
-        }
-        internal static Bitmap increaseImageSize(Bitmap imgToResize, Size newSize)
-         {
-            Bitmap b = new Bitmap(newSize.Width, newSize.Height);
-            Graphics g = Graphics.FromImage((Image)b);
-            g.InterpolationMode = InterpolationMode.NearestNeighbor;
-            
-            g.Clear(Color.White);
-            g.DrawImage(imgToResize, 0, 0, imgToResize.Width, imgToResize.Height);
-            g.Dispose();
-
-            return b;
-        }
-        internal int nextMultiple(int v, int m)
-        {
-            int r = 0;
-            while( v > (r*m) )
-                r++;
-            return r*m;
-        }
-        internal int nextPowerOf2(int v)
-        {
-            int r = 0;
-            while( v > (1<<r) )
-                r++;
-            return (1 << r);
-        }
-        public void CreateTiles(string basepath, Bitmap input, int limit)
-        {
-            Size sqSize = new Size(nextPowerOf2(input.Width), nextPowerOf2(input.Height));
-
-            Bitmap image = increaseImageSize(input, sqSize);
-
-            RecursCreateTiles(basepath, "Tile", image, limit, 0);
-            image.Dispose();
-        }
-        public void RecursCreateTiles(string basepath, string name, Bitmap input, int limit, int recCnt)
-        {
-            if (Directory.Exists(basepath + recCnt) == false)
-                Directory.CreateDirectory(basepath + recCnt);
-
-            Bitmap resized = resizeImage(input, new Size(limit, limit));
-            saveJpeg(basepath + recCnt + "\\" + name + ".jpg", resized, 90);
-            resized.Dispose();
-
-            if ((input.Width <= limit) && (input.Height <= limit))
-            {
-                input.Dispose();
-                return;
-            }
-
-            int half = input.Width / 2;
-
-            RecursCreateTiles(basepath, name + "00", cropImage(input, new Rectangle(0, 0, half, half)), limit, recCnt + 1);
-            RecursCreateTiles(basepath, name + "10", cropImage(input, new Rectangle(half, 0, half, half)), limit, recCnt + 1);
-            RecursCreateTiles(basepath, name + "01", cropImage(input, new Rectangle(0, half, half, half)), limit, recCnt + 1);
-            RecursCreateTiles(basepath, name + "11", cropImage(input, new Rectangle(half, half, half, half)), limit, recCnt + 1);
-            input.Dispose();
-        }
         public Form1()
         {
             InitializeComponent();
-
+            
+            //
             configPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\DayZDBAccess";
-            configFile = configPath + "\\config.xml";
+            configFilePath = configPath + "\\config.xml";
 
             try
             {
@@ -198,7 +77,7 @@ namespace DBAccess
             }
 
             this.Resize += Form1Resize;
-            this.MouseWheel += imgMap_MouseWheel;
+            this.MouseWheel += Form1_MouseWheel;
 
             //
             LoadConfigFile();
@@ -209,21 +88,18 @@ namespace DBAccess
         }
         void ApplyMapChanges()
         {
-            if (imgMap.Image == null)
+            if (!virtualMap.Enabled)
                 return;
 
             Size sizePanel = splitContainer1.Panel1.Size;
 
             Point halfPanel = new Point((int)(sizePanel.Width * 0.5f), (int)(sizePanel.Height * 0.5f));
 
-            MapPos.X = Math.Min(halfPanel.X - 16, MapPos.X);
-            MapPos.Y = Math.Min(halfPanel.Y - 16, MapPos.Y);
+            virtualMap.Position.X = Math.Min(halfPanel.X - 16, virtualMap.Position.X);
+            virtualMap.Position.Y = Math.Min(halfPanel.Y - 16, virtualMap.Position.Y);
 
-            MapPos.X = Math.Max(halfPanel.X - MapSize.Width + 16, MapPos.X);
-            MapPos.Y = Math.Max(halfPanel.Y - MapSize.Height + 16, MapPos.Y);
-
-            imgMap.Size = MapSize;
-            imgMap.Location = MapPos;
+            virtualMap.Position.X = Math.Max(halfPanel.X - virtualMap.Size.Width + 16, virtualMap.Position.X);
+            virtualMap.Position.Y = Math.Max(halfPanel.Y - virtualMap.Size.Height + 16, virtualMap.Position.Y);
 
             RefreshIcons();
         }
@@ -231,54 +107,81 @@ namespace DBAccess
         {
             ApplyMapChanges();
         }
-        private void imgMap_MouseClick(object sender, MouseEventArgs e)
+        private void Panel1_MouseClick(object sender, MouseEventArgs e)
         {
+            interpolationMode = InterpolationMode.NearestNeighbor;
+
+            virtualMap._position_DnD = virtualMap.Position;
+            virtualMap._offset_DnD = Size.Empty;
+
             lastPositionMouse = MousePosition;
             System.Threading.Interlocked.CompareExchange(ref bUserAction, 1, 0);
+
+            Rectangle mouseRec = new Rectangle(e.Location, Size.Empty);
+            Rectangle r = new Rectangle(Point.Empty, new Size(24,24)    /* !!!! annoying shortcut, remove it later !!!! */);
+            foreach(iconDB idb in listIcons)
+            {
+                r.Location = idb.icon.Location;
+
+                if (mouseRec.IntersectsWith(r))
+                {
+                    idb.icon.OnClick(this, e);
+                    break;
+                }
+            }
         }
-        private void imgMap_MouseUp(object sender, MouseEventArgs e)
+        private void Panel1_MouseUp(object sender, MouseEventArgs e)
         {
             System.Threading.Interlocked.CompareExchange(ref bUserAction, 0, 1);
+            interpolationMode = InterpolationMode.Bicubic;
+            splitContainer1.Panel1.Invalidate();
         }
-        private void imgMap_MouseMove(object sender, MouseEventArgs e)
+        private void Panel1_MouseMove(object sender, MouseEventArgs e)
         {
             if (e.Button.HasFlag(MouseButtons.Left))
             {
-                offsetMap = new Size((int)(MousePosition.X - lastPositionMouse.X), (int)(MousePosition.Y - lastPositionMouse.Y));
+                virtualMap._offset_DnD = new Size((int)(MousePosition.X - lastPositionMouse.X), (int)(MousePosition.Y - lastPositionMouse.Y));
 
-                MapPos = Point.Add(MapPosTmp, offsetMap);
+                virtualMap.Position = Point.Add(virtualMap._position_DnD, virtualMap._offset_DnD);
                 ApplyMapChanges();
             }
             else
             {
-                MapPosTmp = MapPos;
-                offsetMap.Width = offsetMap.Height = 0;
+                virtualMap._position_DnD = virtualMap.Position;
+                virtualMap._offset_DnD = Size.Empty;
+
+                if (interpolationMode == InterpolationMode.NearestNeighbor)
+                {
+                    interpolationMode = InterpolationMode.Bicubic;
+                    splitContainer1.Panel1.Invalidate();
+                }
             }
         }
-        private void imgMap_MouseWheel(object sender, MouseEventArgs e)
+        private void Form1_MouseWheel(object sender, MouseEventArgs e)
         {
-            if (imgMap.Image == null)
+            if (!virtualMap.Enabled)
                 return;
 
+            interpolationMode = InterpolationMode.NearestNeighbor;
             System.Threading.Interlocked.CompareExchange(ref bUserAction, 1, 0);
 
-            float newZoom = zoomFactor * (1.0f + ((e.Delta / 120.0f) * 0.1f));
-            //
-            MapSize = new Size((int)(imgMap.Image.Size.Width * newZoom), (int)(imgMap.Image.Size.Height * newZoom));
-            MapSize = new Size(Math.Max(400, Math.Min(15000, MapSize.Width)),
-                                Math.Max(400, Math.Min(15000, MapSize.Height)));
-            //
-            newZoom = MapSize.Width / (float)imgMap.Image.Size.Width;
+            Point mousePos = new Point(e.Location.X - virtualMap.Position.X,
+                                       e.Location.Y - virtualMap.Position.Y);
+            PointF mouseUnit = new PointF((e.Location.X - virtualMap.Position.X) / (float)virtualMap.SizeCorrected.Width,
+                                          (e.Location.Y - virtualMap.Position.Y) / (float)virtualMap.SizeCorrected.Height);
 
-            float deltaZ = newZoom - zoomFactor;
+            double newZoom = zoomFactor * (1.0 + ((e.Delta / 120.0) * 0.1));
+            //
+            newZoom = virtualMap.ResizeFromZoom(newZoom);
 
-            if( deltaZ != 0.0f )
+            double deltaZ = newZoom - zoomFactor;
+            if( deltaZ != 0.0 )
             {
-                Point mousePos = new Point(e.Location.X - MapPos.X, e.Location.Y - MapPos.Y);
+                Point newPos = Point.Truncate(new PointF(mouseUnit.X * virtualMap.SizeCorrected.Width,
+                                                         mouseUnit.Y * virtualMap.SizeCorrected.Height));
 
-                //
-                Size delta = new Size((int)(mousePos.X * deltaZ / zoomFactor), (int)(mousePos.Y * deltaZ / zoomFactor));
-                MapPos = Point.Subtract(MapPos, delta);
+                Size delta = new Size(newPos.X - mousePos.X, newPos.Y - mousePos.Y);
+                virtualMap.Position = Point.Subtract(virtualMap.Position, delta);
 
                 zoomFactor = newZoom;
 
@@ -314,6 +217,7 @@ namespace DBAccess
                 DB_OnConnection();
                 DB_OnRefresh();
 
+                SetCurrentMap(false);
             }
             catch(Exception ex)
             {
@@ -346,9 +250,6 @@ namespace DBAccess
 
             try
             {
-                foreach (iconDB idb in listIcons)
-                    imgMap.Controls.Remove(idb.icon);
-
                 foreach( KeyValuePair<UInt64,UIDdata> pair in dicUIDdata)
                     pair.Value.path.Reset();
 
@@ -424,9 +325,6 @@ namespace DBAccess
 
             try
             {
-                foreach (iconDB idb in listIcons)
-                    imgMap.Controls.Remove(idb.icon);
-
                 listIcons.Clear();
 
                 switch (currDisplayedItems.Name)
@@ -449,44 +347,88 @@ namespace DBAccess
         }
         private void OnPlayerClick(object sender, EventArgs e)
         {
-            InvisibleControl pb = sender as InvisibleControl;
+            myIcon pb = sender as myIcon;
 
-            Survivor player = new Survivor(pb.Tag as iconDB);
+            Survivor player = new Survivor(pb.iconDB);
             player.Rebuild();
             propertyGrid1.SelectedObject = player;
             propertyGrid1.ExpandAllGridItems();
         }
         private void OnVehicleClick(object sender, EventArgs e)
         {
-            InvisibleControl pb = sender as InvisibleControl;
+            myIcon pb = sender as myIcon;
 
-            iconDB idb = pb.Tag as iconDB;
-            if (GetUIDType(idb.uid) == UIDType.TypeVehicle)
+            if (GetUIDType(pb.iconDB.uid) == UIDType.TypeVehicle)
             {
-                Vehicle vehicle = new Vehicle(pb.Tag as iconDB);
+                Vehicle vehicle = new Vehicle(pb.iconDB);
                 vehicle.Rebuild();
                 propertyGrid1.SelectedObject = vehicle;
+                propertyGrid1.ExpandAllGridItems();
+            }
+            else
+            {
+                Spawn spawn = new Spawn(pb.iconDB);
+                spawn.Rebuild();
+                propertyGrid1.SelectedObject = spawn;
                 propertyGrid1.ExpandAllGridItems();
             }
         }
         private void OnDeployableClick(object sender, EventArgs e)
         {
-            InvisibleControl pb = sender as InvisibleControl;
+            myIcon pb = sender as myIcon;
 
-            Deployable deployable = new Deployable(pb.Tag as iconDB);
+            Deployable deployable = new Deployable(pb.iconDB);
             deployable.Rebuild();
             propertyGrid1.SelectedObject = deployable;
             propertyGrid1.ExpandAllGridItems();
         }
         private void RefreshIcons()
         {
-            if (currDisplayedItems == null)
-                return;
-
             mtxUseDS.WaitOne();
 
-            foreach (iconDB idb in listIcons)
-                idb.icon.Location = GetMapPosFromIcon(idb);
+            if (virtualMap.Enabled)
+            {
+                tileRequests.Clear();
+
+                Rectangle recPanel = new Rectangle(Point.Empty, splitContainer1.Panel1.Size);
+                int tileDepth = virtualMap.Depth;
+                Size tileCount = virtualMap.TileCount;
+
+                for (int x = 0; x < tileCount.Width; x++)
+                {
+                    for (int y = 0; y < tileCount.Height; y++)
+                    {
+                        Rectangle recTile = virtualMap.TileRectangle(x, y);
+
+                        if (recPanel.IntersectsWith(recTile))
+                        {
+                            tileReq req = new tileReq();
+                            req.path = virtualMap.nfo.tileBasePath + tileDepth + "\\Tile" + y.ToString("000") + x.ToString("000") + ".jpg";
+                            req.rec = recTile;
+                            tileRequests.Add(req);
+                        }
+                    }
+                }
+
+                long now_ticks = DateTime.Now.Ticks;
+
+                foreach (tileReq req in tileRequests)
+                {
+                    tileNfo nfo = tileCache.Find(x => req.path == x.path);
+                    if (nfo == null)
+                        tileCache.Add(nfo = new tileNfo(req.path));
+                    else
+                        nfo.ticks = now_ticks;
+                }
+
+                tileCache.RemoveAll(x => now_ticks - x.ticks > 10 * 10000000L);
+            }
+
+            if (currDisplayedItems != null)
+                foreach (iconDB idb in listIcons)
+                    idb.icon.Location = virtualMap.VirtualPosition(idb);
+
+            splitContainer1.Panel1.Invalidate();
 
             mtxUseDS.ReleaseMutex();
         }
@@ -506,21 +448,17 @@ namespace DBAccess
 
                 if (idx >= iconPlayers.Count)
                 {
-                    InvisibleControl icon = new InvisibleControl();
-                    icon.Image = null;
+                    myIcon icon = new myIcon();
                     icon.Size = new Size(24, 24);
-                    icon.Tag = null;
                     icon.Click += OnPlayerClick;
                     iconPlayers.Add(icon);
                 }
 
                 idb.icon = iconPlayers[idx];
-                idb.icon.Image = global::DBAccess.Properties.Resources.iconOnline;
-                idb.icon.Tag = idb;
+                idb.icon.image = global::DBAccess.Properties.Resources.iconOnline;
+                idb.icon.iconDB = idb;
 
-                toolTip1.SetToolTip(idb.icon, row.Field<string>("name"));
-
-                imgMap.Controls.Add(idb.icon);
+                //toolTip1.SetToolTip(idb.icon, row.Field<string>("name"));
 
                 listIcons.Add(idb);
 
@@ -546,21 +484,17 @@ namespace DBAccess
 
                 if (idx >= iconPlayers.Count)
                 {
-                    InvisibleControl icon = new InvisibleControl();
-                    icon.Image = null;
+                    myIcon icon = new myIcon();
                     icon.Size = new Size(24, 24);
-                    icon.Tag = null;
                     icon.Click += OnPlayerClick;
                     iconPlayers.Add(icon);
                 }
 
                 idb.icon = iconPlayers[idx];
-                idb.icon.Image = global::DBAccess.Properties.Resources.iconAlive;
-                idb.icon.Tag = idb;
+                idb.icon.image = global::DBAccess.Properties.Resources.iconAlive;
+                idb.icon.iconDB = idb;
 
-                toolTip1.SetToolTip(idb.icon, row.Field<string>("name"));
-                
-                imgMap.Controls.Add(idb.icon);
+                //toolTip1.SetToolTip(idb.icon, row.Field<string>("name"));
 
                 listIcons.Add(idb);
 
@@ -588,9 +522,7 @@ namespace DBAccess
 
                 if( idx >= iconVehicles.Count)
                 {
-                    InvisibleControl icon = new InvisibleControl();
-                    icon.Image = null;
-                    icon.Tag = null;
+                    myIcon icon = new myIcon();
                     icon.Size = new Size(24, 24);
                     icon.Click += OnVehicleClick;
                     iconVehicles.Add(icon);
@@ -605,28 +537,28 @@ namespace DBAccess
                     string classname = (rowT != null) ? rowT.Field<string>("Type") : "";
                     switch (classname)
                     {
-                        case "Air": idb.icon.Image = global::DBAccess.Properties.Resources.air; break;
-                        case "Bicycle": idb.icon.Image = global::DBAccess.Properties.Resources.bike; break;
-                        case "Boat": idb.icon.Image = global::DBAccess.Properties.Resources.boat; break;
-                        case "Bus": idb.icon.Image = global::DBAccess.Properties.Resources.bus; break;
-                        case "Car": idb.icon.Image = global::DBAccess.Properties.Resources.car; break;
-                        case "Helicopter": idb.icon.Image = global::DBAccess.Properties.Resources.helicopter; break;
-                        case "Motorcycle": idb.icon.Image = global::DBAccess.Properties.Resources.motorcycle; break;
-                        case "Truck": idb.icon.Image = global::DBAccess.Properties.Resources.truck; break;
-                        default: idb.icon.Image = global::DBAccess.Properties.Resources.car; break;
+                        case "Air": idb.icon.image = global::DBAccess.Properties.Resources.air; break;
+                        case "Bicycle": idb.icon.image = global::DBAccess.Properties.Resources.bike; break;
+                        case "Boat": idb.icon.image = global::DBAccess.Properties.Resources.boat; break;
+                        case "Bus": idb.icon.image = global::DBAccess.Properties.Resources.bus; break;
+                        case "Car": idb.icon.image = global::DBAccess.Properties.Resources.car; break;
+                        case "Helicopter": idb.icon.image = global::DBAccess.Properties.Resources.helicopter; break;
+                        case "Motorcycle": idb.icon.image = global::DBAccess.Properties.Resources.motorcycle; break;
+                        case "Truck": idb.icon.image = global::DBAccess.Properties.Resources.truck; break;
+                        default: idb.icon.image = global::DBAccess.Properties.Resources.car; break;
                     }
                 }
                 else
                 {
-                    idb.icon.Image = global::DBAccess.Properties.Resources.iconDestroyed;
+                    idb.icon.image = global::DBAccess.Properties.Resources.iconDestroyed;
                 }
 
-                idb.icon.Tag = idb;
-                idb.icon.ContextMenuStrip = contextMenuStripVehicle;
+                Control tr = new Control();
+                tr.ContextMenuStrip = null;
+                idb.icon.iconDB = idb;
+                idb.icon.contextMenuStrip = contextMenuStripVehicle;
 
-                toolTip1.SetToolTip(idb.icon, row.Field<UInt64>("id").ToString() + ": "+ row.Field<string>("class_name"));
-
-                imgMap.Controls.Add(idb.icon);
+                //toolTip1.SetToolTip(idb.icon, row.Field<UInt64>("id").ToString() + ": "+ row.Field<string>("class_name"));
 
                 listIcons.Add(idb);
 
@@ -652,9 +584,7 @@ namespace DBAccess
 
                 if( idx >= iconVehicles.Count)
                 {
-                    InvisibleControl icon = new InvisibleControl();
-                    icon.Image = null;
-                    icon.Tag = null;
+                    myIcon icon = new myIcon();
                     icon.Size = new Size(24, 24);
                     icon.Click += OnVehicleClick;
                     iconVehicles.Add(icon);
@@ -667,23 +597,21 @@ namespace DBAccess
                 string classname = (rowT != null) ? rowT.Field<string>("Type") : "";
                 switch (classname)
                 {
-                    case "Air": idb.icon.Image = global::DBAccess.Properties.Resources.air; break;
-                    case "Bicycle": idb.icon.Image = global::DBAccess.Properties.Resources.bike; break;
-                    case "Boat": idb.icon.Image = global::DBAccess.Properties.Resources.boat; break;
-                    case "Bus": idb.icon.Image = global::DBAccess.Properties.Resources.bus; break;
-                    case "Car": idb.icon.Image = global::DBAccess.Properties.Resources.car; break;
-                    case "Helicopter": idb.icon.Image = global::DBAccess.Properties.Resources.helicopter; break;
-                    case "Motorcycle": idb.icon.Image = global::DBAccess.Properties.Resources.motorcycle; break;
-                    case "Truck": idb.icon.Image = global::DBAccess.Properties.Resources.truck; break;
-                    default: idb.icon.Image = global::DBAccess.Properties.Resources.car; break;
+                    case "Air": idb.icon.image = global::DBAccess.Properties.Resources.air; break;
+                    case "Bicycle": idb.icon.image = global::DBAccess.Properties.Resources.bike; break;
+                    case "Boat": idb.icon.image = global::DBAccess.Properties.Resources.boat; break;
+                    case "Bus": idb.icon.image = global::DBAccess.Properties.Resources.bus; break;
+                    case "Car": idb.icon.image = global::DBAccess.Properties.Resources.car; break;
+                    case "Helicopter": idb.icon.image = global::DBAccess.Properties.Resources.helicopter; break;
+                    case "Motorcycle": idb.icon.image = global::DBAccess.Properties.Resources.motorcycle; break;
+                    case "Truck": idb.icon.image = global::DBAccess.Properties.Resources.truck; break;
+                    default: idb.icon.image = global::DBAccess.Properties.Resources.car; break;
                 }
 
-                idb.icon.Tag = idb;
-                idb.icon.ContextMenuStrip = contextMenuStripSpawn;
+                idb.icon.iconDB = idb;
+                idb.icon.contextMenuStrip = contextMenuStripSpawn;
 
-                toolTip1.SetToolTip(idb.icon, row.Field<UInt64>("id").ToString() + ": " + row.Field<string>("class_name"));
-
-                imgMap.Controls.Add(idb.icon);
+                //toolTip1.SetToolTip(idb.icon, row.Field<UInt64>("id").ToString() + ": " + row.Field<string>("class_name"));
 
                 listIcons.Add(idb);
 
@@ -706,18 +634,15 @@ namespace DBAccess
 
                 if (idx >= iconDeployables.Count)
                 {
-                    InvisibleControl icon = new InvisibleControl();
+                    myIcon icon = new myIcon();
                     icon.Size = new Size(24, 24);
-                    icon.Tag = null;
                     icon.Click += OnDeployableClick;
                     iconDeployables.Add(icon);
                 }
 
                 idb.icon = iconDeployables[idx];
-                idb.icon.Tag = idb;
-                idb.icon.Image = row.Field<UInt16>("deployable_id") == 1 ? global::DBAccess.Properties.Resources.tent : global::DBAccess.Properties.Resources.stach;
-
-                imgMap.Controls.Add(idb.icon);
+                idb.icon.iconDB = idb;
+                idb.icon.image = row.Field<UInt16>("deployable_id") == 1 ? global::DBAccess.Properties.Resources.tent : global::DBAccess.Properties.Resources.stach;
 
                 listIcons.Add(idb);
 
@@ -778,7 +703,7 @@ namespace DBAccess
                     Directory.CreateDirectory(configPath);
 
                 XmlSerializer xs = new XmlSerializer(typeof(myConfig));
-                using (StreamReader re = new StreamReader(configFile))
+                using (StreamReader re = new StreamReader(configFilePath))
                 {
                     mycfg = xs.Deserialize(re) as myConfig;
                 }
@@ -788,16 +713,16 @@ namespace DBAccess
                 Enable(false);
             }
 
-            if (NullOrEmpty(mycfg.url)) mycfg.url = "";
-            if (NullOrEmpty(mycfg.port)) mycfg.port = "3306";
-            if (NullOrEmpty(mycfg.basename)) mycfg.basename = "basename";
-            if (NullOrEmpty(mycfg.username)) mycfg.username = "username";
-            if (NullOrEmpty(mycfg.password)) mycfg.password = "password";
-            if (NullOrEmpty(mycfg.instance_id)) mycfg.instance_id = "1";
-            if (NullOrEmpty(mycfg.vehicle_limit)) mycfg.vehicle_limit = "50";
-            if (NullOrEmpty(mycfg.body_time_limit)) mycfg.body_time_limit = "7";
-            if (NullOrEmpty(mycfg.tent_time_limit)) mycfg.tent_time_limit = "7";
-            if (NullOrEmpty(mycfg.online_time_limit)) mycfg.online_time_limit = "5";
+            if (Tool.NullOrEmpty(mycfg.url)) mycfg.url = "";
+            if (Tool.NullOrEmpty(mycfg.port)) mycfg.port = "3306";
+            if (Tool.NullOrEmpty(mycfg.basename)) mycfg.basename = "basename";
+            if (Tool.NullOrEmpty(mycfg.username)) mycfg.username = "username";
+            if (Tool.NullOrEmpty(mycfg.password)) mycfg.password = "password";
+            if (Tool.NullOrEmpty(mycfg.instance_id)) mycfg.instance_id = "1";
+            if (Tool.NullOrEmpty(mycfg.vehicle_limit)) mycfg.vehicle_limit = "50";
+            if (Tool.NullOrEmpty(mycfg.body_time_limit)) mycfg.body_time_limit = "7";
+            if (Tool.NullOrEmpty(mycfg.tent_time_limit)) mycfg.tent_time_limit = "7";
+            if (Tool.NullOrEmpty(mycfg.online_time_limit)) mycfg.online_time_limit = "5";
             if (mycfg.worlds_def.Tables.Count == 0)
             {
                 DataTable table = mycfg.worlds_def.Tables.Add();
@@ -806,9 +731,15 @@ namespace DBAccess
                 table.Columns.Add(new DataColumn("Width", typeof(UInt32)));
                 table.Columns.Add(new DataColumn("Height", typeof(UInt32)));
                 table.Columns.Add(new DataColumn("Filepath", typeof(string)));
+                table.Columns.Add(new DataColumn("RatioX", typeof(float), "", MappingType.Hidden));
+                table.Columns.Add(new DataColumn("RatioY", typeof(float), "", MappingType.Hidden));
+                table.Columns.Add(new DataColumn("TileSizeX", typeof(int), "", MappingType.Hidden));
+                table.Columns.Add(new DataColumn("TileSizeY", typeof(int), "", MappingType.Hidden));
                 DataColumn[] keys = new DataColumn[1];
                 keys[0] = mycfg.worlds_def.Tables[0].Columns[0];
                 mycfg.worlds_def.Tables[0].PrimaryKey = keys;
+
+                System.Data.DataColumn col = new DataColumn();
 
                 //table.Rows.Add(1, "not connected", 1, 1, "");
                 //table.Rows.Add(2, "not connected", 1, 1, "");
@@ -818,9 +749,27 @@ namespace DBAccess
                 //table.Rows.Add(6, "not connected", 1, 1, "");
                 //table.Rows.Add(7, "not connected", 1, 1, "");
                 //table.Rows.Add(8, "not connected", 1, 1, "");
-                table.Rows.Add(9, "not connected", 12288, 12288, "");
+                table.Rows.Add(9, "not connected", 12288, 12288, "", 0, 0);
                 //table.Rows.Add(10, "not connected", 1, 1, "");
             }
+
+            // -> v1.7.0
+            if (mycfg.worlds_def.Tables[0].Columns.Contains("RatioX") == false)
+            {
+                mycfg.worlds_def.Tables[0].Columns.Add(new DataColumn("RatioX", typeof(float), "", MappingType.Hidden));
+                mycfg.worlds_def.Tables[0].Columns.Add(new DataColumn("RatioY", typeof(float), "", MappingType.Hidden));
+                mycfg.worlds_def.Tables[0].Columns.Add(new DataColumn("TileSizeX", typeof(int), "", MappingType.Hidden));
+                mycfg.worlds_def.Tables[0].Columns.Add(new DataColumn("TileSizeY", typeof(int), "", MappingType.Hidden));
+
+                foreach (DataRow row in mycfg.worlds_def.Tables[0].Rows)
+                {
+                    row.SetField<float>("RatioX", 0);
+                    row.SetField<float>("RatioY", 0);
+                    row.SetField<int>("TileSizeX", 0);
+                    row.SetField<int>("TileSizeY", 0);
+                }
+            }
+
             if (mycfg.vehicle_types.Tables.Count == 0)
             {
                 DataTable table = mycfg.vehicle_types.Tables.Add();
@@ -876,7 +825,7 @@ namespace DBAccess
                 mycfg.tent_time_limit = textBoxOldTentLimit.Text;
 
                 XmlSerializer xs = new XmlSerializer(typeof(myConfig));
-                using (StreamWriter wr = new StreamWriter(configFile))
+                using (StreamWriter wr = new StreamWriter(configFilePath))
                 {
                     xs.Serialize(wr, mycfg);
                 }
@@ -887,7 +836,7 @@ namespace DBAccess
         }
         private PointF GetMapPosFromString(string from)
         {
-            ArrayList arr = ParseInventoryString(from);
+            ArrayList arr = Tool.ParseInventoryString(from);
             // [angle, [X, Y, Z]]
             
             double x = 0;
@@ -904,13 +853,6 @@ namespace DBAccess
             y = 1.0f - (y / mycfg.db_map_size.Height);
 
             return new PointF((float)x, (float)y);
-        }
-        private Point GetMapPosFromIcon(iconDB from)
-        {
-            float x = from.pos.X * MapSize.Width - 12;
-            float y = from.pos.Y * MapSize.Height - 12;
-
-            return new Point((int)x, (int)y);
         }
         private void DB_OnConnection()
         {
@@ -997,8 +939,6 @@ namespace DBAccess
                     DataRow rowW = mycfg.worlds_def.Tables[0].Rows.Find(mycfg.world_id);
                     if (rowW != null)
                         textBoxWorld.Text = rowW.Field<string>("World Name");
-
-                    SetCurrentMap();
                 }
             }
             catch (Exception ex)
@@ -1014,7 +954,7 @@ namespace DBAccess
                 MessageBox.Show("Instance id '" + mycfg.instance_id + "' not found in database", "Warning");
             }
         }
-        private void SetCurrentMap()
+        private void SetCurrentMap(bool rebuild)
         {
             try
             {
@@ -1023,37 +963,53 @@ namespace DBAccess
                 {
                     textBoxWorld.Text = rowW.Field<string>("World Name");
 
+
                     string filepath = rowW.Field<string>("Filepath");
 
                     if (File.Exists(filepath))
                     {
-                        bitmapHQ = new Bitmap(filepath);
+                        FileInfo fi = new FileInfo(filepath);
 
-                        //FileInfo fi = new FileInfo(filepath);
-                        //if(File.Exists(configPath + "\\" + fi.Name + "Tiles") == false)
-                        //    CreateTiles(configPath + "\\" + fi.Name + "Tiles", bitmapHQ, 256);
+                        string tileBasePath = configPath + "\\World" + mycfg.world_id + "\\LOD";
+
+                        if (rebuild)
+                        {
+                            MessageBox.Show("Please wait while generating tiles...\r\nThis is done once when selecting a new map.");
+                            this.Cursor = Cursors.WaitCursor;
+                            Tuple<Size, Size, Size> sizes = Tool.CreateTiles(filepath, tileBasePath, 256);
+
+                            rowW.SetField<float>("RatioX", sizes.Item1.Width / (float)sizes.Item2.Width);
+                            rowW.SetField<float>("RatioY", sizes.Item1.Height / (float)sizes.Item2.Height);
+                            rowW.SetField<int>("TileSizeX", sizes.Item3.Width);
+                            rowW.SetField<int>("TileSizeY", sizes.Item3.Height);
+                            this.Cursor = Cursors.Arrow;
+                        }
+
+                        int i = 0;
+                        while (Directory.Exists(tileBasePath + i))
+                            i++;
+
+                        virtualMap.nfo.tileBasePath = tileBasePath;
+                        virtualMap.nfo.depth = i;
+                        virtualMap.nfo.defTileSize = new Size(rowW.Field<int>("TileSizeX"), rowW.Field<int>("TileSizeY"));
+                        virtualMap.SetRatio(new SizeF(rowW.Field<float>("RatioX"), rowW.Field<float>("RatioY")));
                     }
-                    else
-                        bitmapHQ = global::DBAccess.Properties.Resources.InvalidMap;
                 }
-
-                imgMap.Image = bitmapHQ;
 
                 mycfg.db_map_size = new Size((int)rowW.Field<UInt32>("Width"), (int)rowW.Field<UInt32>("Height"));
 
-                if (imgMap.Image != null)
-                    zoomFactor = MapSize.Width / (float)imgMap.Image.Size.Width;
+                if ( virtualMap.Enabled )
+                    zoomFactor = virtualMap.ResizeFromZoom(1.0f);
 
                 Size sizePanel = splitContainer1.Panel1.Size;
                 Point halfPanel = new Point((int)(sizePanel.Width * 0.5f), (int)(sizePanel.Height * 0.5f));
-                MapPos.X = (int)(halfPanel.X - MapSize.Width * 0.5f);
-                MapPos.Y = (int)(halfPanel.Y - MapSize.Height * 0.5f);
+                virtualMap.Position.X = (int)(halfPanel.X - virtualMap.Size.Width * 0.5f);
+                virtualMap.Position.Y = (int)(halfPanel.Y - virtualMap.Size.Height * 0.5f);
 
                 ApplyMapChanges();
             }
             catch (Exception ex)
             {
-                imgMap.Image = null;
                 textBoxCmdStatus.Text += ex.ToString();
             }
         }
@@ -1104,7 +1060,7 @@ namespace DBAccess
                     //
                     //  Vehicle Spawn points
                     //
-                    cmd.CommandText = "SELECT w.id id, w.worldspace worldspace, v.class_name class_name FROM world_vehicle as w, vehicle as v"
+                    cmd.CommandText = "SELECT w.id id, w.worldspace worldspace, w.chance chance, v.inventory inventory, v.class_name class_name FROM world_vehicle as w, vehicle as v"
                                     + " WHERE w.world_id=" + mycfg.world_id + " AND w.vehicle_id=v.id";
                     _dsVehicleSpawnPoints.Clear();
                     adapter.Fill(_dsVehicleSpawnPoints);
@@ -1236,6 +1192,7 @@ namespace DBAccess
                 catch (Exception ex)
                 {
                     textBoxCmdStatus.Text = ex.ToString();
+                    Enable(false);
                 }
 
                 mtxUpdateDB.ReleaseMutex();
@@ -1260,24 +1217,88 @@ namespace DBAccess
                          + " WHERE id.instance_id=" + mycfg.instance_id + " AND d.class_name = 'TentStorage' AND id.last_updated < now() - interval " + limit + " day";
             int res = ExecuteSqlNonQuery(query);
         }
-        private void imgMap_Paint(object sender, PaintEventArgs e)
+
+        class tileReq
+        {
+            public string path;
+            public Rectangle rec;
+        }
+        class tileNfo
+        {
+            public tileNfo(string path)
+            {
+                bFileExists = File.Exists(path);
+                if (bFileExists)
+                {
+                    this.path = path;
+                    this.bitmap = new Bitmap(path);
+                }
+                ticks = DateTime.Now.Ticks;
+            }
+            ~tileNfo()
+            {
+                if (bitmap != null)
+                    bitmap.Dispose();
+            }
+
+            public bool bFileExists = false;
+            public string path;
+            public Bitmap bitmap;
+            public long ticks;
+        }
+        List<tileReq> tileRequests = new List<tileReq>();
+        List<tileNfo> tileCache = new List<tileNfo>();
+
+        InterpolationMode interpolationMode = InterpolationMode.Bicubic;
+
+        private void Panel1_Paint(object sender, PaintEventArgs e)
         {
             try
             {
-                if (checkBoxShowTrail.Checked )
+                if (virtualMap.Enabled)
                 {
+                    e.Graphics.CompositingMode = CompositingMode.SourceCopy;
+                    e.Graphics.CompositingQuality = CompositingQuality.HighQuality;
+                    e.Graphics.InterpolationMode = interpolationMode;
+
+                    int nb_tilesDrawn = 0;
+                    foreach (tileReq req in tileRequests)
+                    {
+                        tileNfo nfo = tileCache.Find(x => req.path == x.path);
+
+                        if( nfo != null )
+                        {
+                            e.Graphics.DrawImage(nfo.bitmap, req.rec);
+                            nb_tilesDrawn++;
+                        }
+                    }
+
+                    e.Graphics.CompositingMode = CompositingMode.SourceOver;
+
+                    if (checkBoxShowTrail.Checked)
+                    {
+                        foreach (iconDB idb in listIcons)
+                        {
+                            UIDType type = GetUIDType(idb.uid);
+
+                            if ((type == UIDType.TypePlayer) || (type == UIDType.TypeVehicle))
+                                GetUIDdata(idb.uid).Display(e.Graphics, virtualMap);
+                        }
+                    }
+
+                    Rectangle recPanel = new Rectangle(Point.Empty, splitContainer1.Panel1.Size);
+                    int nb_iconsDrawn = 0;
                     foreach (iconDB idb in listIcons)
                     {
-                        UIDType type = GetUIDType(idb.uid);
-
-                        if ((type == UIDType.TypePlayer) || (type == UIDType.TypeVehicle))
-                            GetUIDdata(idb.uid).Display(e.Graphics, MapSize);
+                        if (recPanel.IntersectsWith(idb.icon.rectangle))
+                        {
+                            e.Graphics.DrawImage(idb.icon.image, idb.icon.rectangle);
+                            nb_iconsDrawn++;
+                        }
                     }
-                }
 
-                foreach (iconDB idb in listIcons)
-                {
-                    e.Graphics.DrawImage(idb.icon.Image, idb.icon.Location.X, idb.icon.Location.Y, 24, 24);
+                    textBoxCmdStatus.Text = "\r\nTiles Requested=" + tileRequests.Count + "\r\nTiles displayed: " + nb_tilesDrawn;
+                    textBoxCmdStatus.Text += "\r\nIcons Requested=" + listIcons.Count + "\r\nIcons displayed: " + nb_iconsDrawn;
                 }
             }
             catch (Exception ex)
@@ -1314,6 +1335,7 @@ namespace DBAccess
             catch (Exception ex)
             {
                 textBoxCmdStatus.Text = ex.ToString();
+                Enable(false);
             }
 
             mtxUpdateDB.ReleaseMutex();
@@ -1332,9 +1354,32 @@ namespace DBAccess
             if (res == DialogResult.OK)
             {
                 dataGridViewMaps["ColumnPath", e.RowIndex].Value = openFileDialog1.FileName;
+/*
+                try
+                {
+                    string filepath = openFileDialog1.FileName;
+                    int world_id = int.Parse(dataGridViewMaps["ColumnID", e.RowIndex].Value.ToString());
 
+                    if (File.Exists(filepath))
+                    {
+                        FileInfo fi = new FileInfo(filepath);
+
+                        string tileBasePath = configPath + "\\World" + world_id + "\\LOD";
+
+                        MessageBox.Show("Please wait while generating tiles...\r\nThis is done once when selecting a new map.");
+
+                        this.Cursor = Cursors.WaitCursor;
+                        Tool.CreateTiles(filepath, tileBasePath, 256);
+                        this.Cursor = Cursors.Arrow;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    textBoxCmdStatus.Text += ex.ToString();
+                }
+*/
                 if (dataGridViewMaps["ColumnID", e.RowIndex].Value.ToString() == mycfg.world_id.ToString())
-                    SetCurrentMap();
+                    SetCurrentMap(true);
             }
         }
         private void toolStripMenuItemDelete_Click(object sender, EventArgs e)
@@ -1387,63 +1432,9 @@ namespace DBAccess
         //
         //
         //
-        internal static ArrayList ParseInventoryString(string str)
-        {
-            Stack<ArrayList> stack = new Stack<ArrayList>();
-            ArrayList main = null;
-            ArrayList curr = null;
-            string value = "";
-            bool bValue = false;
-
-            foreach (char c in str)
-            {
-                switch (c)
-                {
-                    case '[': 
-                        if( curr != null ) stack.Push(curr);
-                        curr = new ArrayList();
-                        if (stack.Count > 0) stack.Peek().Add(curr);
-                        if (main == null)
-                            main = curr;
-                        break;
-                    
-                    case ']':
-                        if (value != "") curr.Add(value);
-                        value = "";
-                        bValue = false;
-                        if (stack.Count > 0) curr = stack.Pop();
-                        else curr = null;
-                        break;
-
-                    case '"':
-                        bValue = true;
-                        break;
-
-                    case ',':
-                        if (bValue) curr.Add(value);
-                        value = "";
-                        bValue = false;
-                        break;
-
-                    default:
-                        bValue = true;
-                        value += c;
-                        break;
-                }
-            }
-
-            return main;
-        }
-        internal static bool NullOrEmpty(string str)
-        {
-            return ((str == null) || (str == ""));
-        }
-        //
-        //
-        //
         public class iconDB
         {
-            public InvisibleControl icon;
+            public myIcon icon;
             public DataRow row;
             public PointF pos;
             public UInt64 uid = 0;
@@ -1664,7 +1655,7 @@ namespace DBAccess
 
                 Dictionary<string, int> dicInventory = new Dictionary<string, int>();
 
-                ArrayList arr = ParseInventoryString(idb.row.Field<string>("medical"));
+                ArrayList arr = Tool.ParseInventoryString(idb.row.Field<string>("medical"));
                 // arr[0] = is dead
                 // arr[1] = unconscious
                 // arr[2] = infected
@@ -1691,7 +1682,7 @@ namespace DBAccess
                 this.hunger = ((int)(double.Parse((arr[11] as ArrayList)[0] as string, CultureInfo.InvariantCulture.NumberFormat) / 21.60f)).ToString() + "%";
                 this.thirst = ((int)(double.Parse((arr[11] as ArrayList)[1] as string, CultureInfo.InvariantCulture.NumberFormat) / 14.40f)).ToString() + "%";
 
-                arr = ParseInventoryString(idb.row.Field<string>("inventory"));
+                arr = Tool.ParseInventoryString(idb.row.Field<string>("inventory"));
 
                 if (arr.Count > 0)
                 {
@@ -1727,7 +1718,7 @@ namespace DBAccess
                         this.inventory.Add(new Entry(pair.Key, pair.Value));
                 }
 
-                arr = ParseInventoryString(idb.row.Field<string>("backpack"));
+                arr = Tool.ParseInventoryString(idb.row.Field<string>("backpack"));
                 // arr[0] = backpack's class
                 // arr[1] = weapons
                 // arr[2] = items
@@ -1753,7 +1744,7 @@ namespace DBAccess
                     }
                 }
 
-                arr = ParseInventoryString(idb.row.Field<string>("state"));
+                arr = Tool.ParseInventoryString(idb.row.Field<string>("state"));
 
                 if (arr.Count > 0)
                 {
@@ -1787,7 +1778,7 @@ namespace DBAccess
 
                 this.owner = "who knows...";
 
-                ArrayList arr = ParseInventoryString(idb.row.Field<string>("inventory"));
+                ArrayList arr = Tool.ParseInventoryString(idb.row.Field<string>("inventory"));
                 ArrayList aItems;
                 ArrayList aTypes;
                 ArrayList aCount;
@@ -1832,6 +1823,8 @@ namespace DBAccess
             [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
             public UInt64 spawn_id { get; set; }
             [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
+            public PointF position { get; set; }
+            [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
             public double fuel { get; set; }
             [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
             public double damage { get; set; }
@@ -1848,35 +1841,108 @@ namespace DBAccess
                 this.fuel = idb.row.Field<double>("fuel");
                 this.damage = idb.row.Field<double>("damage");
                 this.classname = idb.row.Field<string>("class_name");
+
+                ArrayList arr = Tool.ParseInventoryString(idb.row.Field<string>("worldspace"));
+                //  arr[0] = angle
+                //  arr[1] = [x, y, z]
+                double x = double.Parse((arr[1] as ArrayList)[0] as string, CultureInfo.InvariantCulture.NumberFormat);
+                double y = double.Parse((arr[1] as ArrayList)[1] as string, CultureInfo.InvariantCulture.NumberFormat);
+                this.position = new PointF((float)x, (float)y);
+
+
+                arr = Tool.ParseInventoryString(idb.row.Field<string>("inventory"));
+                ArrayList aItems;
+                ArrayList aTypes;
+                ArrayList aCount;
+
+                if (arr.Count > 0)
                 {
-                    ArrayList arr = ParseInventoryString(idb.row.Field<string>("inventory"));
-                    ArrayList aItems;
-                    ArrayList aTypes;
-                    ArrayList aCount;
+                    // arr[0] = weapons
+                    // arr[1] = items
+                    // arr[2] = bags
+                    aItems = arr[0] as ArrayList;
+                    aTypes = aItems[0] as ArrayList;
+                    aCount = aItems[1] as ArrayList;
+                    for (int i = 0; i < aTypes.Count; i++)
+                        this.inventory.weapons.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
 
-                    if (arr.Count > 0)
-                    {
-                        // arr[0] = weapons
-                        // arr[1] = items
-                        // arr[2] = bags
-                        aItems = arr[0] as ArrayList;
-                        aTypes = aItems[0] as ArrayList;
-                        aCount = aItems[1] as ArrayList;
-                        for (int i = 0; i < aTypes.Count; i++)
-                            this.inventory.weapons.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
+                    aItems = arr[1] as ArrayList;
+                    aTypes = aItems[0] as ArrayList;
+                    aCount = aItems[1] as ArrayList;
+                    for (int i = 0; i < aTypes.Count; i++)
+                        this.inventory.items.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
 
-                        aItems = arr[1] as ArrayList;
-                        aTypes = aItems[0] as ArrayList;
-                        aCount = aItems[1] as ArrayList;
-                        for (int i = 0; i < aTypes.Count; i++)
-                            this.inventory.items.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
+                    aItems = arr[2] as ArrayList;
+                    aTypes = aItems[0] as ArrayList;
+                    aCount = aItems[1] as ArrayList;
+                    for (int i = 0; i < aTypes.Count; i++)
+                        this.inventory.bags.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
+                }
+            }
+        }
+        public class Spawn : PropObjectBase
+        {
+            public Spawn(iconDB idb)
+                : base(idb)
+            {
+                this.inventory = new Storage();
+            }
 
-                        aItems = arr[2] as ArrayList;
-                        aTypes = aItems[0] as ArrayList;
-                        aCount = aItems[1] as ArrayList;
-                        for (int i = 0; i < aTypes.Count; i++)
-                            this.inventory.bags.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
-                    }
+            [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
+            public string classname { get; set; }
+            [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
+            public UInt64 uid { get; set; }
+            [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
+            public PointF position { get; set; }
+            [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
+            public Decimal chance { get; set; }
+            [CategoryAttribute("Inventory"), ReadOnlyAttribute(true)]
+            public Storage inventory { get; set; }
+            public override void Rebuild()
+            {
+                this.inventory.weapons.Clear();
+                this.inventory.items.Clear();
+                this.inventory.bags.Clear();
+
+                this.classname = idb.row.Field<string>("class_name");
+                this.uid = idb.row.Field<UInt64>("id");
+                this.chance = idb.row.Field<Decimal>("chance");
+
+                ArrayList arr = Tool.ParseInventoryString(idb.row.Field<string>("worldspace"));
+                //  arr[0] = angle
+                //  arr[1] = [x, y, z]
+                double x = double.Parse((arr[1] as ArrayList)[0] as string, CultureInfo.InvariantCulture.NumberFormat);
+                double y = double.Parse((arr[1] as ArrayList)[1] as string, CultureInfo.InvariantCulture.NumberFormat);
+                this.position = new PointF((float)x, (float)y);
+
+
+                arr = Tool.ParseInventoryString(idb.row.Field<string>("inventory"));
+                ArrayList aItems;
+                ArrayList aTypes;
+                ArrayList aCount;
+
+                if (arr.Count > 0)
+                {
+                    // arr[0] = weapons
+                    // arr[1] = items
+                    // arr[2] = bags
+                    aItems = arr[0] as ArrayList;
+                    aTypes = aItems[0] as ArrayList;
+                    aCount = aItems[1] as ArrayList;
+                    for (int i = 0; i < aTypes.Count; i++)
+                        this.inventory.weapons.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
+
+                    aItems = arr[1] as ArrayList;
+                    aTypes = aItems[0] as ArrayList;
+                    aCount = aItems[1] as ArrayList;
+                    for (int i = 0; i < aTypes.Count; i++)
+                        this.inventory.items.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
+
+                    aItems = arr[2] as ArrayList;
+                    aTypes = aItems[0] as ArrayList;
+                    aCount = aItems[1] as ArrayList;
+                    for (int i = 0; i < aTypes.Count; i++)
+                        this.inventory.bags.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
                 }
             }
         }
@@ -1907,27 +1973,34 @@ namespace DBAccess
             [XmlIgnore]
             public Size db_map_size;
         }
-        public class InvisibleControl : Control
+        public class myIcon
         {
-            private Image _image;
-
-            protected override CreateParams CreateParams
+            public myIcon()
             {
-                get
+            }
+
+            // Wrap event invocations inside a protected virtual method 
+            // to allow derived classes to override the event invocation behavior 
+            public void OnClick(Control parent, MouseEventArgs e)
+            {
+                if (e.Button.HasFlag(MouseButtons.Left) && (Click != null))
                 {
-                    CreateParams cp = base.CreateParams;
-                    cp.ExStyle |= 0x20;
-                    return cp;
+                    Click(this, e);
+                }
+                else if (e.Button.HasFlag(MouseButtons.Right) && (contextMenuStrip != null))
+                {
+                    contextMenuStrip.Show(parent, e.Location);
                 }
             }
-            protected override void OnPaint(PaintEventArgs e) { }
-            protected override void OnPaintBackground(PaintEventArgs e) { }
 
-            public Image Image
-            {
-                get { return _image; }
-                set { _image = value; RecreateHandle(); }
-            }
+            public Image image;
+            public iconDB iconDB;
+            public Rectangle rectangle;
+            public Point Location { get { return rectangle.Location; } set { rectangle.Location = value; } }
+            public Size Size { get { return rectangle.Size; } set { rectangle.Size = value; } }
+
+            public event MouseEventHandler Click;
+            public ContextMenuStrip contextMenuStrip;
         }
         public class UIDdata
         {
@@ -1949,14 +2022,14 @@ namespace DBAccess
                     unitPositions.Add(pos);
             }
 
-            public void Display(Graphics gfx, Size mapSize)
+            public void Display(Graphics gfx, VirtualMap map)
             {
                 path.Reset();
 
                 PointF last = invalidPos;
                 foreach (PointF pt in unitPositions)
                 {
-                    PointF newpt = new PointF(pt.X * mapSize.Width, pt.Y * mapSize.Height);
+                    PointF newpt = map.VirtualPosition(pt);
 
                     // if a point is invalid, break the continuity
                     if ((last != invalidPos) && (pt != invalidPos))
@@ -1987,6 +2060,334 @@ namespace DBAccess
         internal UIDType GetUIDType(UInt64 uid)
         {
             return (UIDType)(uid & (UInt64)UIDType.TypeMask);
+        }
+        private class MySplitContainer : SplitContainer
+        {
+            public MySplitContainer()
+            {
+                MethodInfo mi = typeof(Control).GetMethod("SetStyle", BindingFlags.NonPublic | BindingFlags.Instance);
+                object[] args = new object[] { ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true };
+                mi.Invoke(this.Panel1, args);
+                mi.Invoke(this.Panel2, args);
+            }
+        }
+
+        public class VirtualMap
+        {
+            public VirtualMap()
+            {
+                Position = Point.Empty;
+                Size = new Size(400, 400);
+            }
+
+            public bool Enabled { get { return nfo.depth > 0; } }
+
+            public Point Position;
+
+            public Size Size 
+            {
+                get { return _size; }
+                set { _size = value; UpdateData(); }
+            }
+
+            public BitmapNfo nfo = new BitmapNfo();
+
+            public Size SizeCorrected { get { return _sizeCorrected; } }
+            public Size DefTileSize { get { return nfo.defTileSize; } }
+            public Size TileCount { get { return _tileCount; } }
+            public Size TileSize { get { return _tileSize; } }
+            public int Depth { get { return _depth; } }
+
+            public Rectangle TileRectangle(int x, int y)
+            {
+                return new Rectangle(Point.Add(Position, new Size(x * _tileSize.Width, y * _tileSize.Height)), _tileSize);
+            }
+            public PointF VirtualPosition(PointF from)
+            {
+                return new PointF(Position.X + from.X * SizeCorrected.Width, 
+                                  Position.Y + from.Y * SizeCorrected.Height);
+            }
+            public Point VirtualPosition(iconDB from)
+            {
+                float x = Position.X + from.pos.X * SizeCorrected.Width - from.icon.Size.Width * 0.5f;
+                float y = Position.Y + from.pos.Y * SizeCorrected.Height - from.icon.Size.Height * 0.5f;
+
+                return new Point((int)x, (int)y);
+            }
+
+            public double ResizeFromZoom(double zoom)
+            {
+                int max_sizeX = nfo.defTileSize.Width << (nfo.depth - 1);
+                int max_sizeY = nfo.defTileSize.Height << (nfo.depth - 1);
+
+                Size temp = new Size((int)(nfo.defTileSize.Width * zoom),
+                                     (int)(nfo.defTileSize.Height * zoom));
+
+                Size = new Size(Math.Max(nfo.defTileSize.Width, Math.Min(max_sizeX, temp.Width)),
+                                Math.Max(nfo.defTileSize.Height, Math.Min(max_sizeY, temp.Height)));
+
+                return Size.Width / (double)nfo.defTileSize.Width;
+            }
+
+            public void SetRatio(SizeF ratio) { _ratio = ratio; }
+
+            //
+            //
+            //
+            public Point _position_DnD = Point.Empty;
+            public Size _offset_DnD = Size.Empty;
+
+            private int _depth;
+            private Size _size;
+            private Size _sizeCorrected;
+            private Size _tileCount;
+            private Size _tileSize;
+            private SizeF _ratio;
+
+            private void UpdateData()
+            {
+                _tileCount = new Size(Tool.NextPowerOf2((_size.Width / (float)nfo.defTileSize.Width)),
+                                      Tool.NextPowerOf2((_size.Height / (float)nfo.defTileSize.Height)));
+
+                _tileSize = Size.Ceiling(new SizeF(_size.Width / (float)_tileCount.Width, _size.Height / (float)_tileCount.Height));
+
+                _depth = (int)Math.Log(Math.Max(_tileCount.Width, _tileCount.Height), 2);
+
+                // and re-adjust size from new tile size
+                _size = new Size(_tileSize.Width * _tileCount.Width, _tileSize.Height * _tileCount.Height);
+                _sizeCorrected = Size.Ceiling(new SizeF(_size.Width * _ratio.Width, _size.Height * _ratio.Height));
+            }
+
+            public class BitmapNfo
+            {
+                public string tileBasePath = "";
+                public int depth = 0;
+                public Size defTileSize = new Size(1,1);
+           }
+        }
+    }
+    internal class Tool
+    {
+        public static int NextPowerOf2(int v)
+        {
+            int r = 0;
+            while (v > (1 << r))
+                r++;
+            return (1 << r);
+        }
+        public static int NextPowerOf2(float f)
+        {
+            int r = 0;
+            while (f > (float)(1 << r))
+                r++;
+            return (1 << r);
+        }
+        public static ArrayList ParseInventoryString(string str)
+        {
+            Stack<ArrayList> stack = new Stack<ArrayList>();
+            ArrayList main = null;
+            ArrayList curr = null;
+            string value = "";
+            bool bValue = false;
+
+            foreach (char c in str)
+            {
+                switch (c)
+                {
+                    case '[':
+                        if (curr != null) stack.Push(curr);
+                        curr = new ArrayList();
+                        if (stack.Count > 0) stack.Peek().Add(curr);
+                        if (main == null)
+                            main = curr;
+                        break;
+
+                    case ']':
+                        if (value != "") curr.Add(value);
+                        value = "";
+                        bValue = false;
+                        if (stack.Count > 0) curr = stack.Pop();
+                        else curr = null;
+                        break;
+
+                    case '"':
+                        bValue = true;
+                        break;
+
+                    case ',':
+                        if (bValue) curr.Add(value);
+                        value = "";
+                        bValue = false;
+                        break;
+
+                    default:
+                        bValue = true;
+                        value += c;
+                        break;
+                }
+            }
+
+            return main;
+        }
+        public static bool NullOrEmpty(string str)
+        {
+            return ((str == null) || (str == ""));
+        }
+        public static void SaveJpeg(string path, Bitmap img, long quality)
+        {
+            // Encoder parameter for image quality
+            EncoderParameter qualityParam = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, quality);
+
+            // Jpeg image codec
+            ImageCodecInfo jpegCodec = getEncoderInfo("image/jpeg");
+
+            if (jpegCodec == null)
+                return;
+
+            EncoderParameters encoderParams = new EncoderParameters(1);
+            encoderParams.Param[0] = qualityParam;
+
+            img.Save(path, jpegCodec, encoderParams);
+        }
+        public static Bitmap ResizeImage(Bitmap imgToResize, Size size)
+        {
+            int sourceWidth = imgToResize.Width;
+            int sourceHeight = imgToResize.Height;
+
+            float nPercent = 0;
+            float nPercentW = 0;
+            float nPercentH = 0;
+
+            nPercentW = ((float)size.Width / (float)sourceWidth);
+            nPercentH = ((float)size.Height / (float)sourceHeight);
+
+            if (nPercentH < nPercentW)
+                nPercent = nPercentH;
+            else
+                nPercent = nPercentW;
+
+            int destWidth = (int)(sourceWidth * nPercent);
+            int destHeight = (int)(sourceHeight * nPercent);
+
+            Bitmap b = new Bitmap(destWidth, destHeight);
+            Graphics g = Graphics.FromImage((Image)b);
+            g.InterpolationMode = InterpolationMode.Bilinear/*NearestNeighbor*/;
+
+            g.DrawImage(imgToResize, 0, 0, destWidth, destHeight);
+            g.Dispose();
+
+            return b;
+        }
+        public static Bitmap CropImage(Bitmap img, Rectangle cropArea)
+        {
+            Bitmap bmpCrop = img.Clone(cropArea, img.PixelFormat);
+            return bmpCrop;
+        }
+        public static Bitmap IncreaseImageSize(Bitmap imgToResize, Size newSize)
+        {
+            Bitmap b = new Bitmap(newSize.Width, newSize.Height);
+            Graphics g = Graphics.FromImage((Image)b);
+            g.InterpolationMode = InterpolationMode.NearestNeighbor;
+
+            g.Clear(Color.White);
+            g.DrawImage(imgToResize, 0, 0, imgToResize.Width, imgToResize.Height);
+            g.Dispose();
+
+            return b;
+        }
+        public static Tuple<Size, Size, Size> CreateTiles(string filepath, string basepath, int limit)
+        {
+            Bitmap input = new Bitmap(filepath);
+
+            Size inSize = input.Size;
+            Size sqSize = new Size(Tool.NextPowerOf2(input.Width), Tool.NextPowerOf2(input.Height));
+
+            Bitmap sqInput = IncreaseImageSize(input, sqSize);
+
+            input.Dispose();
+
+            double iMax = 1.0 / (float)Math.Min(sqSize.Width, sqSize.Height);
+
+            Size limits = new Size((int)(sqSize.Width * limit * iMax), (int)(sqSize.Height * limit * iMax));
+            RecursCreateTiles(Point.Empty, Size.Empty, basepath, "Tile", sqInput, limits, 0);
+            sqInput.Dispose();
+
+            return new Tuple<Size, Size, Size>(inSize, sqSize, limits);
+        }
+        private static void RecursCreateTiles(Point father, Size child, string basepath, string name, Bitmap input, Size limits, int recCnt)
+        {
+            Point pos = Point.Add(father, child);
+
+            if (Directory.Exists(basepath + recCnt) == false)
+                Directory.CreateDirectory(basepath + recCnt);
+
+            Bitmap resized = ResizeImage(input, limits);
+            //  TEST
+            bool bReject = true;
+            {
+                Bitmap b = new Bitmap(4, 4, PixelFormat.Format24bppRgb);
+                Graphics g = Graphics.FromImage((Image)b);
+                g.InterpolationMode = InterpolationMode.Bilinear;
+                g.DrawImage(resized, 0, 0, 4, 4);
+                g.Dispose();
+                BitmapData data = b.LockBits(new Rectangle(0, 0, 4, 4), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb);
+                IntPtr ptr = data.Scan0;
+                int numBytes = (data.Stride * b.Height);
+                byte[] rgbValues = new byte[numBytes];
+                Marshal.Copy(ptr, rgbValues, 0, numBytes);
+
+                for (int i = 0; i < numBytes; i++)
+                    if( rgbValues[i] != 255 )
+                        bReject = false;
+
+                // Unlock the bits.
+                b.UnlockBits(data);
+
+            }
+            if (!bReject)
+            {
+                SaveJpeg(basepath + recCnt + "\\" + name + pos.Y.ToString("000") + pos.X.ToString("000") + ".jpg", resized, 90);
+                resized.Dispose();
+
+                bool bSplitH = (input.Width > limits.Width);
+                bool bSplitV = (input.Height > limits.Height);
+
+                if (bSplitH || bSplitV)
+                {
+                    recCnt++;
+                    Size cropSize = new Size(Math.Max(input.Width / 2, limits.Width), Math.Max(input.Height / 2, limits.Height));
+
+                    father = new Point(pos.X * 2, pos.Y * 2);
+
+                    RecursCreateTiles(father, new Size(0, 0), basepath, name, CropImage(input, new Rectangle(new Point(0, 0), cropSize)), limits, recCnt);
+
+                    if (bSplitH)
+                        RecursCreateTiles(father, new Size(1, 0), basepath, name, CropImage(input, new Rectangle(new Point(cropSize.Width, 0), cropSize)), limits, recCnt);
+
+                    if (bSplitV)
+                        RecursCreateTiles(father, new Size(0, 1), basepath, name, CropImage(input, new Rectangle(new Point(0, cropSize.Height), cropSize)), limits, recCnt);
+
+                    if (bSplitH && bSplitV)
+                        RecursCreateTiles(father, new Size(1, 1), basepath, name, CropImage(input, new Rectangle(new Point(cropSize.Width, cropSize.Height), cropSize)), limits, recCnt);
+                }
+            }
+            else
+            {
+                resized.Dispose();
+            }
+
+            input.Dispose();
+        }
+        private static ImageCodecInfo getEncoderInfo(string mimeType)
+        {
+            // Get image codecs for all image formats
+            ImageCodecInfo[] codecs = ImageCodecInfo.GetImageEncoders();
+
+            // Find the correct image codec
+            for (int i = 0; i < codecs.Length; i++)
+                if (codecs[i].MimeType == mimeType)
+                    return codecs[i];
+            return null;
         }
     }
 }

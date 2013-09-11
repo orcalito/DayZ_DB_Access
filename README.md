@@ -4,6 +4,17 @@ DayZ DB Access
 Simple tool to show some data from a DayZ database.
 
 
+- v1.7.0
+
+	changed for a fully custom display:
+		- mipmapped tiled display (DayZDB style)
+		- icons can be displayed off map.
+		- instant refresh of icons.
+		- faster display of big map.
+		- small memory usage.
+		- created when map selection is changed by user.
+	spawn points info
+
 - v1.6.1
 
 	modified tent display to add staches.

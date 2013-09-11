@@ -35,8 +35,7 @@
             this.RightToolStripPanel = new System.Windows.Forms.ToolStripPanel();
             this.LeftToolStripPanel = new System.Windows.Forms.ToolStripPanel();
             this.ContentPanel = new System.Windows.Forms.ToolStripContentPanel();
-            this.splitContainer1 = new System.Windows.Forms.SplitContainer();
-            this.imgMap = new System.Windows.Forms.PictureBox();
+            this.splitContainer1 = new MySplitContainer();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
@@ -105,10 +104,8 @@
             this.contextMenuStripSpawn = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.toolStripMenuItemDeleteSpawn = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
-            this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.imgMap)).BeginInit();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -170,7 +167,11 @@
             // 
             // splitContainer1.Panel1
             // 
-            this.splitContainer1.Panel1.Controls.Add(this.imgMap);
+            this.splitContainer1.Panel1.BackColor = System.Drawing.Color.White;
+            this.splitContainer1.Panel1.Paint += new System.Windows.Forms.PaintEventHandler(this.Panel1_Paint);
+            this.splitContainer1.Panel1.MouseDown += new System.Windows.Forms.MouseEventHandler(this.Panel1_MouseClick);
+            this.splitContainer1.Panel1.MouseMove += new System.Windows.Forms.MouseEventHandler(this.Panel1_MouseMove);
+            this.splitContainer1.Panel1.MouseUp += new System.Windows.Forms.MouseEventHandler(this.Panel1_MouseUp);
             // 
             // splitContainer1.Panel2
             // 
@@ -179,19 +180,6 @@
             this.splitContainer1.Size = new System.Drawing.Size(612, 459);
             this.splitContainer1.SplitterDistance = 388;
             this.splitContainer1.TabIndex = 1;
-            // 
-            // imgMap
-            // 
-            this.imgMap.Location = new System.Drawing.Point(50, 47);
-            this.imgMap.Name = "imgMap";
-            this.imgMap.Size = new System.Drawing.Size(219, 210);
-            this.imgMap.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
-            this.imgMap.TabIndex = 0;
-            this.imgMap.TabStop = false;
-            this.imgMap.Paint += new System.Windows.Forms.PaintEventHandler(this.imgMap_Paint);
-            this.imgMap.MouseDown += new System.Windows.Forms.MouseEventHandler(this.imgMap_MouseClick);
-            this.imgMap.MouseMove += new System.Windows.Forms.MouseEventHandler(this.imgMap_MouseMove);
-            this.imgMap.MouseUp += new System.Windows.Forms.MouseEventHandler(this.imgMap_MouseUp);
             // 
             // tabControl1
             // 
@@ -877,11 +865,9 @@
             this.Name = "Form1";
             this.Text = "Form1";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
-            this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.imgMap)).EndInit();
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
             this.groupBox2.ResumeLayout(false);
@@ -905,8 +891,7 @@
 
         #endregion
 
-        private System.Windows.Forms.SplitContainer splitContainer1;
-        private System.Windows.Forms.PictureBox imgMap;
+        private MySplitContainer splitContainer1;
         private System.Windows.Forms.RadioButton radioButtonDeployables;
         private System.Windows.Forms.RadioButton radioButtonVehicles;
         private System.Windows.Forms.RadioButton radioButtonOnline;
