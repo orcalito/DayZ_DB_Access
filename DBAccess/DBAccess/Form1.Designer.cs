@@ -35,12 +35,14 @@
             this.RightToolStripPanel = new System.Windows.Forms.ToolStripPanel();
             this.LeftToolStripPanel = new System.Windows.Forms.ToolStripPanel();
             this.ContentPanel = new System.Windows.Forms.ToolStripContentPanel();
-            this.splitContainer1 = new MySplitContainer();
+            this.splitContainer1 = new DBAccess.Form1.MySplitContainer();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.textBoxInstanceId = new System.Windows.Forms.TextBox();
             this.label10 = new System.Windows.Forms.Label();
+            this.comboBoxGameType = new System.Windows.Forms.ComboBox();
+            this.label13 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.textBoxStatus = new System.Windows.Forms.TextBox();
             this.buttonConnect = new System.Windows.Forms.Button();
@@ -67,6 +69,7 @@
             this.label8 = new System.Windows.Forms.Label();
             this.tbVehicles = new System.Windows.Forms.TextBox();
             this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.checkBoxMapHelper = new System.Windows.Forms.CheckBox();
             this.checkBoxShowTrail = new System.Windows.Forms.CheckBox();
             this.radioButtonDeployables = new System.Windows.Forms.RadioButton();
             this.radioButtonSpawn = new System.Windows.Forms.RadioButton();
@@ -88,10 +91,9 @@
             this.dataGridViewMaps = new System.Windows.Forms.DataGridView();
             this.ColumnID = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColumnName = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ColumnWidth = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ColumnHeight = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColumnChoosePath = new System.Windows.Forms.DataGridViewButtonColumn();
             this.ColumnPath = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataSetBindingSource = new System.Windows.Forms.BindingSource(this.components);
             this.tabPage5 = new System.Windows.Forms.TabPage();
             this.dataGridViewVehicleTypes = new System.Windows.Forms.DataGridView();
             this.ColumnClassName = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -115,6 +117,7 @@
             this.tabPage3.SuspendLayout();
             this.tabPage4.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewMaps)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dataSetBindingSource)).BeginInit();
             this.tabPage5.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewVehicleTypes)).BeginInit();
             this.contextMenuStripVehicle.SuspendLayout();
@@ -177,8 +180,8 @@
             // 
             this.splitContainer1.Panel2.Controls.Add(this.tabControl1);
             this.splitContainer1.Panel2MinSize = 220;
-            this.splitContainer1.Size = new System.Drawing.Size(612, 459);
-            this.splitContainer1.SplitterDistance = 388;
+            this.splitContainer1.Size = new System.Drawing.Size(748, 522);
+            this.splitContainer1.SplitterDistance = 484;
             this.splitContainer1.TabIndex = 1;
             // 
             // tabControl1
@@ -192,7 +195,7 @@
             this.tabControl1.Location = new System.Drawing.Point(0, 0);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(216, 455);
+            this.tabControl1.Size = new System.Drawing.Size(256, 518);
             this.tabControl1.TabIndex = 4;
             // 
             // tabPage1
@@ -203,7 +206,7 @@
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(208, 429);
+            this.tabPage1.Size = new System.Drawing.Size(248, 492);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "Database";
             // 
@@ -211,6 +214,8 @@
             // 
             this.groupBox2.Controls.Add(this.textBoxInstanceId);
             this.groupBox2.Controls.Add(this.label10);
+            this.groupBox2.Controls.Add(this.comboBoxGameType);
+            this.groupBox2.Controls.Add(this.label13);
             this.groupBox2.Controls.Add(this.label1);
             this.groupBox2.Controls.Add(this.textBoxStatus);
             this.groupBox2.Controls.Add(this.buttonConnect);
@@ -225,27 +230,50 @@
             this.groupBox2.Controls.Add(this.textBoxBaseName);
             this.groupBox2.Location = new System.Drawing.Point(6, 6);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(200, 202);
+            this.groupBox2.Size = new System.Drawing.Size(236, 230);
             this.groupBox2.TabIndex = 9;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Database";
             // 
             // textBoxInstanceId
             // 
-            this.textBoxInstanceId.Location = new System.Drawing.Point(72, 146);
+            this.textBoxInstanceId.Location = new System.Drawing.Point(174, 173);
             this.textBoxInstanceId.MaxLength = 64;
             this.textBoxInstanceId.Name = "textBoxInstanceId";
-            this.textBoxInstanceId.Size = new System.Drawing.Size(122, 20);
-            this.textBoxInstanceId.TabIndex = 9;
+            this.textBoxInstanceId.Size = new System.Drawing.Size(56, 20);
+            this.textBoxInstanceId.TabIndex = 5;
             // 
             // label10
             // 
             this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(6, 149);
+            this.label10.Location = new System.Drawing.Point(6, 176);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(60, 13);
-            this.label10.TabIndex = 8;
+            this.label10.TabIndex = 105;
             this.label10.Text = "Instance Id";
+            // 
+            // comboBoxGameType
+            // 
+            this.comboBoxGameType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboBoxGameType.FormattingEnabled = true;
+            this.comboBoxGameType.Items.AddRange(new object[] {
+            "Classic",
+            "Epoch"});
+            this.comboBoxGameType.Location = new System.Drawing.Point(81, 146);
+            this.comboBoxGameType.MaxDropDownItems = 4;
+            this.comboBoxGameType.Name = "comboBoxGameType";
+            this.comboBoxGameType.Size = new System.Drawing.Size(149, 21);
+            this.comboBoxGameType.TabIndex = 6;
+            this.comboBoxGameType.SelectedValueChanged += new System.EventHandler(this.comboBoxGameType_SelectedValueChanged);
+            // 
+            // label13
+            // 
+            this.label13.AutoSize = true;
+            this.label13.Location = new System.Drawing.Point(6, 146);
+            this.label13.Name = "label13";
+            this.label13.Size = new System.Drawing.Size(62, 13);
+            this.label13.TabIndex = 106;
+            this.label13.Text = "Game Type";
             // 
             // label1
             // 
@@ -253,24 +281,24 @@
             this.label1.Location = new System.Drawing.Point(6, 19);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(29, 13);
-            this.label1.TabIndex = 0;
+            this.label1.TabIndex = 100;
             this.label1.Text = "URL";
             // 
             // textBoxStatus
             // 
-            this.textBoxStatus.Location = new System.Drawing.Point(116, 172);
+            this.textBoxStatus.Location = new System.Drawing.Point(81, 199);
             this.textBoxStatus.MaxLength = 256;
             this.textBoxStatus.Name = "textBoxStatus";
             this.textBoxStatus.ReadOnly = true;
-            this.textBoxStatus.Size = new System.Drawing.Size(78, 20);
-            this.textBoxStatus.TabIndex = 7;
+            this.textBoxStatus.Size = new System.Drawing.Size(149, 20);
+            this.textBoxStatus.TabIndex = 107;
             // 
             // buttonConnect
             // 
-            this.buttonConnect.Location = new System.Drawing.Point(41, 170);
+            this.buttonConnect.Location = new System.Drawing.Point(6, 197);
             this.buttonConnect.Name = "buttonConnect";
             this.buttonConnect.Size = new System.Drawing.Size(69, 23);
-            this.buttonConnect.TabIndex = 5;
+            this.buttonConnect.TabIndex = 7;
             this.buttonConnect.Text = "Connect";
             this.buttonConnect.UseVisualStyleBackColor = true;
             this.buttonConnect.Click += new System.EventHandler(this.buttonConnect_Click);
@@ -280,12 +308,12 @@
             this.textBoxURL.Location = new System.Drawing.Point(41, 16);
             this.textBoxURL.MaxLength = 256;
             this.textBoxURL.Name = "textBoxURL";
-            this.textBoxURL.Size = new System.Drawing.Size(153, 20);
+            this.textBoxURL.Size = new System.Drawing.Size(189, 20);
             this.textBoxURL.TabIndex = 0;
             // 
             // textBoxPort
             // 
-            this.textBoxPort.Location = new System.Drawing.Point(41, 42);
+            this.textBoxPort.Location = new System.Drawing.Point(174, 42);
             this.textBoxPort.MaxLength = 6;
             this.textBoxPort.Name = "textBoxPort";
             this.textBoxPort.Size = new System.Drawing.Size(56, 20);
@@ -293,10 +321,10 @@
             // 
             // textBoxPassword
             // 
-            this.textBoxPassword.Location = new System.Drawing.Point(41, 120);
+            this.textBoxPassword.Location = new System.Drawing.Point(43, 120);
             this.textBoxPassword.MaxLength = 64;
             this.textBoxPassword.Name = "textBoxPassword";
-            this.textBoxPassword.Size = new System.Drawing.Size(153, 20);
+            this.textBoxPassword.Size = new System.Drawing.Size(187, 20);
             this.textBoxPassword.TabIndex = 4;
             // 
             // label4
@@ -305,7 +333,7 @@
             this.label4.Location = new System.Drawing.Point(6, 123);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(30, 13);
-            this.label4.TabIndex = 2;
+            this.label4.TabIndex = 104;
             this.label4.Text = "Pass";
             // 
             // label2
@@ -314,7 +342,7 @@
             this.label2.Location = new System.Drawing.Point(6, 45);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(26, 13);
-            this.label2.TabIndex = 0;
+            this.label2.TabIndex = 101;
             this.label2.Text = "Port";
             // 
             // label3
@@ -323,15 +351,15 @@
             this.label3.Location = new System.Drawing.Point(6, 71);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(31, 13);
-            this.label3.TabIndex = 0;
+            this.label3.TabIndex = 102;
             this.label3.Text = "Base";
             // 
             // textBoxUser
             // 
-            this.textBoxUser.Location = new System.Drawing.Point(41, 94);
+            this.textBoxUser.Location = new System.Drawing.Point(43, 94);
             this.textBoxUser.MaxLength = 256;
             this.textBoxUser.Name = "textBoxUser";
-            this.textBoxUser.Size = new System.Drawing.Size(153, 20);
+            this.textBoxUser.Size = new System.Drawing.Size(187, 20);
             this.textBoxUser.TabIndex = 3;
             // 
             // label5
@@ -340,15 +368,15 @@
             this.label5.Location = new System.Drawing.Point(6, 97);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(29, 13);
-            this.label5.TabIndex = 0;
+            this.label5.TabIndex = 103;
             this.label5.Text = "User";
             // 
             // textBoxBaseName
             // 
-            this.textBoxBaseName.Location = new System.Drawing.Point(41, 68);
+            this.textBoxBaseName.Location = new System.Drawing.Point(43, 68);
             this.textBoxBaseName.MaxLength = 256;
             this.textBoxBaseName.Name = "textBoxBaseName";
-            this.textBoxBaseName.Size = new System.Drawing.Size(153, 20);
+            this.textBoxBaseName.Size = new System.Drawing.Size(187, 20);
             this.textBoxBaseName.TabIndex = 2;
             // 
             // groupBox1
@@ -365,9 +393,9 @@
             this.groupBox1.Controls.Add(this.tbVehicleSpawn);
             this.groupBox1.Controls.Add(this.label8);
             this.groupBox1.Controls.Add(this.tbVehicles);
-            this.groupBox1.Location = new System.Drawing.Point(6, 214);
+            this.groupBox1.Location = new System.Drawing.Point(6, 242);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(199, 182);
+            this.groupBox1.Size = new System.Drawing.Size(236, 182);
             this.groupBox1.TabIndex = 8;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "General Info";
@@ -383,7 +411,7 @@
             // 
             // textBoxWorld
             // 
-            this.textBoxWorld.Location = new System.Drawing.Point(89, 23);
+            this.textBoxWorld.Location = new System.Drawing.Point(126, 23);
             this.textBoxWorld.Name = "textBoxWorld";
             this.textBoxWorld.ReadOnly = true;
             this.textBoxWorld.Size = new System.Drawing.Size(104, 20);
@@ -400,7 +428,7 @@
             // 
             // tbAlivePlayers
             // 
-            this.tbAlivePlayers.Location = new System.Drawing.Point(89, 75);
+            this.tbAlivePlayers.Location = new System.Drawing.Point(126, 75);
             this.tbAlivePlayers.Name = "tbAlivePlayers";
             this.tbAlivePlayers.ReadOnly = true;
             this.tbAlivePlayers.Size = new System.Drawing.Size(104, 20);
@@ -417,7 +445,7 @@
             // 
             // tbOnlinePlayers
             // 
-            this.tbOnlinePlayers.Location = new System.Drawing.Point(89, 49);
+            this.tbOnlinePlayers.Location = new System.Drawing.Point(126, 49);
             this.tbOnlinePlayers.Name = "tbOnlinePlayers";
             this.tbOnlinePlayers.ReadOnly = true;
             this.tbOnlinePlayers.Size = new System.Drawing.Size(104, 20);
@@ -434,7 +462,7 @@
             // 
             // tbDeployables
             // 
-            this.tbDeployables.Location = new System.Drawing.Point(89, 153);
+            this.tbDeployables.Location = new System.Drawing.Point(126, 153);
             this.tbDeployables.Name = "tbDeployables";
             this.tbDeployables.ReadOnly = true;
             this.tbDeployables.Size = new System.Drawing.Size(104, 20);
@@ -451,7 +479,7 @@
             // 
             // tbVehicleSpawn
             // 
-            this.tbVehicleSpawn.Location = new System.Drawing.Point(89, 127);
+            this.tbVehicleSpawn.Location = new System.Drawing.Point(126, 127);
             this.tbVehicleSpawn.Name = "tbVehicleSpawn";
             this.tbVehicleSpawn.ReadOnly = true;
             this.tbVehicleSpawn.Size = new System.Drawing.Size(104, 20);
@@ -468,7 +496,7 @@
             // 
             // tbVehicles
             // 
-            this.tbVehicles.Location = new System.Drawing.Point(89, 101);
+            this.tbVehicles.Location = new System.Drawing.Point(126, 101);
             this.tbVehicles.Name = "tbVehicles";
             this.tbVehicles.ReadOnly = true;
             this.tbVehicles.Size = new System.Drawing.Size(104, 20);
@@ -477,6 +505,7 @@
             // tabPage2
             // 
             this.tabPage2.BackColor = System.Drawing.Color.Transparent;
+            this.tabPage2.Controls.Add(this.checkBoxMapHelper);
             this.tabPage2.Controls.Add(this.checkBoxShowTrail);
             this.tabPage2.Controls.Add(this.radioButtonDeployables);
             this.tabPage2.Controls.Add(this.radioButtonSpawn);
@@ -487,14 +516,25 @@
             this.tabPage2.Location = new System.Drawing.Point(4, 22);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(208, 429);
+            this.tabPage2.Size = new System.Drawing.Size(248, 492);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Display";
+            // 
+            // checkBoxMapHelper
+            // 
+            this.checkBoxMapHelper.AutoSize = true;
+            this.checkBoxMapHelper.Location = new System.Drawing.Point(114, 80);
+            this.checkBoxMapHelper.Name = "checkBoxMapHelper";
+            this.checkBoxMapHelper.Size = new System.Drawing.Size(81, 17);
+            this.checkBoxMapHelper.TabIndex = 6;
+            this.checkBoxMapHelper.Text = "Map Helper";
+            this.checkBoxMapHelper.UseVisualStyleBackColor = true;
+            this.checkBoxMapHelper.CheckedChanged += new System.EventHandler(this.checkBoxMapHelper_CheckedChanged);
             // 
             // checkBoxShowTrail
             // 
             this.checkBoxShowTrail.AutoSize = true;
-            this.checkBoxShowTrail.Location = new System.Drawing.Point(114, 58);
+            this.checkBoxShowTrail.Location = new System.Drawing.Point(6, 80);
             this.checkBoxShowTrail.Name = "checkBoxShowTrail";
             this.checkBoxShowTrail.Size = new System.Drawing.Size(72, 17);
             this.checkBoxShowTrail.TabIndex = 5;
@@ -530,9 +570,9 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBoxInfo.Controls.Add(this.propertyGrid1);
-            this.groupBoxInfo.Location = new System.Drawing.Point(3, 80);
+            this.groupBoxInfo.Location = new System.Drawing.Point(3, 103);
             this.groupBoxInfo.Name = "groupBoxInfo";
-            this.groupBoxInfo.Size = new System.Drawing.Size(201, 346);
+            this.groupBoxInfo.Size = new System.Drawing.Size(241, 386);
             this.groupBoxInfo.TabIndex = 3;
             this.groupBoxInfo.TabStop = false;
             this.groupBoxInfo.Text = "Info";
@@ -540,10 +580,11 @@
             // propertyGrid1
             // 
             this.propertyGrid1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.propertyGrid1.HelpVisible = false;
             this.propertyGrid1.Location = new System.Drawing.Point(3, 16);
             this.propertyGrid1.Name = "propertyGrid1";
             this.propertyGrid1.PropertySort = System.Windows.Forms.PropertySort.Categorized;
-            this.propertyGrid1.Size = new System.Drawing.Size(195, 327);
+            this.propertyGrid1.Size = new System.Drawing.Size(235, 367);
             this.propertyGrid1.TabIndex = 0;
             this.propertyGrid1.ToolbarVisible = false;
             this.propertyGrid1.ViewBackColor = System.Drawing.SystemColors.Control;
@@ -597,7 +638,7 @@
             this.tabPage3.Location = new System.Drawing.Point(4, 22);
             this.tabPage3.Name = "tabPage3";
             this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage3.Size = new System.Drawing.Size(208, 429);
+            this.tabPage3.Size = new System.Drawing.Size(248, 492);
             this.tabPage3.TabIndex = 2;
             this.tabPage3.Text = "Scripts";
             // 
@@ -635,7 +676,7 @@
             this.textBoxCmdStatus.Name = "textBoxCmdStatus";
             this.textBoxCmdStatus.ReadOnly = true;
             this.textBoxCmdStatus.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.textBoxCmdStatus.Size = new System.Drawing.Size(195, 299);
+            this.textBoxCmdStatus.Size = new System.Drawing.Size(235, 362);
             this.textBoxCmdStatus.TabIndex = 8;
             // 
             // textBoxOldBodyLimit
@@ -697,7 +738,7 @@
             this.tabPage4.Location = new System.Drawing.Point(4, 22);
             this.tabPage4.Name = "tabPage4";
             this.tabPage4.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage4.Size = new System.Drawing.Size(208, 429);
+            this.tabPage4.Size = new System.Drawing.Size(248, 492);
             this.tabPage4.TabIndex = 3;
             this.tabPage4.Text = "Maps";
             // 
@@ -705,65 +746,59 @@
             // 
             this.dataGridViewMaps.AllowUserToAddRows = false;
             this.dataGridViewMaps.AllowUserToDeleteRows = false;
-            this.dataGridViewMaps.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridViewMaps.AllowUserToOrderColumns = true;
+            this.dataGridViewMaps.AllowUserToResizeRows = false;
+            this.dataGridViewMaps.AutoGenerateColumns = false;
+            this.dataGridViewMaps.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this.dataGridViewMaps.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
             this.dataGridViewMaps.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.ColumnID,
             this.ColumnName,
-            this.ColumnWidth,
-            this.ColumnHeight,
             this.ColumnChoosePath,
             this.ColumnPath});
+            this.dataGridViewMaps.DataSource = this.dataSetBindingSource;
             this.dataGridViewMaps.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dataGridViewMaps.Location = new System.Drawing.Point(3, 3);
             this.dataGridViewMaps.MultiSelect = false;
             this.dataGridViewMaps.Name = "dataGridViewMaps";
             this.dataGridViewMaps.RowHeadersVisible = false;
-            this.dataGridViewMaps.Size = new System.Drawing.Size(202, 423);
+            this.dataGridViewMaps.Size = new System.Drawing.Size(242, 486);
             this.dataGridViewMaps.TabIndex = 0;
             this.dataGridViewMaps.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewMaps_CellClick);
             // 
             // ColumnID
             // 
-            this.ColumnID.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
+            this.ColumnID.FillWeight = 10F;
             this.ColumnID.HeaderText = "World ID";
             this.ColumnID.Name = "ColumnID";
             this.ColumnID.ReadOnly = true;
-            this.ColumnID.Width = 74;
             // 
             // ColumnName
             // 
+            this.ColumnName.FillWeight = 30F;
             this.ColumnName.HeaderText = "Name";
             this.ColumnName.Name = "ColumnName";
             this.ColumnName.ReadOnly = true;
             // 
-            // ColumnWidth
-            // 
-            this.ColumnWidth.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
-            this.ColumnWidth.HeaderText = "Width";
-            this.ColumnWidth.Name = "ColumnWidth";
-            this.ColumnWidth.Width = 60;
-            // 
-            // ColumnHeight
-            // 
-            this.ColumnHeight.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
-            this.ColumnHeight.HeaderText = "Height";
-            this.ColumnHeight.Name = "ColumnHeight";
-            this.ColumnHeight.Width = 63;
-            // 
             // ColumnChoosePath
             // 
-            this.ColumnChoosePath.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
+            this.ColumnChoosePath.FillWeight = 8F;
             this.ColumnChoosePath.HeaderText = "Select";
             this.ColumnChoosePath.Name = "ColumnChoosePath";
             this.ColumnChoosePath.Text = "...";
             this.ColumnChoosePath.ToolTipText = "Select your file on disk";
             this.ColumnChoosePath.UseColumnTextForButtonValue = true;
-            this.ColumnChoosePath.Width = 43;
             // 
             // ColumnPath
             // 
+            this.ColumnPath.FillWeight = 45F;
             this.ColumnPath.HeaderText = "Path";
             this.ColumnPath.Name = "ColumnPath";
+            // 
+            // dataSetBindingSource
+            // 
+            this.dataSetBindingSource.DataSource = typeof(System.Data.DataSet);
+            this.dataSetBindingSource.Position = 0;
             // 
             // tabPage5
             // 
@@ -772,7 +807,7 @@
             this.tabPage5.Location = new System.Drawing.Point(4, 22);
             this.tabPage5.Name = "tabPage5";
             this.tabPage5.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage5.Size = new System.Drawing.Size(208, 429);
+            this.tabPage5.Size = new System.Drawing.Size(248, 492);
             this.tabPage5.TabIndex = 4;
             this.tabPage5.Text = "Vehicles";
             // 
@@ -780,7 +815,8 @@
             // 
             this.dataGridViewVehicleTypes.AllowUserToAddRows = false;
             this.dataGridViewVehicleTypes.AllowUserToDeleteRows = false;
-            this.dataGridViewVehicleTypes.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridViewVehicleTypes.AllowUserToResizeRows = false;
+            this.dataGridViewVehicleTypes.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dataGridViewVehicleTypes.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.ColumnClassName,
             this.ColumnType});
@@ -789,7 +825,7 @@
             this.dataGridViewVehicleTypes.Name = "dataGridViewVehicleTypes";
             this.dataGridViewVehicleTypes.RowHeadersVisible = false;
             this.dataGridViewVehicleTypes.ShowEditingIcon = false;
-            this.dataGridViewVehicleTypes.Size = new System.Drawing.Size(202, 423);
+            this.dataGridViewVehicleTypes.Size = new System.Drawing.Size(242, 486);
             this.dataGridViewVehicleTypes.TabIndex = 0;
             // 
             // ColumnClassName
@@ -858,7 +894,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(612, 459);
+            this.ClientSize = new System.Drawing.Size(748, 522);
             this.Controls.Add(this.splitContainer1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MinimumSize = new System.Drawing.Size(628, 497);
@@ -881,6 +917,7 @@
             this.tabPage3.PerformLayout();
             this.tabPage4.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewMaps)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dataSetBindingSource)).EndInit();
             this.tabPage5.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewVehicleTypes)).EndInit();
             this.contextMenuStripVehicle.ResumeLayout(false);
@@ -956,14 +993,16 @@
         private System.Windows.Forms.DataGridView dataGridViewVehicleTypes;
         private System.Windows.Forms.DataGridViewTextBoxColumn ColumnClassName;
         private System.Windows.Forms.DataGridViewComboBoxColumn ColumnType;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ColumnID;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ColumnName;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ColumnWidth;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ColumnHeight;
-        private System.Windows.Forms.DataGridViewButtonColumn ColumnChoosePath;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ColumnPath;
         private System.Windows.Forms.Label label12;
         private System.Windows.Forms.TextBox textBoxWorld;
+        private System.Windows.Forms.ComboBox comboBoxGameType;
+        private System.Windows.Forms.Label label13;
+        private System.Windows.Forms.CheckBox checkBoxMapHelper;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColumnID;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColumnName;
+        private System.Windows.Forms.DataGridViewButtonColumn ColumnChoosePath;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColumnPath;
+        private System.Windows.Forms.BindingSource dataSetBindingSource;
 
     }
 }

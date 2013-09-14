@@ -24,6 +24,8 @@ namespace DBAccess
 {
     public partial class Form1 : Form
     {
+        static ModuleVersion curCfgVersion = new ModuleVersion(2, 0);
+
         private static int bUserAction = 0;
         private static Mutex mtxUpdateDB = new Mutex();
         private static Mutex mtxUseDS = new Mutex();
@@ -32,7 +34,6 @@ namespace DBAccess
         private MySqlConnection cnx;
         private bool bConnected = false;
         private RadioButton currDisplayedItems;
-        private Point lastPositionMouse;
         //
         public myConfig mycfg = new myConfig();
         private string configPath;
@@ -47,17 +48,20 @@ namespace DBAccess
         private DataSet dsVehicles = new DataSet();
         private DataSet dsVehicleSpawnPoints = new DataSet();
 
-        private Dictionary<UInt64, UIDdata> dicUIDdata = new Dictionary<UInt64, UIDdata>();
+        private Dictionary<UInt64, UIDGraph> dicUIDGraph = new Dictionary<UInt64, UIDGraph>();
         private List<iconDB> listIcons = new List<iconDB>();
         private List<iconDB> iconsDB = new List<iconDB>();
         private List<myIcon> iconPlayers = new List<myIcon>();
         private List<myIcon> iconVehicles = new List<myIcon>();
         private List<myIcon> iconDeployables = new List<myIcon>();
+        private DragNDrop dragndrop = new DragNDrop();
+
+        private MapHelper mapHelper;
 
         public Form1()
         {
             InitializeComponent();
-            
+
             //
             configPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\DayZDBAccess";
             configFilePath = configPath + "\\config.xml";
@@ -65,11 +69,15 @@ namespace DBAccess
             try
             {
                 Assembly asb = System.Reflection.Assembly.GetExecutingAssembly();
-                Version version = asb.GetName().Version;
                 if (System.Deployment.Application.ApplicationDeployment.IsNetworkDeployed)
-                    version = System.Deployment.Application.ApplicationDeployment.CurrentDeployment.CurrentVersion;
-
-                this.Text = asb.GetName().Name + " - v" + version.ToString();
+                {
+                    Version version = System.Deployment.Application.ApplicationDeployment.CurrentDeployment.CurrentVersion;
+                    this.Text = asb.GetName().Name + " - v" + version.ToString();
+                }
+                else
+                {
+                    this.Text = asb.GetName().Name + " - Test version";
+                }
             }
             catch
             {
@@ -111,15 +119,47 @@ namespace DBAccess
         {
             interpolationMode = InterpolationMode.NearestNeighbor;
 
-            virtualMap._position_DnD = virtualMap.Position;
-            virtualMap._offset_DnD = Size.Empty;
-
-            lastPositionMouse = MousePosition;
             System.Threading.Interlocked.CompareExchange(ref bUserAction, 1, 0);
 
+            if (e.Button.HasFlag(MouseButtons.Right) && (mapHelper != null))
+            {
+                if (mapHelper.enabled)
+                {
+                    Point mousePos = new Point(e.Location.X - virtualMap.Position.X,
+                                               e.Location.Y - virtualMap.Position.Y);
+                    mapHelper.isDraggingCtrlPoint = mapHelper.IntersectControl(mousePos, 5);
+
+                    if (mapHelper.isDraggingCtrlPoint > 0)
+                    {
+                        // Will drag selected Control point
+                        Point pt = new Point((int)(mapHelper.controls[mapHelper.isDraggingCtrlPoint].X * virtualMap.SizeCorrected.Width + virtualMap.Position.X),
+                                             (int)(mapHelper.controls[mapHelper.isDraggingCtrlPoint].Y * virtualMap.SizeCorrected.Height + virtualMap.Position.Y));
+                        dragndrop.Start(pt);
+                    }
+                    else
+                    {
+                        // Will drag all Control points
+                        List<Point> points = new List<Point>(4);
+                        for (int i = 0; i < 4; i++)
+                        {
+                            Point pt = new Point((int)(mapHelper.controls[i].X * virtualMap.SizeCorrected.Width + virtualMap.Position.X),
+                                                 (int)(mapHelper.controls[i].Y * virtualMap.SizeCorrected.Height + virtualMap.Position.Y));
+                            points.Add(pt);
+                        }
+                        dragndrop.Start(points);
+                    }
+
+                    splitContainer1.Panel1.Invalidate();
+                    return;
+                }
+            }
+
+            //
+            dragndrop.Start(virtualMap.Position);
+
             Rectangle mouseRec = new Rectangle(e.Location, Size.Empty);
-            Rectangle r = new Rectangle(Point.Empty, new Size(24,24)    /* !!!! annoying shortcut, remove it later !!!! */);
-            foreach(iconDB idb in listIcons)
+            Rectangle r = new Rectangle(Point.Empty, new Size(24, 24)    /* !!!! annoying shortcut, remove it later !!!! */);
+            foreach (iconDB idb in listIcons)
             {
                 r.Location = idb.icon.Location;
 
@@ -130,25 +170,56 @@ namespace DBAccess
                 }
             }
         }
-        private void Panel1_MouseUp(object sender, MouseEventArgs e)
-        {
-            System.Threading.Interlocked.CompareExchange(ref bUserAction, 0, 1);
-            interpolationMode = InterpolationMode.Bicubic;
-            splitContainer1.Panel1.Invalidate();
-        }
         private void Panel1_MouseMove(object sender, MouseEventArgs e)
         {
-            if (e.Button.HasFlag(MouseButtons.Left))
+            if (e.Button.HasFlag(MouseButtons.Right) && (mapHelper != null))
             {
-                virtualMap._offset_DnD = new Size((int)(MousePosition.X - lastPositionMouse.X), (int)(MousePosition.Y - lastPositionMouse.Y));
+                if (mapHelper.enabled)
+                {
+                    dragndrop.Update();
 
-                virtualMap.Position = Point.Add(virtualMap._position_DnD, virtualMap._offset_DnD);
+                    if (mapHelper.isDraggingCtrlPoint >= 0)
+                    {
+                        Point newPos = dragndrop.Position(0);
+                        PointF pt = new PointF((newPos.X - virtualMap.Position.X) / (float)virtualMap.SizeCorrected.Width,
+                                                (newPos.Y - virtualMap.Position.Y) / (float)virtualMap.SizeCorrected.Height);
+
+                        mapHelper.controls[mapHelper.isDraggingCtrlPoint] = pt;
+                        mapHelper.ControlPointUpdated(mapHelper.isDraggingCtrlPoint);
+                    }
+                    else
+                    {
+                        for (int i = 0; i < 2; i++)
+                        {
+                            Point newPos = dragndrop.Position(i);
+                            PointF pt = new PointF((newPos.X - virtualMap.Position.X) / (float)virtualMap.SizeCorrected.Width,
+                                                    (newPos.Y - virtualMap.Position.Y) / (float)virtualMap.SizeCorrected.Height);
+
+                            mapHelper.controls[i] = pt;
+                        }
+                        mapHelper.ControlPointUpdated(0);
+                    }
+    
+                    ApplyMapChanges();
+                }
+            }
+            else if (e.Button.HasFlag(MouseButtons.Left))
+            {
+                dragndrop.Update();
+                virtualMap.Position = dragndrop.Position(0);
                 ApplyMapChanges();
             }
             else
             {
-                virtualMap._position_DnD = virtualMap.Position;
-                virtualMap._offset_DnD = Size.Empty;
+                if (mapHelper != null)
+                {
+                    Point mousePos = new Point(e.Location.X - virtualMap.Position.X,
+                                               e.Location.Y - virtualMap.Position.Y);
+                    mapHelper.isDraggingCtrlPoint = mapHelper.IntersectControl(mousePos, 5);
+                    splitContainer1.Panel1.Invalidate();
+                }
+
+                dragndrop.Stop();
 
                 if (interpolationMode == InterpolationMode.NearestNeighbor)
                 {
@@ -156,6 +227,15 @@ namespace DBAccess
                     splitContainer1.Panel1.Invalidate();
                 }
             }
+        }
+        private void Panel1_MouseUp(object sender, MouseEventArgs e)
+        {
+            if(mapHelper != null)
+                mapHelper.isDraggingCtrlPoint = -1;
+
+            System.Threading.Interlocked.CompareExchange(ref bUserAction, 0, 1);
+            interpolationMode = InterpolationMode.Bicubic;
+            splitContainer1.Panel1.Invalidate();
         }
         private void Form1_MouseWheel(object sender, MouseEventArgs e)
         {
@@ -214,10 +294,19 @@ namespace DBAccess
 
                 Enable(true);
 
-                DB_OnConnection();
-                DB_OnRefresh();
+                switch (mycfg.game_type)
+                {
+                    case "Epoch":
+                        DBEpoch_OnConnection();
+                        DBEpoch_OnRefresh();
+                        break;
+                    default:
+                        DB_OnConnection();
+                        DB_OnRefresh();
+                        break;
+                }
 
-                SetCurrentMap(false);
+                SetCurrentMap();
             }
             catch(Exception ex)
             {
@@ -250,7 +339,7 @@ namespace DBAccess
 
             try
             {
-                foreach( KeyValuePair<UInt64,UIDdata> pair in dicUIDdata)
+                foreach( KeyValuePair<UInt64,UIDGraph> pair in dicUIDGraph)
                     pair.Value.path.Reset();
 
                 listIcons.Clear();
@@ -296,11 +385,11 @@ namespace DBAccess
             {
                 if (bConnected)
                 {
-                    tbOnlinePlayers.Text = dsOnlinePlayers.Tables[0].Rows.Count.ToString();
-                    tbAlivePlayers.Text = dsAlivePlayers.Tables[0].Rows.Count.ToString();
-                    tbVehicles.Text = dsVehicles.Tables[0].Rows.Count.ToString();
-                    tbVehicleSpawn.Text = dsVehicleSpawnPoints.Tables[0].Rows.Count.ToString();
-                    tbDeployables.Text = dsDeployables.Tables[0].Rows.Count.ToString();
+                    tbOnlinePlayers.Text = (dsOnlinePlayers.Tables.Count > 0) ? dsOnlinePlayers.Tables[0].Rows.Count.ToString() : "-";
+                    tbAlivePlayers.Text = (dsAlivePlayers.Tables.Count > 0) ? dsAlivePlayers.Tables[0].Rows.Count.ToString() : "-";
+                    tbVehicles.Text = (dsVehicles.Tables.Count > 0) ? dsVehicles.Tables[0].Rows.Count.ToString() : "-";
+                    tbVehicleSpawn.Text = (dsVehicleSpawnPoints.Tables.Count > 0) ? dsVehicleSpawnPoints.Tables[0].Rows.Count.ToString() : "-";
+                    tbDeployables.Text = (dsDeployables.Tables.Count > 0) ? dsDeployables.Tables[0].Rows.Count.ToString() : "-";
 
                     if ((propertyGrid1.SelectedObject != null) && (propertyGrid1.SelectedObject is PropObjectBase))
                     {
@@ -444,7 +533,7 @@ namespace DBAccess
 
                 idb.uid = UInt64.Parse(row.Field<string>("unique_id")) | (UInt64)UIDType.TypePlayer;
                 idb.row = row;
-                idb.pos = GetMapPosFromString(row.Field<string>("worldspace"));
+                idb.pos = GetUnitPosFromString(row.Field<string>("worldspace"));
 
                 if (idx >= iconPlayers.Count)
                 {
@@ -463,7 +552,7 @@ namespace DBAccess
                 listIcons.Add(idb);
 
                 if (checkBoxShowTrail.Checked)
-                    GetUIDdata(idb.uid).AddPoint(idb.pos);
+                    GetUIDGraph(idb.uid).AddPoint(idb.pos);
 
                 idx++;
             }
@@ -480,7 +569,7 @@ namespace DBAccess
 
                 idb.uid = UInt64.Parse(row.Field<string>("unique_id")) | (UInt64)UIDType.TypePlayer;
                 idb.row = row;
-                idb.pos = GetMapPosFromString(row.Field<string>("worldspace"));
+                idb.pos = GetUnitPosFromString(row.Field<string>("worldspace"));
 
                 if (idx >= iconPlayers.Count)
                 {
@@ -499,7 +588,7 @@ namespace DBAccess
                 listIcons.Add(idb);
 
                 if (checkBoxShowTrail.Checked)
-                    GetUIDdata(idb.uid).AddPoint(idb.pos);
+                    GetUIDGraph(idb.uid).AddPoint(idb.pos);
 
                 idx++;
             }
@@ -518,7 +607,7 @@ namespace DBAccess
 
                 idb.uid = row.Field<UInt64>("id") | (UInt64)UIDType.TypeVehicle;
                 idb.row = row;
-                idb.pos = GetMapPosFromString(row.Field<string>("worldspace"));
+                idb.pos = GetUnitPosFromString(row.Field<string>("worldspace"));
 
                 if( idx >= iconVehicles.Count)
                 {
@@ -563,13 +652,16 @@ namespace DBAccess
                 listIcons.Add(idb);
 
                 if (checkBoxShowTrail.Checked)
-                    GetUIDdata(idb.uid).AddPoint(idb.pos);
+                    GetUIDGraph(idb.uid).AddPoint(idb.pos);
 
                 idx++;
             }
         }
         private void BuildSpawnIcons()
         {
+            if (dsVehicleSpawnPoints.Tables.Count == 0)
+                return;
+
             int idx = 0;
             foreach (DataRow row in dsVehicleSpawnPoints.Tables[0].Rows)
             {
@@ -580,7 +672,7 @@ namespace DBAccess
 
                 idb.uid = row.Field<UInt64>("id") | (UInt64)UIDType.TypeSpawn;
                 idb.row = row;
-                idb.pos = GetMapPosFromString(row.Field<string>("worldspace"));
+                idb.pos = GetUnitPosFromString(row.Field<string>("worldspace"));
 
                 if( idx >= iconVehicles.Count)
                 {
@@ -630,7 +722,7 @@ namespace DBAccess
 
                 idb.uid = row.Field<UInt64>("id") | (UInt64)UIDType.TypeDeployable;
                 idb.row = row;
-                idb.pos = GetMapPosFromString(row.Field<string>("worldspace"));
+                idb.pos = GetUnitPosFromString(row.Field<string>("worldspace"));
 
                 if (idx >= iconDeployables.Count)
                 {
@@ -642,7 +734,8 @@ namespace DBAccess
 
                 idb.icon = iconDeployables[idx];
                 idb.icon.iconDB = idb;
-                idb.icon.image = row.Field<UInt16>("deployable_id") == 1 ? global::DBAccess.Properties.Resources.tent : global::DBAccess.Properties.Resources.stach;
+                UInt64 did = row.Field<UInt64>("deployable_id");
+                idb.icon.image = (did == 1) ? global::DBAccess.Properties.Resources.tent : global::DBAccess.Properties.Resources.stach;
 
                 listIcons.Add(idb);
 
@@ -651,6 +744,7 @@ namespace DBAccess
         }
         private void Enable(bool bState)
         {
+            bool bEpochGameType = (mycfg.game_type == "Epoch");
             bConnected = bState;
 
             buttonConnect.Enabled = !bState;
@@ -658,7 +752,7 @@ namespace DBAccess
             radioButtonOnline.Enabled = bState;
             radioButtonAlive.Enabled = bState;
             radioButtonVehicles.Enabled = bState;
-            radioButtonSpawn.Enabled = bState;
+            radioButtonSpawn.Enabled = bState && !bEpochGameType;
             radioButtonDeployables.Enabled = bState;
 
             textBoxURL.Enabled = !bState;
@@ -666,12 +760,14 @@ namespace DBAccess
             textBoxPort.Enabled = !bState;
             textBoxUser.Enabled = !bState;
             textBoxPassword.Enabled = !bState;
-            textBoxInstanceId.Enabled = !bState;
+            comboBoxGameType.Enabled = !bState;
 
-            buttonRemoveDestroyed.Enabled = bState;
-            buttonSpawnNew.Enabled = bState;
-            buttonRemoveBodies.Enabled = bState;
-            buttonRemoveTents.Enabled = bState;
+            // Epoch disabled controls...
+            textBoxInstanceId.Enabled = !(bState || bEpochGameType);
+            buttonRemoveDestroyed.Enabled = bState && !bEpochGameType;
+            buttonSpawnNew.Enabled = bState && !bEpochGameType;
+            buttonRemoveBodies.Enabled = bState && !bEpochGameType;
+            buttonRemoveTents.Enabled = bState && !bEpochGameType;
 
             if (!bState)
             {
@@ -713,6 +809,8 @@ namespace DBAccess
                 Enable(false);
             }
 
+            if (mycfg.cfgVersion == null) mycfg.cfgVersion = new ModuleVersion(); 
+            if (Tool.NullOrEmpty(mycfg.game_type)) mycfg.game_type = comboBoxGameType.Items[0] as string;
             if (Tool.NullOrEmpty(mycfg.url)) mycfg.url = "";
             if (Tool.NullOrEmpty(mycfg.port)) mycfg.port = "3306";
             if (Tool.NullOrEmpty(mycfg.basename)) mycfg.basename = "basename";
@@ -728,38 +826,64 @@ namespace DBAccess
                 DataTable table = mycfg.worlds_def.Tables.Add();
                 table.Columns.Add(new DataColumn("World ID", typeof(UInt16)));
                 table.Columns.Add(new DataColumn("World Name", typeof(string)));
-                table.Columns.Add(new DataColumn("Width", typeof(UInt32)));
-                table.Columns.Add(new DataColumn("Height", typeof(UInt32)));
                 table.Columns.Add(new DataColumn("Filepath", typeof(string)));
                 table.Columns.Add(new DataColumn("RatioX", typeof(float), "", MappingType.Hidden));
                 table.Columns.Add(new DataColumn("RatioY", typeof(float), "", MappingType.Hidden));
                 table.Columns.Add(new DataColumn("TileSizeX", typeof(int), "", MappingType.Hidden));
                 table.Columns.Add(new DataColumn("TileSizeY", typeof(int), "", MappingType.Hidden));
+                table.Columns.Add(new DataColumn("TileDepth", typeof(int), "", MappingType.Hidden));
+                table.Columns.Add(new DataColumn("DB_X", typeof(int), "", MappingType.Hidden));
+                table.Columns.Add(new DataColumn("DB_Y", typeof(int), "", MappingType.Hidden));
+                table.Columns.Add(new DataColumn("DB_Width", typeof(UInt32), "", MappingType.Hidden));
+                table.Columns.Add(new DataColumn("DB_Height", typeof(UInt32), "", MappingType.Hidden));
+
                 DataColumn[] keys = new DataColumn[1];
                 keys[0] = mycfg.worlds_def.Tables[0].Columns[0];
                 mycfg.worlds_def.Tables[0].PrimaryKey = keys;
 
                 System.Data.DataColumn col = new DataColumn();
 
-                //table.Rows.Add(1, "not connected", 1, 1, "");
-                //table.Rows.Add(2, "not connected", 1, 1, "");
-                //table.Rows.Add(3, "not connected", 1, 1, "");
-                //table.Rows.Add(4, "not connected", 1, 1, "");
-                //table.Rows.Add(5, "not connected", 1, 1, "");
-                //table.Rows.Add(6, "not connected", 1, 1, "");
-                //table.Rows.Add(7, "not connected", 1, 1, "");
-                //table.Rows.Add(8, "not connected", 1, 1, "");
-                table.Rows.Add(9, "not connected", 12288, 12288, "", 0, 0);
-                //table.Rows.Add(10, "not connected", 1, 1, "");
+                table.Rows.Add(1, "Chernarus", "", 0, 0, 0, 0, 0, 0, 14700, 15360 );
+                table.Rows.Add(2, "Lingor", "", 0, 0, 0, 0, 0, 0, 10000, 10000);
+                table.Rows.Add(3, "Utes", "", 0, 0, 0, 0, 0, 0, 5100, 5100);
+                table.Rows.Add(4, "Takistan", "", 0, 0, 0, 0, 0, 0, 14000, 14000);
+                table.Rows.Add(5, "Panthera2", "", 0, 0, 0, 0, 0, 0, 10200, 10200);
+                table.Rows.Add(6, "Fallujah", "", 0, 0, 0, 0, 0, 0, 10200, 10200);
+                table.Rows.Add(7, "Zargabad", "", 0, 0, 0, 0, 0, 0, 8000, 8000);
+                table.Rows.Add(8, "Namalsk", "", 0, 0, 0, 0, 0, 0, 12000, 12000);
+                table.Rows.Add(9, "Celle2", "", 0, 0, 0, 0, 0, 0, 13000, 13000);
+                table.Rows.Add(10, "Taviana", "", 0, 0, 0, 0, 0, 0, 25600, 25600);
             }
 
-            // -> v1.7.0
-            if (mycfg.worlds_def.Tables[0].Columns.Contains("RatioX") == false)
+            // -> v1.8
+            if (mycfg.cfgVersion < curCfgVersion)
             {
-                mycfg.worlds_def.Tables[0].Columns.Add(new DataColumn("RatioX", typeof(float), "", MappingType.Hidden));
-                mycfg.worlds_def.Tables[0].Columns.Add(new DataColumn("RatioY", typeof(float), "", MappingType.Hidden));
-                mycfg.worlds_def.Tables[0].Columns.Add(new DataColumn("TileSizeX", typeof(int), "", MappingType.Hidden));
-                mycfg.worlds_def.Tables[0].Columns.Add(new DataColumn("TileSizeY", typeof(int), "", MappingType.Hidden));
+                DataColumnCollection cols = mycfg.worlds_def.Tables[0].Columns;
+                
+                if (cols.Contains("Width")) cols["Width"].ColumnName = "DB_refWidth";
+                if (cols.Contains("Height")) cols["Height"].ColumnName = "DB_refHeight";
+
+                if (!cols.Contains("RatioX")) cols.Add(new DataColumn("RatioX", typeof(float), "", MappingType.Hidden));
+                if (!cols.Contains("RatioY")) cols.Add(new DataColumn("RatioY", typeof(float), "", MappingType.Hidden));
+                if (!cols.Contains("TileSizeX")) cols.Add(new DataColumn("TileSizeX", typeof(int), "", MappingType.Hidden));
+                if (!cols.Contains("TileSizeY")) cols.Add(new DataColumn("TileSizeY", typeof(int), "", MappingType.Hidden));
+                if (!cols.Contains("TileDepth")) cols.Add(new DataColumn("TileDepth", typeof(int), "", MappingType.Hidden));
+
+                if (!cols.Contains("DB_X")) cols.Add(new DataColumn("DB_X", typeof(int), "", MappingType.Hidden));
+                if (!cols.Contains("DB_Y")) cols.Add(new DataColumn("DB_Y", typeof(int), "", MappingType.Hidden));
+
+                if (!cols.Contains("DB_Width"))
+                {
+                    cols.Add(new DataColumn("DB_Width", typeof(UInt32), "", MappingType.Hidden));
+                    foreach (DataRow row in mycfg.worlds_def.Tables[0].Rows)
+                        row.SetField<UInt32>("DB_Width", row.Field<UInt32>("DB_refWidth"));
+                }
+                if (!cols.Contains("DB_Height"))
+                {
+                    cols.Add(new DataColumn("DB_Height", typeof(UInt32), "", MappingType.Hidden));
+                    foreach (DataRow row in mycfg.worlds_def.Tables[0].Rows)
+                        row.SetField<UInt32>("DB_Height", row.Field<UInt32>("DB_refHeight"));
+                }
 
                 foreach (DataRow row in mycfg.worlds_def.Tables[0].Rows)
                 {
@@ -767,6 +891,9 @@ namespace DBAccess
                     row.SetField<float>("RatioY", 0);
                     row.SetField<int>("TileSizeX", 0);
                     row.SetField<int>("TileSizeY", 0);
+                    row.SetField<int>("TileDepth", 0);
+                    row.SetField<int>("DB_X", 0);
+                    row.SetField<int>("DB_Y", 0);
                 }
             }
 
@@ -788,6 +915,7 @@ namespace DBAccess
                 textBoxUser.Text = mycfg.username;
                 textBoxPassword.Text = mycfg.password;
                 textBoxInstanceId.Text = mycfg.instance_id;
+                comboBoxGameType.SelectedItem = mycfg.game_type;
                 textBoxVehicleMax.Text = mycfg.vehicle_limit;
                 textBoxOldBodyLimit.Text = mycfg.body_time_limit;
                 textBoxOldTentLimit.Text = mycfg.tent_time_limit;
@@ -795,8 +923,6 @@ namespace DBAccess
                 dataGridViewMaps.Columns["ColumnID"].DataPropertyName = "World ID";
                 dataGridViewMaps.Columns["ColumnName"].DataPropertyName = "World Name";
                 dataGridViewMaps.Columns["ColumnPath"].DataPropertyName = "Filepath";
-                dataGridViewMaps.Columns["ColumnWidth"].DataPropertyName = "Width";
-                dataGridViewMaps.Columns["ColumnHeight"].DataPropertyName = "Height";
                 dataGridViewMaps.DataSource = mycfg.worlds_def.Tables[0];
                 dataGridViewMaps.Sort(dataGridViewMaps.Columns["ColumnID"], ListSortDirection.Ascending);
 
@@ -820,6 +946,8 @@ namespace DBAccess
                 mycfg.username = textBoxUser.Text;
                 mycfg.password = textBoxPassword.Text;
                 mycfg.instance_id = textBoxInstanceId.Text;
+                mycfg.cfgVersion = curCfgVersion;
+                mycfg.game_type = comboBoxGameType.SelectedItem as string;
                 mycfg.vehicle_limit = textBoxVehicleMax.Text;
                 mycfg.body_time_limit = textBoxOldBodyLimit.Text;
                 mycfg.tent_time_limit = textBoxOldTentLimit.Text;
@@ -834,7 +962,7 @@ namespace DBAccess
             {
             }
         }
-        private PointF GetMapPosFromString(string from)
+        private PointF GetUnitPosFromString(string from)
         {
             ArrayList arr = Tool.ParseInventoryString(from);
             // [angle, [X, Y, Z]]
@@ -849,10 +977,55 @@ namespace DBAccess
                 y = double.Parse(arr[1] as string, CultureInfo.InvariantCulture.NumberFormat);
             }
 
-            x = x / mycfg.db_map_size.Width;
-            y = 1.0f - (y / mycfg.db_map_size.Height);
+            x /= virtualMap.nfo.dbRefMapSize.Width;
+            y /= virtualMap.nfo.dbRefMapSize.Height;
+            y = 1.0f - y;
 
             return new PointF((float)x, (float)y);
+        }
+        private void SetCurrentMap()
+        {
+            try
+            {
+                mapHelper = null;
+
+                DataRow rowW = mycfg.worlds_def.Tables[0].Rows.Find(mycfg.world_id);
+                if (rowW != null)
+                {
+                    textBoxWorld.Text = rowW.Field<string>("World Name");
+
+                    string filepath = rowW.Field<string>("Filepath");
+
+                    if (File.Exists(filepath))
+                    {
+                        virtualMap.nfo.tileBasePath = configPath + "\\World" + mycfg.world_id + "\\LOD"; ;
+                    }
+
+                    virtualMap.nfo.defTileSize = new Size(rowW.Field<int>("TileSizeX"), rowW.Field<int>("TileSizeY"));
+                    virtualMap.nfo.depth = rowW.Field<int>("TileDepth");
+                    virtualMap.SetRatio(new SizeF(rowW.Field<float>("RatioX"), rowW.Field<float>("RatioY")));
+                    virtualMap.nfo.dbMapSize = new Size((int)rowW.Field<UInt32>("DB_Width"), (int)rowW.Field<UInt32>("DB_Height"));
+                    virtualMap.nfo.dbRefMapSize = new SizeF(rowW.Field<UInt32>("DB_refWidth"), rowW.Field<UInt32>("DB_refHeight"));
+                    virtualMap.nfo.dbMapOffsetUnit = new PointF(rowW.Field<int>("DB_X") / virtualMap.nfo.dbRefMapSize.Width,
+                                                                rowW.Field<int>("DB_Y") / virtualMap.nfo.dbRefMapSize.Height);
+                }
+
+                if ( virtualMap.Enabled )
+                    zoomFactor = virtualMap.ResizeFromZoom(1.0f);
+
+                Size sizePanel = splitContainer1.Panel1.Size;
+                Point halfPanel = new Point((int)(sizePanel.Width * 0.5f), (int)(sizePanel.Height * 0.5f));
+                virtualMap.Position.X = (int)(halfPanel.X - virtualMap.Size.Width * 0.5f);
+                virtualMap.Position.Y = (int)(halfPanel.Y - virtualMap.Size.Height * 0.5f);
+
+                mapHelper = new MapHelper(virtualMap);
+
+                ApplyMapChanges();
+            }
+            catch (Exception ex)
+            {
+                textBoxCmdStatus.Text += ex.ToString();
+            }
         }
         private void DB_OnConnection()
         {
@@ -906,7 +1079,7 @@ namespace DBAccess
 
             try
             {
-                foreach(DataRow row in _dsAllVehicleTypes.Tables[0].Rows)
+                foreach (DataRow row in _dsAllVehicleTypes.Tables[0].Rows)
                 {
                     string name = row.Field<string>("class_name");
 
@@ -952,65 +1125,6 @@ namespace DBAccess
             {
                 CloseConnection();
                 MessageBox.Show("Instance id '" + mycfg.instance_id + "' not found in database", "Warning");
-            }
-        }
-        private void SetCurrentMap(bool rebuild)
-        {
-            try
-            {
-                DataRow rowW = mycfg.worlds_def.Tables[0].Rows.Find(mycfg.world_id);
-                if (rowW != null)
-                {
-                    textBoxWorld.Text = rowW.Field<string>("World Name");
-
-
-                    string filepath = rowW.Field<string>("Filepath");
-
-                    if (File.Exists(filepath))
-                    {
-                        FileInfo fi = new FileInfo(filepath);
-
-                        string tileBasePath = configPath + "\\World" + mycfg.world_id + "\\LOD";
-
-                        if (rebuild)
-                        {
-                            MessageBox.Show("Please wait while generating tiles...\r\nThis is done once when selecting a new map.");
-                            this.Cursor = Cursors.WaitCursor;
-                            Tuple<Size, Size, Size> sizes = Tool.CreateTiles(filepath, tileBasePath, 256);
-
-                            rowW.SetField<float>("RatioX", sizes.Item1.Width / (float)sizes.Item2.Width);
-                            rowW.SetField<float>("RatioY", sizes.Item1.Height / (float)sizes.Item2.Height);
-                            rowW.SetField<int>("TileSizeX", sizes.Item3.Width);
-                            rowW.SetField<int>("TileSizeY", sizes.Item3.Height);
-                            this.Cursor = Cursors.Arrow;
-                        }
-
-                        int i = 0;
-                        while (Directory.Exists(tileBasePath + i))
-                            i++;
-
-                        virtualMap.nfo.tileBasePath = tileBasePath;
-                        virtualMap.nfo.depth = i;
-                        virtualMap.nfo.defTileSize = new Size(rowW.Field<int>("TileSizeX"), rowW.Field<int>("TileSizeY"));
-                        virtualMap.SetRatio(new SizeF(rowW.Field<float>("RatioX"), rowW.Field<float>("RatioY")));
-                    }
-                }
-
-                mycfg.db_map_size = new Size((int)rowW.Field<UInt32>("Width"), (int)rowW.Field<UInt32>("Height"));
-
-                if ( virtualMap.Enabled )
-                    zoomFactor = virtualMap.ResizeFromZoom(1.0f);
-
-                Size sizePanel = splitContainer1.Panel1.Size;
-                Point halfPanel = new Point((int)(sizePanel.Width * 0.5f), (int)(sizePanel.Height * 0.5f));
-                virtualMap.Position.X = (int)(halfPanel.X - virtualMap.Size.Width * 0.5f);
-                virtualMap.Position.Y = (int)(halfPanel.Y - virtualMap.Size.Height * 0.5f);
-
-                ApplyMapChanges();
-            }
-            catch (Exception ex)
-            {
-                textBoxCmdStatus.Text += ex.ToString();
             }
         }
         private void DB_OnRefresh()
@@ -1068,7 +1182,7 @@ namespace DBAccess
                     //
                     //  Deployables
                     //
-                    cmd.CommandText = "SELECT * FROM instance_deployable WHERE instance_id=" + mycfg.instance_id + " AND (deployable_id=1 OR deployable_id=66 OR deployable_id=67)";
+                    cmd.CommandText = "SELECT id, CAST(deployable_id AS UNSIGNED) deployable_id, worldspace, inventory, FROM instance_deployable WHERE instance_id=" + mycfg.instance_id + " AND (deployable_id=1 OR deployable_id=66 OR deployable_id=67)";
                     _dsDeployables.Clear();
                     adapter.Fill(_dsDeployables);
                 }
@@ -1090,6 +1204,122 @@ namespace DBAccess
                 mtxUseDS.ReleaseMutex();
             }
         }
+        private void DBEpoch_OnConnection()
+        {
+            if (!bConnected)
+                return;
+
+            mtxUpdateDB.WaitOne();
+
+            DataSet _dsVehicles = new DataSet();
+
+            this.textBoxCmdStatus.Text = "";
+
+            try
+            {
+                MySqlCommand cmd = cnx.CreateCommand();
+                MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
+
+                //
+                //  Vehicle types
+                //
+                cmd.CommandText = "SELECT ClassName class_name FROM object_data WHERE CharacterID=0";
+                _dsVehicles.Clear();
+                adapter.Fill(_dsVehicles);
+            }
+            catch (Exception ex)
+            {
+                this.textBoxCmdStatus.Text += ex.ToString();
+            }
+
+            mtxUpdateDB.ReleaseMutex();
+
+            mtxUseDS.WaitOne();
+
+            try
+            {
+                foreach (DataRow row in _dsVehicles.Tables[0].Rows)
+                {
+                    string name = row.Field<string>("class_name");
+
+                    if (mycfg.vehicle_types.Tables[0].Rows.Find(name) == null)
+                        mycfg.vehicle_types.Tables[0].Rows.Add(name, "Car");
+                }
+            }
+            catch (Exception ex)
+            {
+                textBoxCmdStatus.Text += ex.ToString();
+            }
+
+            mtxUseDS.ReleaseMutex();
+        }
+        private void DBEpoch_OnRefresh()
+        {
+            if (bConnected)
+            {
+                DataSet _dsAlivePlayers = new DataSet();
+                DataSet _dsOnlinePlayers = new DataSet();
+                DataSet _dsDeployables = new DataSet();
+                DataSet _dsVehicles = new DataSet();
+
+                mtxUpdateDB.WaitOne();
+
+                try
+                {
+                    MySqlCommand cmd = cnx.CreateCommand();
+                    MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
+
+                    //
+                    //  Players alive
+                    //
+                    cmd.CommandText = "SELECT cd.CharacterID id, pd.PlayerUID unique_id, pd.PlayerName name, cd.Humanity humanity, cd.worldspace worldspace,"
+                                    + " cd.inventory inventory, cd.backpack backpack, cd.medical medical, cd.CurrentState state, cd.DateStamp last_updated"
+                                    + " FROM character_data as cd, player_data as pd"
+                                    + " WHERE cd.PlayerUID=pd.PlayerUID AND cd.Alive=1";
+                    _dsAlivePlayers.Clear();
+                    adapter.Fill(_dsAlivePlayers);
+
+                    //
+                    //  Players online
+                    //
+                    cmd.CommandText += " AND cd.DateStamp > now() - interval " + mycfg.online_time_limit + " minute";
+                    _dsOnlinePlayers.Clear();
+                    adapter.Fill(_dsOnlinePlayers);
+
+                    //
+                    //  Vehicles
+                    cmd.CommandText = "SELECT CAST(ObjectID AS UNSIGNED) id, CAST(0 AS UNSIGNED) spawn_id, ClassName class_name, worldspace, inventory,"
+                                    + " fuel, damage, DateStamp last_updated"
+                                    + " FROM object_data WHERE CharacterID=0";
+                    _dsVehicles.Clear();
+                    adapter.Fill(_dsVehicles);
+
+                    //
+                    //  Deployables                                 à Remapper
+                    //
+                    cmd.CommandText = "SELECT CAST(ObjectID AS UNSIGNED) id, CAST(0 AS UNSIGNED) deployable_id, worldspace, inventory FROM object_data WHERE CharacterID!=0";
+                    _dsDeployables.Clear();
+                    adapter.Fill(_dsDeployables);
+                }
+                catch (Exception ex)
+                {
+                    textBoxCmdStatus.Text = ex.ToString();
+                }
+
+                mtxUpdateDB.ReleaseMutex();
+
+                mtxUseDS.WaitOne();
+
+                dsDeployables = _dsDeployables.Copy();
+                dsAlivePlayers = _dsAlivePlayers.Copy();
+                dsOnlinePlayers = _dsOnlinePlayers.Copy();
+                dsVehicles = _dsVehicles.Copy();
+
+                mycfg.world_id = 1;
+
+                mtxUseDS.ReleaseMutex();
+            }
+        }
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
             BackgroundWorker bw = sender as BackgroundWorker;
@@ -1098,7 +1328,11 @@ namespace DBAccess
             {
                 Thread.Sleep(5000);
 
-                DB_OnRefresh();
+                switch (mycfg.game_type)
+                {
+                    case "Epoch": DBEpoch_OnRefresh(); break;
+                    default: DB_OnRefresh(); break;
+                }
 
                 if (System.Threading.Interlocked.CompareExchange(ref bUserAction, 1, 0) == 0)
                 {
@@ -1231,7 +1465,11 @@ namespace DBAccess
                 if (bFileExists)
                 {
                     this.path = path;
-                    this.bitmap = new Bitmap(path);
+                    //this.bitmap = new Bitmap(path);
+                    using (var bmpTemp = new Bitmap(path))
+                    {
+                        this.bitmap = new Bitmap(bmpTemp);
+                    }
                 }
                 ticks = DateTime.Now.Ticks;
             }
@@ -1250,6 +1488,8 @@ namespace DBAccess
         List<tileNfo> tileCache = new List<tileNfo>();
 
         InterpolationMode interpolationMode = InterpolationMode.Bicubic;
+        PixelOffsetMode pixelOffsetMode = PixelOffsetMode.Half;
+
 
         private void Panel1_Paint(object sender, PaintEventArgs e)
         {
@@ -1260,6 +1500,7 @@ namespace DBAccess
                     e.Graphics.CompositingMode = CompositingMode.SourceCopy;
                     e.Graphics.CompositingQuality = CompositingQuality.HighQuality;
                     e.Graphics.InterpolationMode = interpolationMode;
+                    e.Graphics.PixelOffsetMode = pixelOffsetMode;
 
                     int nb_tilesDrawn = 0;
                     foreach (tileReq req in tileRequests)
@@ -1275,30 +1516,37 @@ namespace DBAccess
 
                     e.Graphics.CompositingMode = CompositingMode.SourceOver;
 
-                    if (checkBoxShowTrail.Checked)
+                    if (!mapHelper.enabled)
                     {
+                        if (checkBoxShowTrail.Checked)
+                        {
+                            foreach (iconDB idb in listIcons)
+                            {
+                                UIDType type = GetUIDType(idb.uid);
+
+                                if ((type == UIDType.TypePlayer) || (type == UIDType.TypeVehicle))
+                                    GetUIDGraph(idb.uid).DisplayInMap(e.Graphics, virtualMap);
+                            }
+                        }
+
+                        Rectangle recPanel = new Rectangle(Point.Empty, splitContainer1.Panel1.Size);
+                        int nb_iconsDrawn = 0;
                         foreach (iconDB idb in listIcons)
                         {
-                            UIDType type = GetUIDType(idb.uid);
-
-                            if ((type == UIDType.TypePlayer) || (type == UIDType.TypeVehicle))
-                                GetUIDdata(idb.uid).Display(e.Graphics, virtualMap);
+                            if (recPanel.IntersectsWith(idb.icon.rectangle))
+                            {
+                                e.Graphics.DrawImage(idb.icon.image, idb.icon.rectangle);
+                                nb_iconsDrawn++;
+                            }
                         }
                     }
-
-                    Rectangle recPanel = new Rectangle(Point.Empty, splitContainer1.Panel1.Size);
-                    int nb_iconsDrawn = 0;
-                    foreach (iconDB idb in listIcons)
+                    else
                     {
-                        if (recPanel.IntersectsWith(idb.icon.rectangle))
-                        {
-                            e.Graphics.DrawImage(idb.icon.image, idb.icon.rectangle);
-                            nb_iconsDrawn++;
-                        }
+                        mapHelper.Display(e.Graphics);
                     }
 
-                    textBoxCmdStatus.Text = "\r\nTiles Requested=" + tileRequests.Count + "\r\nTiles displayed: " + nb_tilesDrawn;
-                    textBoxCmdStatus.Text += "\r\nIcons Requested=" + listIcons.Count + "\r\nIcons displayed: " + nb_iconsDrawn;
+                    //textBoxCmdStatus.Text = "\r\nTiles Requested=" + tileRequests.Count + "\r\nTiles displayed: " + nb_tilesDrawn;
+                    //textBoxCmdStatus.Text += "\r\nIcons Requested=" + listIcons.Count + "\r\nIcons displayed: " + nb_iconsDrawn;
                 }
             }
             catch (Exception ex)
@@ -1310,7 +1558,7 @@ namespace DBAccess
         {
             if ((sender as CheckBox).Checked == false)
             {
-                foreach (KeyValuePair<UInt64, UIDdata> pair in dicUIDdata)
+                foreach (KeyValuePair<UInt64, UIDGraph> pair in dicUIDGraph)
                     pair.Value.path.Reset();
             }
         }
@@ -1345,41 +1593,66 @@ namespace DBAccess
         }
         private void dataGridViewMaps_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-            // Ignore clicks that are not on button cells.  
-            if (e.RowIndex < 0 || e.ColumnIndex != dataGridViewMaps.Columns["ColumnChoosePath"].Index)
+            if ((e.RowIndex < 0) || (e.RowIndex >= dataGridViewMaps.Rows.Count))
                 return;
 
-            DialogResult res = openFileDialog1.ShowDialog();
-
-            if (res == DialogResult.OK)
+            // Ignore clicks that are not on button cells.  
+            if (e.ColumnIndex == dataGridViewMaps.Columns["ColumnChoosePath"].Index)
             {
-                dataGridViewMaps["ColumnPath", e.RowIndex].Value = openFileDialog1.FileName;
-/*
-                try
+                DialogResult res = openFileDialog1.ShowDialog();
+
+                if (res == DialogResult.OK)
                 {
-                    string filepath = openFileDialog1.FileName;
-                    int world_id = int.Parse(dataGridViewMaps["ColumnID", e.RowIndex].Value.ToString());
+                    dataGridViewMaps["ColumnPath", e.RowIndex].Value = openFileDialog1.FileName;
 
-                    if (File.Exists(filepath))
+                    try
                     {
-                        FileInfo fi = new FileInfo(filepath);
+                        string filepath = openFileDialog1.FileName;
+                        int world_id = int.Parse(dataGridViewMaps["ColumnID", e.RowIndex].Value.ToString());
 
-                        string tileBasePath = configPath + "\\World" + world_id + "\\LOD";
+                        if (File.Exists(filepath))
+                        {
+                            FileInfo fi = new FileInfo(filepath);
 
-                        MessageBox.Show("Please wait while generating tiles...\r\nThis is done once when selecting a new map.");
+                            string tileBasePath = configPath + "\\World" + world_id + "\\LOD";
 
-                        this.Cursor = Cursors.WaitCursor;
-                        Tool.CreateTiles(filepath, tileBasePath, 256);
+                            MessageBox.Show("Please wait while generating tiles...\r\nThis is done once when selecting a new map.");
+
+                            tileCache.Clear();
+
+                            this.Cursor = Cursors.WaitCursor;
+
+                            DirectoryInfo di = new DirectoryInfo(configPath + "\\World" + world_id);
+                            if( di.Exists )
+                                di.Delete(true);
+
+                            Tuple<Size, Size, Size> sizes = Tool.CreateTiles(filepath, tileBasePath, 256);
+
+                            DataRow rowW = mycfg.worlds_def.Tables[0].Rows.Find(world_id);
+                            rowW.SetField<float>("RatioX", sizes.Item1.Width / (float)sizes.Item2.Width);
+                            rowW.SetField<float>("RatioY", sizes.Item1.Height / (float)sizes.Item2.Height);
+                            rowW.SetField<int>("TileSizeX", sizes.Item3.Width);
+                            rowW.SetField<int>("TileSizeY", sizes.Item3.Height);
+
+                            int tileCount = sizes.Item2.Width / 256;
+                            int depth = (int)Math.Log(tileCount, 2) + 1;
+
+                            rowW.SetField<int>("TileDepth", depth);
+
+                            this.Cursor = Cursors.Arrow;
+                            MessageBox.Show("Tiles generation done.");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Error while generating tiles !\r\nMaybe the bitmap is too large to be processed...");
+                        textBoxCmdStatus.Text += ex.ToString();
                         this.Cursor = Cursors.Arrow;
                     }
+
+                    if (dataGridViewMaps["ColumnID", e.RowIndex].Value.ToString() == mycfg.world_id.ToString())
+                        SetCurrentMap();
                 }
-                catch (Exception ex)
-                {
-                    textBoxCmdStatus.Text += ex.ToString();
-                }
-*/
-                if (dataGridViewMaps["ColumnID", e.RowIndex].Value.ToString() == mycfg.world_id.ToString())
-                    SetCurrentMap(true);
             }
         }
         private void toolStripMenuItemDelete_Click(object sender, EventArgs e)
@@ -1420,14 +1693,14 @@ namespace DBAccess
                 }
             }
         }
-        internal UIDdata GetUIDdata(UInt64 uid)
+        internal UIDGraph GetUIDGraph(UInt64 uid)
         {
-            UIDdata uiddata = null;
+            UIDGraph uidgraph = null;
 
-            if (dicUIDdata.TryGetValue(uid, out uiddata) == false)
-                dicUIDdata[uid] = uiddata = new UIDdata();
+            if (dicUIDGraph.TryGetValue(uid, out uidgraph) == false)
+                dicUIDGraph[uid] = uidgraph = new UIDGraph(new Pen(Color.Red, 2));
 
-            return uiddata;
+            return uidgraph;
         }
         //
         //
@@ -1947,31 +2220,62 @@ namespace DBAccess
             }
         }
         public delegate void DlgUpdateIcons();
+        public class DragNDrop
+        {
+            public void Start(List<Point> refPos)
+            {
+                refPositions = refPos;
+                offset = Size.Empty;
+                lastPositionMouse = MousePosition;
+            }
+            public void Start(Point refPos)
+            {
+                refPositions = new List<Point>();
+                refPositions.Add(refPos);
+                offset = Size.Empty;
+                lastPositionMouse = MousePosition;
+            }
+            public void Update()
+            {
+                offset = new Size((int)(MousePosition.X - lastPositionMouse.X), (int)(MousePosition.Y - lastPositionMouse.Y));
+            }
+            public void Stop()
+            {
+                offset = Size.Empty;
+            }
+
+            public Size Offset { get { return offset; } }
+            public Point Position(int idx) { return Point.Add(refPositions[idx], offset); }
+
+            private List<Point> refPositions;
+            private Size offset = Size.Empty;
+            private Point lastPositionMouse;
+        }
         public class myConfig
         {
             public myConfig()
             {
+                cfgVersion = curCfgVersion;
                 worlds_def = new DataSet();
                 vehicle_types = new DataSet();
-                db_map_size = Size.Empty;
             }
-            public string url { get; set; }
-            public string port { get; set; }
-            public string basename { get; set; }
-            public string username { get; set; }
-            public string password { get; set; }
-            public string instance_id { get; set; }
-            public string vehicle_limit { get; set; }
-            public string body_time_limit { get; set; }
-            public string tent_time_limit { get; set; }
-            public string online_time_limit { get; set; }
+            public string game_type;
+            public string url;
+            public string port;
+            public string basename;
+            public string username;
+            public string password;
+            public string instance_id;
+            public string vehicle_limit;
+            public string body_time_limit;
+            public string tent_time_limit;
+            public string online_time_limit;
+            public ModuleVersion cfgVersion { get; set; }
             public DataSet worlds_def { get; set; }
             public DataSet vehicle_types { get; set; }
             //
             [XmlIgnore]
             public UInt16 world_id = 0;
-            [XmlIgnore]
-            public Size db_map_size;
         }
         public class myIcon
         {
@@ -2002,37 +2306,35 @@ namespace DBAccess
             public event MouseEventHandler Click;
             public ContextMenuStrip contextMenuStrip;
         }
-        public class UIDdata
+        public class UIDGraph
         {
-            public PointF invalidPos = new PointF(0,1);
+            public static PointF InvalidPos = new PointF(float.NaN,float.NaN);
 
-            public UIDdata()
+            public UIDGraph(Pen pen)
             {
                 Random rnd = new Random();
 
                 byte[] rgb = { 0, 0, 0 };
                 rnd.NextBytes(rgb);
 
-                pen = new Pen(Color.FromArgb(192, rgb[0], rgb[1], rgb[2]), 3);
+                this.pen = pen;
             }
-
             public void AddPoint(PointF pos)
             {
-                if ((unitPositions.Count == 0) || (pos != unitPositions.Last()))
-                    unitPositions.Add(pos);
+                if ((positions.Count == 0) || (pos != positions.Last()))
+                    positions.Add(pos);
             }
-
-            public void Display(Graphics gfx, VirtualMap map)
+            public void DisplayInMap(Graphics gfx, VirtualMap map)
             {
                 path.Reset();
 
-                PointF last = invalidPos;
-                foreach (PointF pt in unitPositions)
+                PointF last = InvalidPos;
+                foreach (PointF pt in positions)
                 {
                     PointF newpt = map.VirtualPosition(pt);
 
                     // if a point is invalid, break the continuity
-                    if ((last != invalidPos) && (pt != invalidPos))
+                    if ((last != InvalidPos) && (pt != InvalidPos))
                         path.AddLine(last, newpt);
 
                     last = newpt;
@@ -2043,7 +2345,7 @@ namespace DBAccess
 
             public GraphicsPath path = new GraphicsPath();
             public Pen pen;
-            public List<PointF> unitPositions = new List<PointF>();
+            public List<PointF> positions = new List<PointF>();
         }
         public enum UIDType : ulong
         {
@@ -2071,7 +2373,6 @@ namespace DBAccess
                 mi.Invoke(this.Panel2, args);
             }
         }
-
         public class VirtualMap
         {
             public VirtualMap()
@@ -2109,16 +2410,21 @@ namespace DBAccess
             }
             public Point VirtualPosition(iconDB from)
             {
-                float x = Position.X + from.pos.X * SizeCorrected.Width - from.icon.Size.Width * 0.5f;
-                float y = Position.Y + from.pos.Y * SizeCorrected.Height - from.icon.Size.Height * 0.5f;
+                float ratioX = (nfo.dbMapSize.Width / nfo.dbRefMapSize.Width);
+                float ratioY = (nfo.dbMapSize.Height / nfo.dbRefMapSize.Height);
+                float unitPosX = from.pos.X * ratioX + nfo.dbMapOffsetUnit.X;
+                float unitPosY = from.pos.Y * ratioY + nfo.dbMapOffsetUnit.Y;
 
+                float x = Position.X + unitPosX * SizeCorrected.Width - from.icon.Size.Width * 0.5f;
+                float y = Position.Y + unitPosY * SizeCorrected.Height - from.icon.Size.Height * 0.5f;
+                
                 return new Point((int)x, (int)y);
             }
 
             public double ResizeFromZoom(double zoom)
             {
-                int max_sizeX = nfo.defTileSize.Width << (nfo.depth - 1);
-                int max_sizeY = nfo.defTileSize.Height << (nfo.depth - 1);
+                int max_sizeX = /*2**/nfo.defTileSize.Width << (nfo.depth - 1);
+                int max_sizeY = /*2**/nfo.defTileSize.Height << (nfo.depth - 1);
 
                 Size temp = new Size((int)(nfo.defTileSize.Width * zoom),
                                      (int)(nfo.defTileSize.Height * zoom));
@@ -2134,9 +2440,6 @@ namespace DBAccess
             //
             //
             //
-            public Point _position_DnD = Point.Empty;
-            public Size _offset_DnD = Size.Empty;
-
             private int _depth;
             private Size _size;
             private Size _sizeCorrected;
@@ -2146,12 +2449,19 @@ namespace DBAccess
 
             private void UpdateData()
             {
-                _tileCount = new Size(Tool.NextPowerOf2((_size.Width / (float)nfo.defTileSize.Width)),
-                                      Tool.NextPowerOf2((_size.Height / (float)nfo.defTileSize.Height)));
+                int reqTileCountX = Tool.NextPowerOf2((_size.Width / (float)nfo.defTileSize.Width));
+                int reqTileCountY = Tool.NextPowerOf2((_size.Width / (float)nfo.defTileSize.Width));
+
+                _depth = (int)Math.Log(Math.Max(reqTileCountX, reqTileCountY), 2);
+
+                // Clamp to max depth
+                _depth = Math.Min(_depth, nfo.depth-1);
+
+                // Clamp tile count
+                _tileCount = new Size(Math.Min(reqTileCountX, 1<<_depth),
+                                      Math.Min(reqTileCountY, 1<<_depth));
 
                 _tileSize = Size.Ceiling(new SizeF(_size.Width / (float)_tileCount.Width, _size.Height / (float)_tileCount.Height));
-
-                _depth = (int)Math.Log(Math.Max(_tileCount.Width, _tileCount.Height), 2);
 
                 // and re-adjust size from new tile size
                 _size = new Size(_tileSize.Width * _tileCount.Width, _tileSize.Height * _tileCount.Height);
@@ -2163,7 +2473,261 @@ namespace DBAccess
                 public string tileBasePath = "";
                 public int depth = 0;
                 public Size defTileSize = new Size(1,1);
+                public SizeF dbMapSize = new SizeF(1, 1);
+                public PointF dbMapOffsetUnit = PointF.Empty;
+                public SizeF dbRefMapSize = new SizeF(1, 1);
            }
+        }
+        public class MapHelper
+        {
+            public PointF[] defBoundaries = new PointF[2];
+            public PointF[] boundaries = new PointF[2];
+            public PointF[] controls = new PointF[4];
+            public int isDraggingCtrlPoint;
+            public bool enabled;
+
+            public MapHelper(VirtualMap map)
+            {
+                this.map = map;
+
+                PathDef def;
+
+                //  DB NEAF
+                def = new PathDef();
+                paths.Add(def);
+                def.points.Add(new PointF(11777, 12848));
+                def.points.Add(new PointF(11767, 12823));
+                def.points.Add(new PointF(12470, 12566));
+                def.points.Add(new PointF(12480, 12593));
+                def.points.Add(new PointF(11777, 12848));
+                //  DB NWAF
+                def = new PathDef();
+                paths.Add(def);
+                def.points.Add(new PointF(5055, 9732));
+                def.points.Add(new PointF(4778, 9572));
+                def.points.Add(new PointF(4057, 10820));
+                def.points.Add(new PointF(4335, 10979));
+                def.points.Add(new PointF(5055, 9732));
+                //  DB SWAF
+                def = new PathDef();
+                paths.Add(def);
+                def.points.Add(new PointF(4617, 2583));
+                def.points.Add(new PointF(4605, 2565));
+                def.points.Add(new PointF(5230, 2203));
+                def.points.Add(new PointF(5241, 2222));
+                def.points.Add(new PointF(4617, 2583));
+
+                PointF min = new PointF(9999999, 9999999);
+                PointF max = new PointF(-9999999, -9999999);
+                foreach (PathDef _def in paths)
+                {
+                    foreach (PointF pt in _def.points)
+                    {
+                        min.X = Math.Min(min.X, pt.X);
+                        min.Y = Math.Min(min.Y, pt.Y);
+                        max.X = Math.Max(max.X, pt.X);
+                        max.Y = Math.Max(max.Y, pt.Y);
+                    }
+                }
+                SizeF size = new SizeF(max.X - min.X, max.Y - min.Y);
+
+                //  DB Map boundaries
+                def = new PathDef();
+                paths.Add(def);
+                def.points.Add(new PointF(0, 15360));
+                def.points.Add(new PointF(15360, 15360));
+                def.points.Add(new PointF(15360, 0));
+                def.points.Add(new PointF(0, 0));
+                def.points.Add(new PointF(0, 15360));
+
+                foreach (PathDef _def in paths)
+                {
+                    for (int i = 0; i < _def.points.Count; i++)
+                    {
+                        PointF pt = _def.points[i];
+
+                        pt.X = (pt.X - min.X) / size.Width;
+                        pt.Y = (pt.Y - min.Y) / size.Height;
+                        _def.points[i] = pt;
+                    }
+                }
+
+                defBoundaries[0] = new PointF(def.points[0].X, def.points[0].Y);
+                defBoundaries[1] = new PointF(def.points[2].X, def.points[2].Y);
+
+                //  DB bounding box
+                def = new PathDef();
+                paths.Add(def);
+                def.points.Add(new PointF(0, 0));
+                def.points.Add(new PointF(0, 1));
+                def.points.Add(new PointF(1, 1));
+                def.points.Add(new PointF(1, 0));
+                def.points.Add(new PointF(0, 0));
+
+                // DB map boundaries
+                boundaries[0] = map.nfo.dbMapOffsetUnit;
+                boundaries[1] = PointF.Add(boundaries[0], new SizeF(map.nfo.dbMapSize.Width / map.nfo.dbRefMapSize.Width,
+                                                                    map.nfo.dbMapSize.Height / map.nfo.dbRefMapSize.Height));
+                // Control points
+                SizeF Csize = new SizeF((boundaries[1].X - boundaries[0].X) / (defBoundaries[1].X - defBoundaries[0].X),
+                                        (boundaries[1].Y - boundaries[0].Y) / (defBoundaries[1].Y - defBoundaries[0].Y));
+
+                controls[0] = new PointF(boundaries[0].X - defBoundaries[0].X * Csize.Width,
+                                         boundaries[0].Y - defBoundaries[0].Y * Csize.Height);
+                controls[1] = new PointF(controls[0].X + Csize.Width,
+                                         controls[0].Y + Csize.Height);
+                controls[2] = new PointF(controls[1].X, controls[0].Y);
+                controls[3] = new PointF(controls[0].X, controls[1].Y);
+            }
+            public int IntersectControl(PointF pos, float radius)
+            {
+                SizeF delta = new SizeF();
+                for (int i = 0; i < 4; i++)
+                {
+                    PointF posInMap = new PointF(controls[i].X * map.SizeCorrected.Width,
+                                                 controls[i].Y * map.SizeCorrected.Height);
+
+                    delta.Width = (posInMap.X - pos.X);
+                    delta.Height = (posInMap.Y - pos.Y);
+
+                    float distance = (float)Math.Sqrt(delta.Width*delta.Width + delta.Height*delta.Height);
+
+                    if (distance <= radius)
+                        return i;
+                }
+
+                return -1;
+            }
+            public void Display(Graphics gfx)
+            {
+                PointF offset = new PointF(controls[0].X * map.SizeCorrected.Width + map.Position.X,
+                                           controls[0].Y * map.SizeCorrected.Height + map.Position.Y);
+
+                SizeF size = SizeF.Subtract(new SizeF(controls[1]), new SizeF(controls[0]));
+                size.Width *= map.SizeCorrected.Width;
+                size.Height *= map.SizeCorrected.Height;
+
+                foreach (PathDef def in paths)
+                {
+                    def.path.Reset();
+
+                    PointF last = new PointF(offset.X + (def.points[0].X * size.Width),
+                                             offset.Y + (def.points[0].Y * size.Height));
+                    for (int i = 1; i < def.points.Count; i++)
+                    {
+                        PointF pt = def.points[i];
+                        PointF newpt = new PointF(offset.X + (pt.X * size.Width),
+                                                  offset.Y + (pt.Y * size.Height));
+
+                        // if a point is invalid, break the continuity
+                        def.path.AddLine(last, newpt);
+                        last = newpt;
+                    }
+
+                    gfx.DrawPath(pen, def.path);
+                }
+
+                int j = 0;
+                foreach (PointF point in controls)
+                {
+                    Point pt = Point.Truncate(new PointF(point.X * map.SizeCorrected.Width + map.Position.X,
+                                                         point.Y * map.SizeCorrected.Height + map.Position.Y));
+
+                    Brush brush = (isDraggingCtrlPoint == j) ? brushSelected : brushUnselected;
+                    gfx.FillEllipse(brush, new Rectangle(pt.X - 5, pt.Y - 5, 11, 11));
+                    j++;
+                }
+
+                j = 0;
+                foreach (PointF point in boundaries)
+                {
+                    Point pt = Point.Truncate(new PointF(point.X * map.SizeCorrected.Width + map.Position.X,
+                                                         point.Y * map.SizeCorrected.Height + map.Position.Y));
+
+                    gfx.FillEllipse(brushSelected, new Rectangle(pt.X - 8, pt.Y - 8, 17, 17));
+                    j++;
+                }
+            }
+            public void ControlPointUpdated(int idx)
+            {
+                if (idx < 2)
+                {
+                    // Update 2 & 3
+                    controls[2] = new PointF(controls[1].X, controls[0].Y);
+                    controls[3] = new PointF(controls[0].X, controls[1].Y);
+                }
+                else
+                {
+                    // Update 1 & 2
+                    controls[0] = new PointF(controls[3].X, controls[2].Y);
+                    controls[1] = new PointF(controls[2].X, controls[3].Y);
+                }
+
+                SizeF size = new SizeF(controls[1].X - controls[0].X,
+                                       controls[1].Y - controls[0].Y);
+
+                boundaries[0] = new PointF(controls[0].X + defBoundaries[0].X * size.Width,
+                                           controls[0].Y + defBoundaries[0].Y * size.Height);
+                boundaries[1] = new PointF(controls[0].X + defBoundaries[1].X * size.Width,
+                                           controls[0].Y + defBoundaries[1].Y * size.Height);
+            }
+
+            private class PathDef
+            {
+                public GraphicsPath path = new GraphicsPath();
+                public List<PointF> points = new List<PointF>();
+            }
+            private Pen pen = new Pen(Color.Red, 1.5f);
+            private SolidBrush brushUnselected = new SolidBrush(Color.Red);
+            private SolidBrush brushSelected = new SolidBrush(Color.Green);
+            private List<PathDef> paths = new List<PathDef>();
+            private VirtualMap map;
+        }
+        private void comboBoxGameType_SelectedValueChanged(object sender, EventArgs e)
+        {
+            ComboBox cb = sender as ComboBox;
+
+            mycfg.game_type = cb.Items[cb.SelectedIndex] as string;
+            textBoxInstanceId.Enabled = (!bConnected && (cb.SelectedIndex == 0));
+        }
+
+        private void checkBoxMapHelper_CheckedChanged(object sender, EventArgs e)
+        {
+            CheckBox cb = sender as CheckBox;
+
+            if (mapHelper == null)
+                return;
+
+            mapHelper.enabled = cb.Checked;
+            
+            if (!cb.Checked)
+            {
+                // Apply map helper's new size
+                DataRow row = mycfg.worlds_def.Tables[0].Rows.Find(mycfg.world_id);
+
+                UInt32 refWidth = row.Field<UInt32>("DB_refWidth");
+                UInt32 refHeight = row.Field<UInt32>("DB_refHeight");
+
+                PointF offUnit = mapHelper.boundaries[0];
+                SizeF sizeUnit = new SizeF(mapHelper.boundaries[1].X - mapHelper.boundaries[0].X,
+                                           mapHelper.boundaries[1].Y - mapHelper.boundaries[0].Y);
+
+                int offsetX = (int)(offUnit.X * refWidth);
+                int offsetY = (int)(offUnit.Y * refWidth);
+                UInt32 width = (UInt32)(sizeUnit.Width * refWidth);
+                UInt32 height = (UInt32)(sizeUnit.Height * refWidth);
+
+                virtualMap.nfo.dbMapOffsetUnit = new PointF(offsetX / (float)refWidth, offsetY / (float)refHeight);
+                virtualMap.nfo.dbMapSize = new SizeF(width, height);
+                virtualMap.nfo.dbRefMapSize = new SizeF(refWidth, refHeight);
+
+                row.SetField<int>("DB_X", offsetX);
+                row.SetField<int>("DB_Y", offsetY);
+                row.SetField<UInt32>("DB_Width", width);
+                row.SetField<UInt32>("DB_Height", height);
+            }
+
+            splitContainer1.Panel1.Invalidate();
         }
     }
     internal class Tool
@@ -2388,6 +2952,144 @@ namespace DBAccess
                 if (codecs[i].MimeType == mimeType)
                     return codecs[i];
             return null;
+        }
+    }
+    [Serializable]
+    public class ModuleVersion : ICloneable, IComparable
+    {
+        private int major;
+        private int minor;
+        public int Major
+        {
+            get
+            {
+                return major;
+            }
+            set
+            {
+                major = value;
+            }
+        }
+        public int Minor
+        {
+            get
+            {
+                return minor;
+            }
+            set
+            {
+                minor = value;
+            }
+        }
+        public ModuleVersion()
+        {
+            this.major = 0;
+            this.minor = 0;
+        }
+        public ModuleVersion(int major, int minor)
+        {
+            if (major < 0)
+            {
+                throw new ArgumentOutOfRangeException("major", "ArgumentOutOfRange_Version");
+            }
+            if (minor < 0)
+            {
+                throw new ArgumentOutOfRangeException("minor", "ArgumentOutOfRange_Version");
+            }
+            this.major = major;
+            this.minor = minor;
+        }
+        #region ICloneable Members
+        public object Clone()
+        {
+            ModuleVersion version1 = new ModuleVersion();
+            version1.major = this.major;
+            version1.minor = this.minor;
+            return version1;
+        }
+        #endregion
+        #region IComparable Members
+        public int CompareTo(object version)
+        {
+            if (version == null)
+            {
+                return 1;
+            }
+            if (!(version is ModuleVersion))
+            {
+                throw new ArgumentException("Arg_MustBeVersion");
+            }
+            ModuleVersion version1 = (ModuleVersion)version;
+            if (this.major != version1.Major)
+            {
+                if (this.major > version1.Major)
+                {
+                    return 1;
+                }
+                return -1;
+            }
+            if (this.minor != version1.Minor)
+            {
+                if (this.minor > version1.Minor)
+                {
+                    return 1;
+                }
+                return -1;
+            }
+            return 0;
+        }
+        #endregion
+        public override bool Equals(object obj)
+        {
+            if ((obj == null) || !(obj is ModuleVersion))
+            {
+                return false;
+            }
+            ModuleVersion version1 = (ModuleVersion)obj;
+            if ((this.major == version1.Major) && (this.minor == version1.Minor))
+            {
+                return true;
+            }
+            return false;
+        }
+        public override int GetHashCode()
+        {
+            int num1 = 0;
+            num1 |= ((this.major & 15) << 0x1c);
+            num1 |= ((this.minor & 0xff) << 20);
+            return num1;
+        }
+        public static bool operator ==(ModuleVersion v1, ModuleVersion v2)
+        {
+            return v1.Equals(v2);
+        }
+        public static bool operator >(ModuleVersion v1, ModuleVersion v2)
+        {
+            return (v2 < v1);
+        }
+        public static bool operator >=(ModuleVersion v1, ModuleVersion v2)
+        {
+            return (v2 <= v1);
+        }
+        public static bool operator !=(ModuleVersion v1, ModuleVersion v2)
+        {
+            return (v1 != v2);
+        }
+        public static bool operator <(ModuleVersion v1, ModuleVersion v2)
+        {
+            if (v1 == null)
+            {
+                throw new ArgumentNullException("v1");
+            }
+            return (v1.CompareTo(v2) < 0);
+        }
+        public static bool operator <=(ModuleVersion v1, ModuleVersion v2)
+        {
+            if (v1 == null)
+            {
+                throw new ArgumentNullException("v1");
+            }
+            return (v1.CompareTo(v2) <= 0);
         }
     }
 }

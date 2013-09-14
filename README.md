@@ -3,6 +3,9 @@ DayZ DB Access
 
 Simple tool to show some data from a DayZ database.
 
+- v2.0.0
+	added support for Epoch database (not yet fully functional)
+	added graphical helper to adapt DB coordinates to selected bitmap
 
 - v1.7.0
 
