@@ -448,6 +448,13 @@ namespace DBAccess
             deployable.Rebuild();
             propertyGrid1.SelectedObject = deployable;
             propertyGrid1.ExpandAllGridItems();
+
+            // Select class name in Deployables table
+            foreach (DataGridViewRow row in dataGridViewDeployableTypes.Rows)
+            {
+                if (row.Cells["ClassName"].Value as string == pb.iconDB.row.Field<string>("class_name"))
+                    row.Cells["Type"].Selected = true;
+            }
         }
         private void RefreshIcons()
         {
@@ -712,8 +719,18 @@ namespace DBAccess
 
                 idb.icon = iconDeployables[idx];
                 idb.icon.iconDB = idb;
-                UInt64 did = row.Field<UInt64>("deployable_id");
-                idb.icon.image = (did == 1) ? global::DBAccess.Properties.Resources.tent : global::DBAccess.Properties.Resources.stach;
+                string name = row.Field<string>("class_name");
+
+                DataRow rowT = mycfg.deployable_types.Tables[0].Rows.Find(name);
+                string classname = (rowT != null) ? rowT.Field<string>("Type") : "";
+                switch (classname)
+                {
+                    case "Tent": idb.icon.image = global::DBAccess.Properties.Resources.tent; break;
+                    case "Stach": idb.icon.image = global::DBAccess.Properties.Resources.stach; break;
+                    case "Small Build": idb.icon.image = global::DBAccess.Properties.Resources.small_build; break;
+                    case "Large Build": idb.icon.image = global::DBAccess.Properties.Resources.large_build; break;
+                    default: idb.icon.image = global::DBAccess.Properties.Resources.unknown; break;
+                }
 
                 listIcons.Add(idb);
 
@@ -885,6 +902,16 @@ namespace DBAccess
                 mycfg.vehicle_types.Tables[0].PrimaryKey = keys;
             }
 
+            if (mycfg.deployable_types.Tables.Count == 0)
+            {
+                DataTable table = mycfg.deployable_types.Tables.Add();
+                table.Columns.Add(new DataColumn("ClassName", typeof(string)));
+                table.Columns.Add(new DataColumn("Type", typeof(string)));
+                DataColumn[] keys = new DataColumn[1];
+                keys[0] = mycfg.deployable_types.Tables[0].Columns[0];
+                mycfg.deployable_types.Tables[0].PrimaryKey = keys;
+            }
+
             try
             {
                 textBoxURL.Text = mycfg.url;
@@ -908,6 +935,11 @@ namespace DBAccess
                 dataGridViewVehicleTypes.Columns["ColumnType"].DataPropertyName = "Type";
                 dataGridViewVehicleTypes.DataSource = mycfg.vehicle_types.Tables[0];
                 dataGridViewVehicleTypes.Sort(dataGridViewVehicleTypes.Columns["ColumnClassName"], ListSortDirection.Ascending);
+
+                dataGridViewDeployableTypes.Columns["ClassName"].DataPropertyName = "ClassName";
+                dataGridViewDeployableTypes.Columns["Type"].DataPropertyName = "Type";
+                dataGridViewDeployableTypes.DataSource = mycfg.deployable_types.Tables[0];
+                dataGridViewDeployableTypes.Sort(dataGridViewDeployableTypes.Columns["ClassName"], ListSortDirection.Ascending);
             }
             catch (Exception ex)
             {
@@ -1160,13 +1192,23 @@ namespace DBAccess
                     //
                     //  Deployables
                     //
-                    cmd.CommandText = "SELECT id, CAST(deployable_id AS UNSIGNED) deployable_id, worldspace, inventory, FROM instance_deployable WHERE instance_id=" + mycfg.instance_id + " AND (deployable_id=1 OR deployable_id=66 OR deployable_id=67)";
+                    cmd.CommandText = "SELECT id.id id, d.class_name class_name, id.worldspace, id.inventory"
+                                    + " FROM instance_deployable as id, deployable as d"
+                                    + " WHERE instance_id=" + mycfg.instance_id;
                     _dsDeployables.Clear();
                     adapter.Fill(_dsDeployables);
                 }
                 catch (Exception ex)
                 {
                     textBoxCmdStatus.Text = ex.ToString();
+                }
+
+                foreach (DataRow row in _dsDeployables.Tables[0].Rows)
+                {
+                    string name = row.Field<string>("class_name");
+
+                    if (mycfg.deployable_types.Tables[0].Rows.Find(name) == null)
+                        mycfg.deployable_types.Tables[0].Rows.Add(name, "Unknown");
                 }
 
                 mtxUpdateDB.ReleaseMutex();
@@ -1273,15 +1315,23 @@ namespace DBAccess
                     adapter.Fill(_dsVehicles);
 
                     //
-                    //  Deployables                                 à Remapper
+                    //  Deployables
                     //
-                    cmd.CommandText = "SELECT CAST(ObjectID AS UNSIGNED) id, CAST(0 AS UNSIGNED) deployable_id, worldspace, inventory FROM object_data WHERE CharacterID!=0";
+                    cmd.CommandText = "SELECT CAST(ObjectID AS UNSIGNED) id, Classname class_name, worldspace, inventory FROM object_data WHERE CharacterID!=0";
                     _dsDeployables.Clear();
                     adapter.Fill(_dsDeployables);
                 }
                 catch (Exception ex)
                 {
                     textBoxCmdStatus.Text = ex.ToString();
+                }
+
+                foreach (DataRow row in _dsDeployables.Tables[0].Rows)
+                {
+                    string name = row.Field<string>("class_name");
+
+                    if (mycfg.deployable_types.Tables[0].Rows.Find(name) == null)
+                        mycfg.deployable_types.Tables[0].Rows.Add(name, "Unknown");
                 }
 
                 mtxUpdateDB.ReleaseMutex();
@@ -2014,7 +2064,7 @@ namespace DBAccess
             }
 
             [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
-            public string owner { get; set; }
+            public string name { get; set; }
             [CategoryAttribute("Inventory"), ReadOnlyAttribute(true)]
             public Storage inventory { get; set; }
             public override void Rebuild()
@@ -2023,7 +2073,7 @@ namespace DBAccess
                 this.inventory.items.Clear();
                 this.inventory.bags.Clear();
 
-                this.owner = "who knows...";
+                this.name = idb.row.Field<string>("class_name");
 
                 ArrayList arr = Tool.ParseInventoryString(idb.row.Field<string>("inventory"));
                 ArrayList aItems;
@@ -2291,6 +2341,7 @@ namespace DBAccess
                 cfgVersion = curCfgVersion;
                 worlds_def = new DataSet();
                 vehicle_types = new DataSet();
+                deployable_types = new DataSet();
             }
             public string game_type;
             public string url;
@@ -2306,6 +2357,7 @@ namespace DBAccess
             public ModuleVersion cfgVersion { get; set; }
             public DataSet worlds_def { get; set; }
             public DataSet vehicle_types { get; set; }
+            public DataSet deployable_types { get; set; }
             //
             [XmlIgnore]
             public UInt16 world_id = 0;
@@ -2723,7 +2775,6 @@ namespace DBAccess
             mycfg.game_type = cb.Items[cb.SelectedIndex] as string;
             textBoxInstanceId.Enabled = (!bConnected && (cb.SelectedIndex == 0));
         }
-
         private void checkBoxMapHelper_CheckedChanged(object sender, EventArgs e)
         {
             CheckBox cb = sender as CheckBox;
@@ -2762,7 +2813,6 @@ namespace DBAccess
 
             splitContainer1.Panel1.Invalidate();
         }
-
         private void bgWorkerFast_DoWork(object sender, DoWorkEventArgs e)
         {
             BackgroundWorker bw = sender as BackgroundWorker;
