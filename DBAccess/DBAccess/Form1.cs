@@ -29,7 +29,9 @@ namespace DBAccess
         private static int bUserAction = 0;
         private static Mutex mtxUpdateDB = new Mutex();
         private static Mutex mtxUseDS = new Mutex();
+        private static EventWaitHandle eventFastBgWorker = new EventWaitHandle(false, EventResetMode.ManualReset);
         public DlgUpdateIcons dlgUpdateIcons;
+        public DlgUpdateIcons dlgRefreshMap;
         //
         private MySqlConnection cnx;
         private bool bConnected = false;
@@ -39,7 +41,6 @@ namespace DBAccess
         private string configPath;
         private string configFilePath;
         private VirtualMap virtualMap = new VirtualMap();
-        private double zoomFactor = 1.0;
         //
         private DataSet dsInstances = new DataSet();
         private DataSet dsDeployables = new DataSet();
@@ -55,6 +56,7 @@ namespace DBAccess
         private List<myIcon> iconVehicles = new List<myIcon>();
         private List<myIcon> iconDeployables = new List<myIcon>();
         private DragNDrop dragndrop = new DragNDrop();
+        private MapZoom mapZoom = new MapZoom();
 
         private MapHelper mapHelper;
 
@@ -90,7 +92,8 @@ namespace DBAccess
             //
             LoadConfigFile();
 
-            bgWorker.RunWorkerAsync();
+            bgWorkerDatabase.RunWorkerAsync();
+            bgWorkerFast.RunWorkerAsync();
 
             Enable(false);
         }
@@ -117,56 +120,56 @@ namespace DBAccess
         }
         private void Panel1_MouseClick(object sender, MouseEventArgs e)
         {
-            interpolationMode = InterpolationMode.NearestNeighbor;
-
             System.Threading.Interlocked.CompareExchange(ref bUserAction, 1, 0);
 
-            if (e.Button.HasFlag(MouseButtons.Right) && (mapHelper != null))
+            if (e.Button.HasFlag(MouseButtons.Right) && (mapHelper != null) && mapHelper.enabled)
             {
-                if (mapHelper.enabled)
+                Point mousePos = new Point(e.Location.X - virtualMap.Position.X,
+                                            e.Location.Y - virtualMap.Position.Y);
+                mapHelper.isDraggingCtrlPoint = mapHelper.IntersectControl(mousePos, 5);
+
+                if (mapHelper.isDraggingCtrlPoint > 0)
                 {
-                    Point mousePos = new Point(e.Location.X - virtualMap.Position.X,
-                                               e.Location.Y - virtualMap.Position.Y);
-                    mapHelper.isDraggingCtrlPoint = mapHelper.IntersectControl(mousePos, 5);
-
-                    if (mapHelper.isDraggingCtrlPoint > 0)
-                    {
-                        // Will drag selected Control point
-                        Point pt = new Point((int)(mapHelper.controls[mapHelper.isDraggingCtrlPoint].X * virtualMap.SizeCorrected.Width + virtualMap.Position.X),
-                                             (int)(mapHelper.controls[mapHelper.isDraggingCtrlPoint].Y * virtualMap.SizeCorrected.Height + virtualMap.Position.Y));
-                        dragndrop.Start(pt);
-                    }
-                    else
-                    {
-                        // Will drag all Control points
-                        List<Point> points = new List<Point>(4);
-                        for (int i = 0; i < 4; i++)
-                        {
-                            Point pt = new Point((int)(mapHelper.controls[i].X * virtualMap.SizeCorrected.Width + virtualMap.Position.X),
-                                                 (int)(mapHelper.controls[i].Y * virtualMap.SizeCorrected.Height + virtualMap.Position.Y));
-                            points.Add(pt);
-                        }
-                        dragndrop.Start(points);
-                    }
-
-                    splitContainer1.Panel1.Invalidate();
-                    return;
+                    // Will drag selected Control point
+                    Point pt = new Point((int)(mapHelper.controls[mapHelper.isDraggingCtrlPoint].X * virtualMap.SizeCorrected.Width + virtualMap.Position.X),
+                                            (int)(mapHelper.controls[mapHelper.isDraggingCtrlPoint].Y * virtualMap.SizeCorrected.Height + virtualMap.Position.Y));
+                    dragndrop.Start(pt);
                 }
-            }
-
-            //
-            dragndrop.Start(virtualMap.Position);
-
-            Rectangle mouseRec = new Rectangle(e.Location, Size.Empty);
-            Rectangle r = new Rectangle(Point.Empty, new Size(24, 24)    /* !!!! annoying shortcut, remove it later !!!! */);
-            foreach (iconDB idb in listIcons)
-            {
-                r.Location = idb.icon.Location;
-
-                if (mouseRec.IntersectsWith(r))
+                else
                 {
-                    idb.icon.OnClick(this, e);
-                    break;
+                    // Will drag all Control points
+                    List<Point> points = new List<Point>(4);
+                    for (int i = 0; i < 4; i++)
+                    {
+                        Point pt = new Point((int)(mapHelper.controls[i].X * virtualMap.SizeCorrected.Width + virtualMap.Position.X),
+                                                (int)(mapHelper.controls[i].Y * virtualMap.SizeCorrected.Height + virtualMap.Position.Y));
+                        points.Add(pt);
+                    }
+                    dragndrop.Start(points);
+                }
+
+                splitContainer1.Panel1.Invalidate();
+            }
+            else
+            {
+                dragndrop.Start(virtualMap.Position);
+
+                if ((mapHelper!=null) && !mapHelper.enabled)
+                {
+                    Rectangle mouseRec = new Rectangle(e.Location, Size.Empty);
+                    Rectangle r = new Rectangle(Point.Empty, new Size(24, 24)    /* !!!! annoying shortcut, remove it later !!!! */);
+                    foreach (iconDB idb in listIcons)
+                    {
+                        r.Location = idb.icon.Location;
+
+                        if (mouseRec.IntersectsWith(r))
+                        {
+                            // Call Click event from icon
+                            idb.icon.OnClick(this, e);
+
+                            break;
+                        }
+                    }
                 }
             }
         }
@@ -220,12 +223,6 @@ namespace DBAccess
                 }
 
                 dragndrop.Stop();
-
-                if (interpolationMode == InterpolationMode.NearestNeighbor)
-                {
-                    interpolationMode = InterpolationMode.Bicubic;
-                    splitContainer1.Panel1.Invalidate();
-                }
             }
         }
         private void Panel1_MouseUp(object sender, MouseEventArgs e)
@@ -234,41 +231,15 @@ namespace DBAccess
                 mapHelper.isDraggingCtrlPoint = -1;
 
             System.Threading.Interlocked.CompareExchange(ref bUserAction, 0, 1);
-            interpolationMode = InterpolationMode.Bicubic;
-            splitContainer1.Panel1.Invalidate();
         }
         private void Form1_MouseWheel(object sender, MouseEventArgs e)
         {
             if (!virtualMap.Enabled)
                 return;
 
-            interpolationMode = InterpolationMode.NearestNeighbor;
-            System.Threading.Interlocked.CompareExchange(ref bUserAction, 1, 0);
-
-            Point mousePos = new Point(e.Location.X - virtualMap.Position.X,
-                                       e.Location.Y - virtualMap.Position.Y);
-            PointF mouseUnit = new PointF((e.Location.X - virtualMap.Position.X) / (float)virtualMap.SizeCorrected.Width,
-                                          (e.Location.Y - virtualMap.Position.Y) / (float)virtualMap.SizeCorrected.Height);
-
-            double newZoom = zoomFactor * (1.0 + ((e.Delta / 120.0) * 0.1));
-            //
-            newZoom = virtualMap.ResizeFromZoom(newZoom);
-
-            double deltaZ = newZoom - zoomFactor;
-            if( deltaZ != 0.0 )
-            {
-                Point newPos = Point.Truncate(new PointF(mouseUnit.X * virtualMap.SizeCorrected.Width,
-                                                         mouseUnit.Y * virtualMap.SizeCorrected.Height));
-
-                Size delta = new Size(newPos.X - mousePos.X, newPos.Y - mousePos.Y);
-                virtualMap.Position = Point.Subtract(virtualMap.Position, delta);
-
-                zoomFactor = newZoom;
-
-                ApplyMapChanges();
-            }
-
-            System.Threading.Interlocked.CompareExchange(ref bUserAction, 0, 1);
+            mapZoom.Start(virtualMap,
+                          new Point(e.Location.X - virtualMap.Position.X, e.Location.Y - virtualMap.Position.Y),
+                          Math.Sign(e.Delta));
         }
         private void buttonConnect_Click(object sender, EventArgs e)
         {
@@ -460,6 +431,13 @@ namespace DBAccess
                 spawn.Rebuild();
                 propertyGrid1.SelectedObject = spawn;
                 propertyGrid1.ExpandAllGridItems();
+            }
+
+            // Select class name in Vehicles table
+            foreach(DataGridViewRow row in dataGridViewVehicleTypes.Rows)
+            {
+                if (row.Cells["ColumnClassName"].Value as string == pb.iconDB.row.Field<string>("class_name"))
+                    row.Cells["ColumnType"].Selected = true;
             }
         }
         private void OnDeployableClick(object sender, EventArgs e)
@@ -1011,7 +989,7 @@ namespace DBAccess
                 }
 
                 if ( virtualMap.Enabled )
-                    zoomFactor = virtualMap.ResizeFromZoom(1.0f);
+                    mapZoom.currDepth = Math.Log( virtualMap.ResizeFromZoom(Math.Pow(2, mapZoom.currDepth)), 2);
 
                 Size sizePanel = splitContainer1.Panel1.Size;
                 Point halfPanel = new Point((int)(sizePanel.Width * 0.5f), (int)(sizePanel.Height * 0.5f));
@@ -1320,7 +1298,7 @@ namespace DBAccess
                 mtxUseDS.ReleaseMutex();
             }
         }
-        private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
+        private void bgWorkerRefreshDatabase_DoWork(object sender, DoWorkEventArgs e)
         {
             BackgroundWorker bw = sender as BackgroundWorker;
 
@@ -1487,10 +1465,6 @@ namespace DBAccess
         List<tileReq> tileRequests = new List<tileReq>();
         List<tileNfo> tileCache = new List<tileNfo>();
 
-        InterpolationMode interpolationMode = InterpolationMode.Bicubic;
-        PixelOffsetMode pixelOffsetMode = PixelOffsetMode.Half;
-
-
         private void Panel1_Paint(object sender, PaintEventArgs e)
         {
             try
@@ -1499,8 +1473,8 @@ namespace DBAccess
                 {
                     e.Graphics.CompositingMode = CompositingMode.SourceCopy;
                     e.Graphics.CompositingQuality = CompositingQuality.HighQuality;
-                    e.Graphics.InterpolationMode = interpolationMode;
-                    e.Graphics.PixelOffsetMode = pixelOffsetMode;
+                    e.Graphics.InterpolationMode = InterpolationMode.NearestNeighbor;
+                    e.Graphics.PixelOffsetMode = PixelOffsetMode.Half;
 
                     int nb_tilesDrawn = 0;
                     foreach (tileReq req in tileRequests)
@@ -2220,6 +2194,65 @@ namespace DBAccess
             }
         }
         public delegate void DlgUpdateIcons();
+        public class MapZoom
+        {
+            private static float depthSpeed = 0.04f;
+
+            public void Start(VirtualMap map, Point center, int depthDir)
+            {
+                this.centerUnit = new PointF(center.X / (float)map.SizeCorrected.Width,
+                                             center.Y / (float)map.SizeCorrected.Height);
+
+                int newDepth = this.destDepth + depthDir;
+
+                if (newDepth >= 0 && newDepth <= map.nfo.depth-1)
+                {
+                    this.destDepth = newDepth;
+                    eventFastBgWorker.Set();
+                }
+            }
+
+            internal bool Update(VirtualMap map)
+            {
+                Point center = Point.Truncate(new PointF(centerUnit.X * map.SizeCorrected.Width,
+                                                         centerUnit.Y * map.SizeCorrected.Height));
+
+                double deltaDepth = this.destDepth - this.currDepth;
+                if (Math.Abs(deltaDepth) > depthSpeed)
+                {
+                    map.ResizeFromZoom(Math.Pow(2, currDepth));
+
+                    Point newPos = Point.Truncate(new PointF(centerUnit.X * map.SizeCorrected.Width,
+                                                             centerUnit.Y * map.SizeCorrected.Height));
+
+                    Size delta = new Size(newPos.X - center.X,
+                                          newPos.Y - center.Y);
+                    map.Position = Point.Subtract(map.Position, delta);
+
+                    this.currDepth += Math.Sign(deltaDepth) * depthSpeed;
+
+                    return true;
+                }
+                else
+                {
+                    this.currDepth = this.destDepth;
+                    map.ResizeFromZoom(Math.Pow(2, currDepth));
+
+                    Point newPos = Point.Truncate(new PointF(centerUnit.X * map.SizeCorrected.Width,
+                                                             centerUnit.Y * map.SizeCorrected.Height));
+
+                    Size delta = new Size(newPos.X - center.X,
+                                          newPos.Y - center.Y);
+                    map.Position = Point.Subtract(map.Position, delta);
+                }
+
+                return false;
+            }
+
+            public PointF centerUnit;
+            public double currDepth = 0;
+            public int destDepth = 0;
+        }
         public class DragNDrop
         {
             public void Start(List<Point> refPos)
@@ -2449,8 +2482,8 @@ namespace DBAccess
 
             private void UpdateData()
             {
-                int reqTileCountX = Tool.NextPowerOf2((_size.Width / (float)nfo.defTileSize.Width));
-                int reqTileCountY = Tool.NextPowerOf2((_size.Width / (float)nfo.defTileSize.Width));
+                int reqTileCountX = Tool.UpperPowerOf2((_size.Width / (float)nfo.defTileSize.Width));
+                int reqTileCountY = Tool.UpperPowerOf2((_size.Width / (float)nfo.defTileSize.Width));
 
                 _depth = (int)Math.Log(Math.Max(reqTileCountX, reqTileCountY), 2);
 
@@ -2729,17 +2762,62 @@ namespace DBAccess
 
             splitContainer1.Panel1.Invalidate();
         }
+
+        private void bgWorkerFast_DoWork(object sender, DoWorkEventArgs e)
+        {
+            BackgroundWorker bw = sender as BackgroundWorker;
+            
+            while (!bw.CancellationPending)
+            {
+                eventFastBgWorker.WaitOne();
+
+                if (virtualMap.Enabled)
+                {
+                    if (System.Threading.Interlocked.CompareExchange(ref bUserAction, 1, 0) == 0)
+                    {
+                        while (mapZoom.Update(virtualMap))
+                        {
+                            dlgRefreshMap = this.ApplyMapChanges;
+                            this.Invoke(dlgRefreshMap);
+
+                            Thread.Sleep(20);
+                        }
+
+                        dlgRefreshMap = this.ApplyMapChanges;
+                        this.Invoke(dlgRefreshMap);
+                    }
+
+                    System.Threading.Interlocked.CompareExchange(ref bUserAction, 0, 1);
+                }
+
+                eventFastBgWorker.Reset();
+            }
+        }
     }
     internal class Tool
     {
-        public static int NextPowerOf2(int v)
+        public static int BelowPowerOf2(int v)
+        {
+            int r = 30;
+            while (v < (1 << r))
+                r--;
+            return (1 << r);
+        }
+        public static int BelowPowerOf2(float v)
+        {
+            int r = 30;
+            while (v < (float)(1 << r))
+                r--;
+            return (1 << r);
+        }
+        public static int UpperPowerOf2(int v)
         {
             int r = 0;
             while (v > (1 << r))
                 r++;
             return (1 << r);
         }
-        public static int NextPowerOf2(float f)
+        public static int UpperPowerOf2(float f)
         {
             int r = 0;
             while (f > (float)(1 << r))
@@ -2864,7 +2942,7 @@ namespace DBAccess
             Bitmap input = new Bitmap(filepath);
 
             Size inSize = input.Size;
-            Size sqSize = new Size(Tool.NextPowerOf2(input.Width), Tool.NextPowerOf2(input.Height));
+            Size sqSize = new Size(Tool.UpperPowerOf2(input.Width), Tool.UpperPowerOf2(input.Height));
 
             Bitmap sqInput = IncreaseImageSize(input, sqSize);
 

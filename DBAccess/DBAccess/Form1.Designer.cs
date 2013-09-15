@@ -98,13 +98,14 @@
             this.dataGridViewVehicleTypes = new System.Windows.Forms.DataGridView();
             this.ColumnClassName = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColumnType = new System.Windows.Forms.DataGridViewComboBoxColumn();
-            this.bgWorker = new System.ComponentModel.BackgroundWorker();
+            this.bgWorkerDatabase = new System.ComponentModel.BackgroundWorker();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.contextMenuStripVehicle = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.toolStripMenuItemDeleteVehicle = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStripSpawn = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.toolStripMenuItemDeleteSpawn = new System.Windows.Forms.ToolStripMenuItem();
+            this.bgWorkerFast = new System.ComponentModel.BackgroundWorker();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
@@ -822,6 +823,7 @@
             this.ColumnType});
             this.dataGridViewVehicleTypes.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dataGridViewVehicleTypes.Location = new System.Drawing.Point(3, 3);
+            this.dataGridViewVehicleTypes.MultiSelect = false;
             this.dataGridViewVehicleTypes.Name = "dataGridViewVehicleTypes";
             this.dataGridViewVehicleTypes.RowHeadersVisible = false;
             this.dataGridViewVehicleTypes.ShowEditingIcon = false;
@@ -851,8 +853,8 @@
             // 
             // bgWorker
             // 
-            this.bgWorker.WorkerSupportsCancellation = true;
-            this.bgWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker1_DoWork);
+            this.bgWorkerDatabase.WorkerSupportsCancellation = true;
+            this.bgWorkerDatabase.DoWork += new System.ComponentModel.DoWorkEventHandler(this.bgWorkerRefreshDatabase_DoWork);
             // 
             // toolTip1
             // 
@@ -889,6 +891,10 @@
             this.toolStripMenuItemDeleteSpawn.Size = new System.Drawing.Size(173, 22);
             this.toolStripMenuItemDeleteSpawn.Text = "Delete Spawnpoint";
             this.toolStripMenuItemDeleteSpawn.Click += new System.EventHandler(this.toolStripMenuItemDeleteSpawn_Click);
+            // 
+            // bgWorkerFast
+            // 
+            this.bgWorkerFast.DoWork += new System.ComponentModel.DoWorkEventHandler(this.bgWorkerFast_DoWork);
             // 
             // Form1
             // 
@@ -952,7 +958,7 @@
         private System.Windows.Forms.ToolStripContentPanel ContentPanel;
         private System.Windows.Forms.GroupBox groupBoxInfo;
         private System.Windows.Forms.RadioButton radioButtonAlive;
-        private System.ComponentModel.BackgroundWorker bgWorker;
+        private System.ComponentModel.BackgroundWorker bgWorkerDatabase;
         private System.Windows.Forms.TabControl tabControl1;
         private System.Windows.Forms.TabPage tabPage1;
         private System.Windows.Forms.TabPage tabPage2;
@@ -1003,6 +1009,7 @@
         private System.Windows.Forms.DataGridViewButtonColumn ColumnChoosePath;
         private System.Windows.Forms.DataGridViewTextBoxColumn ColumnPath;
         private System.Windows.Forms.BindingSource dataSetBindingSource;
+        private System.ComponentModel.BackgroundWorker bgWorkerFast;
 
     }
 }
