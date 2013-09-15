@@ -102,15 +102,12 @@ namespace DBAccess
             if (!virtualMap.Enabled)
                 return;
 
-            Size sizePanel = splitContainer1.Panel1.Size;
+            Tool.Size sizePanel = splitContainer1.Panel1.Size;
+            Tool.Point halfPanel = (Tool.Point)(sizePanel * 0.5f);
+            Tool.Size delta = new Tool.Size(16, 16);
 
-            Point halfPanel = new Point((int)(sizePanel.Width * 0.5f), (int)(sizePanel.Height * 0.5f));
-
-            virtualMap.Position.X = Math.Min(halfPanel.X - 16, virtualMap.Position.X);
-            virtualMap.Position.Y = Math.Min(halfPanel.Y - 16, virtualMap.Position.Y);
-
-            virtualMap.Position.X = Math.Max(halfPanel.X - virtualMap.Size.Width + 16, virtualMap.Position.X);
-            virtualMap.Position.Y = Math.Max(halfPanel.Y - virtualMap.Size.Height + 16, virtualMap.Position.Y);
+            virtualMap.Position = Tool.Point.Min(halfPanel - delta, virtualMap.Position);
+            virtualMap.Position = Tool.Point.Max(halfPanel - virtualMap.Size + delta, virtualMap.Position);
 
             RefreshIcons();
         }
@@ -124,25 +121,23 @@ namespace DBAccess
 
             if (e.Button.HasFlag(MouseButtons.Right) && (mapHelper != null) && mapHelper.enabled)
             {
-                Point mousePos = new Point(e.Location.X - virtualMap.Position.X,
-                                            e.Location.Y - virtualMap.Position.Y);
+                Tool.Point mousePos = (Tool.Point)(e.Location - virtualMap.Position);
+
                 mapHelper.isDraggingCtrlPoint = mapHelper.IntersectControl(mousePos, 5);
 
                 if (mapHelper.isDraggingCtrlPoint > 0)
                 {
                     // Will drag selected Control point
-                    Point pt = new Point((int)(mapHelper.controls[mapHelper.isDraggingCtrlPoint].X * virtualMap.SizeCorrected.Width + virtualMap.Position.X),
-                                            (int)(mapHelper.controls[mapHelper.isDraggingCtrlPoint].Y * virtualMap.SizeCorrected.Height + virtualMap.Position.Y));
+                    Tool.Point pt = mapHelper.controls[mapHelper.isDraggingCtrlPoint] * virtualMap.SizeCorrected + virtualMap.Position;
                     dragndrop.Start(pt);
                 }
                 else
                 {
                     // Will drag all Control points
-                    List<Point> points = new List<Point>(4);
+                    List<Tool.Point> points = new List<Tool.Point>(4);
                     for (int i = 0; i < 4; i++)
                     {
-                        Point pt = new Point((int)(mapHelper.controls[i].X * virtualMap.SizeCorrected.Width + virtualMap.Position.X),
-                                                (int)(mapHelper.controls[i].Y * virtualMap.SizeCorrected.Height + virtualMap.Position.Y));
+                        Tool.Point pt = mapHelper.controls[i] * virtualMap.SizeCorrected + virtualMap.Position;
                         points.Add(pt);
                     }
                     dragndrop.Start(points);
@@ -154,15 +149,12 @@ namespace DBAccess
             {
                 dragndrop.Start(virtualMap.Position);
 
-                if ((mapHelper!=null) && !mapHelper.enabled)
+                if ((mapHelper == null) || !mapHelper.enabled)
                 {
                     Rectangle mouseRec = new Rectangle(e.Location, Size.Empty);
-                    Rectangle r = new Rectangle(Point.Empty, new Size(24, 24)    /* !!!! annoying shortcut, remove it later !!!! */);
                     foreach (iconDB idb in listIcons)
                     {
-                        r.Location = idb.icon.Location;
-
-                        if (mouseRec.IntersectsWith(r))
+                        if (mouseRec.IntersectsWith(idb.icon.rectangle))
                         {
                             // Call Click event from icon
                             idb.icon.OnClick(this, e);
@@ -183,9 +175,8 @@ namespace DBAccess
 
                     if (mapHelper.isDraggingCtrlPoint >= 0)
                     {
-                        Point newPos = dragndrop.Position(0);
-                        PointF pt = new PointF((newPos.X - virtualMap.Position.X) / (float)virtualMap.SizeCorrected.Width,
-                                                (newPos.Y - virtualMap.Position.Y) / (float)virtualMap.SizeCorrected.Height);
+                        Tool.Point newPos = dragndrop.Position(0);
+                        Tool.Point pt = (Tool.Point)((newPos - virtualMap.Position) / virtualMap.SizeCorrected);
 
                         mapHelper.controls[mapHelper.isDraggingCtrlPoint] = pt;
                         mapHelper.ControlPointUpdated(mapHelper.isDraggingCtrlPoint);
@@ -194,15 +185,14 @@ namespace DBAccess
                     {
                         for (int i = 0; i < 2; i++)
                         {
-                            Point newPos = dragndrop.Position(i);
-                            PointF pt = new PointF((newPos.X - virtualMap.Position.X) / (float)virtualMap.SizeCorrected.Width,
-                                                    (newPos.Y - virtualMap.Position.Y) / (float)virtualMap.SizeCorrected.Height);
+                            Tool.Point newPos = dragndrop.Position(i);
+                            Tool.Point pt = (Tool.Point)((newPos - virtualMap.Position) / virtualMap.SizeCorrected);
 
                             mapHelper.controls[i] = pt;
                         }
                         mapHelper.ControlPointUpdated(0);
                     }
-    
+
                     ApplyMapChanges();
                 }
             }
@@ -216,8 +206,7 @@ namespace DBAccess
             {
                 if (mapHelper != null)
                 {
-                    Point mousePos = new Point(e.Location.X - virtualMap.Position.X,
-                                               e.Location.Y - virtualMap.Position.Y);
+                    Tool.Point mousePos = (Tool.Point)(e.Location - virtualMap.Position);
                     mapHelper.isDraggingCtrlPoint = mapHelper.IntersectControl(mousePos, 5);
                     splitContainer1.Panel1.Invalidate();
                 }
@@ -227,7 +216,7 @@ namespace DBAccess
         }
         private void Panel1_MouseUp(object sender, MouseEventArgs e)
         {
-            if(mapHelper != null)
+            if (mapHelper != null)
                 mapHelper.isDraggingCtrlPoint = -1;
 
             System.Threading.Interlocked.CompareExchange(ref bUserAction, 0, 1);
@@ -238,7 +227,7 @@ namespace DBAccess
                 return;
 
             mapZoom.Start(virtualMap,
-                          new Point(e.Location.X - virtualMap.Position.X, e.Location.Y - virtualMap.Position.Y),
+                          (Tool.Point)(e.Location - virtualMap.Position),
                           Math.Sign(e.Delta));
         }
         private void buttonConnect_Click(object sender, EventArgs e)
@@ -279,7 +268,7 @@ namespace DBAccess
 
                 SetCurrentMap();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 textBoxCmdStatus.Text = ex.ToString();
                 Enable(false);
@@ -310,7 +299,7 @@ namespace DBAccess
 
             try
             {
-                foreach( KeyValuePair<UInt64,UIDGraph> pair in dicUIDGraph)
+                foreach (KeyValuePair<UInt64, UIDGraph> pair in dicUIDGraph)
                     pair.Value.path.Reset();
 
                 listIcons.Clear();
@@ -329,7 +318,7 @@ namespace DBAccess
 
             if (cnx != null)
                 cnx.Close();
-            
+
             mtxUpdateDB.ReleaseMutex();
         }
         private void radioButton_CheckedChanged(object sender, EventArgs e)
@@ -434,7 +423,7 @@ namespace DBAccess
             }
 
             // Select class name in Vehicles table
-            foreach(DataGridViewRow row in dataGridViewVehicleTypes.Rows)
+            foreach (DataGridViewRow row in dataGridViewVehicleTypes.Rows)
             {
                 if (row.Cells["ColumnClassName"].Value as string == pb.iconDB.row.Field<string>("class_name"))
                     row.Cells["ColumnType"].Selected = true;
@@ -472,7 +461,7 @@ namespace DBAccess
                 {
                     for (int y = 0; y < tileCount.Height; y++)
                     {
-                        Rectangle recTile = virtualMap.TileRectangle(x, y);
+                        Rectangle recTile = virtualMap.TileRectangle(new Tool.Point(x, y));
 
                         if (recPanel.IntersectsWith(recTile))
                         {
@@ -523,7 +512,7 @@ namespace DBAccess
                 if (idx >= iconPlayers.Count)
                 {
                     myIcon icon = new myIcon();
-                    icon.Size = new Size(24, 24);
+                    icon.Size = new Tool.Size(24, 24);
                     icon.Click += OnPlayerClick;
                     iconPlayers.Add(icon);
                 }
@@ -559,7 +548,7 @@ namespace DBAccess
                 if (idx >= iconPlayers.Count)
                 {
                     myIcon icon = new myIcon();
-                    icon.Size = new Size(24, 24);
+                    icon.Size = new Tool.Size(24, 24);
                     icon.Click += OnPlayerClick;
                     iconPlayers.Add(icon);
                 }
@@ -580,7 +569,7 @@ namespace DBAccess
         }
         private void BuildVehicleIcons()
         {
-            int idx=0;
+            int idx = 0;
             foreach (DataRow row in dsVehicles.Tables[0].Rows)
             {
                 double damage = row.Field<double>("damage");
@@ -594,17 +583,17 @@ namespace DBAccess
                 idb.row = row;
                 idb.pos = GetUnitPosFromString(row.Field<string>("worldspace"));
 
-                if( idx >= iconVehicles.Count)
+                if (idx >= iconVehicles.Count)
                 {
                     myIcon icon = new myIcon();
-                    icon.Size = new Size(24, 24);
+                    icon.Size = new Tool.Size(24, 24);
                     icon.Click += OnVehicleClick;
                     iconVehicles.Add(icon);
                 }
 
                 idb.icon = iconVehicles[idx];
 
-                if(damage < 1.0f)
+                if (damage < 1.0f)
                 {
                     DataRow rowT = mycfg.vehicle_types.Tables[0].Rows.Find(row.Field<string>("class_name"));
 
@@ -659,10 +648,10 @@ namespace DBAccess
                 idb.row = row;
                 idb.pos = GetUnitPosFromString(row.Field<string>("worldspace"));
 
-                if( idx >= iconVehicles.Count)
+                if (idx >= iconVehicles.Count)
                 {
                     myIcon icon = new myIcon();
-                    icon.Size = new Size(24, 24);
+                    icon.Size = new Tool.Size(24, 24);
                     icon.Click += OnVehicleClick;
                     iconVehicles.Add(icon);
                 }
@@ -712,7 +701,7 @@ namespace DBAccess
                 if (idx >= iconDeployables.Count)
                 {
                     myIcon icon = new myIcon();
-                    icon.Size = new Size(24, 24);
+                    icon.Size = new Tool.Size(24, 24);
                     icon.Click += OnDeployableClick;
                     iconDeployables.Add(icon);
                 }
@@ -804,7 +793,7 @@ namespace DBAccess
                 Enable(false);
             }
 
-            if (mycfg.cfgVersion == null) mycfg.cfgVersion = new ModuleVersion(); 
+            if (mycfg.cfgVersion == null) mycfg.cfgVersion = new ModuleVersion();
             if (Tool.NullOrEmpty(mycfg.game_type)) mycfg.game_type = comboBoxGameType.Items[0] as string;
             if (Tool.NullOrEmpty(mycfg.url)) mycfg.url = "";
             if (Tool.NullOrEmpty(mycfg.port)) mycfg.port = "3306";
@@ -838,7 +827,7 @@ namespace DBAccess
 
                 System.Data.DataColumn col = new DataColumn();
 
-                table.Rows.Add(1, "Chernarus", "", 0, 0, 0, 0, 0, 0, 14700, 15360 );
+                table.Rows.Add(1, "Chernarus", "", 0, 0, 0, 0, 0, 0, 14700, 15360);
                 table.Rows.Add(2, "Lingor", "", 0, 0, 0, 0, 0, 0, 10000, 10000);
                 table.Rows.Add(3, "Utes", "", 0, 0, 0, 0, 0, 0, 5100, 5100);
                 table.Rows.Add(4, "Takistan", "", 0, 0, 0, 0, 0, 0, 14000, 14000);
@@ -854,7 +843,7 @@ namespace DBAccess
             if (mycfg.cfgVersion < curCfgVersion)
             {
                 DataColumnCollection cols = mycfg.worlds_def.Tables[0].Columns;
-                
+
                 if (cols.Contains("Width")) cols["Width"].ColumnName = "DB_refWidth";
                 if (cols.Contains("Height")) cols["Height"].ColumnName = "DB_refHeight";
 
@@ -972,11 +961,11 @@ namespace DBAccess
             {
             }
         }
-        private PointF GetUnitPosFromString(string from)
+        private Tool.Point GetUnitPosFromString(string from)
         {
             ArrayList arr = Tool.ParseInventoryString(from);
             // [angle, [X, Y, Z]]
-            
+
             double x = 0;
             double y = 0;
 
@@ -991,7 +980,7 @@ namespace DBAccess
             y /= virtualMap.nfo.dbRefMapSize.Height;
             y = 1.0f - y;
 
-            return new PointF((float)x, (float)y);
+            return new Tool.Point((float)x, (float)y);
         }
         private void SetCurrentMap()
         {
@@ -1011,22 +1000,20 @@ namespace DBAccess
                         virtualMap.nfo.tileBasePath = configPath + "\\World" + mycfg.world_id + "\\LOD"; ;
                     }
 
-                    virtualMap.nfo.defTileSize = new Size(rowW.Field<int>("TileSizeX"), rowW.Field<int>("TileSizeY"));
+                    virtualMap.nfo.defTileSize = new Tool.Size(rowW.Field<int>("TileSizeX"), rowW.Field<int>("TileSizeY"));
                     virtualMap.nfo.depth = rowW.Field<int>("TileDepth");
-                    virtualMap.SetRatio(new SizeF(rowW.Field<float>("RatioX"), rowW.Field<float>("RatioY")));
-                    virtualMap.nfo.dbMapSize = new Size((int)rowW.Field<UInt32>("DB_Width"), (int)rowW.Field<UInt32>("DB_Height"));
-                    virtualMap.nfo.dbRefMapSize = new SizeF(rowW.Field<UInt32>("DB_refWidth"), rowW.Field<UInt32>("DB_refHeight"));
-                    virtualMap.nfo.dbMapOffsetUnit = new PointF(rowW.Field<int>("DB_X") / virtualMap.nfo.dbRefMapSize.Width,
-                                                                rowW.Field<int>("DB_Y") / virtualMap.nfo.dbRefMapSize.Height);
+                    virtualMap.SetRatio(new Tool.Size(rowW.Field<float>("RatioX"), rowW.Field<float>("RatioY")));
+                    virtualMap.nfo.dbMapSize = new Tool.Size(rowW.Field<UInt32>("DB_Width"), rowW.Field<UInt32>("DB_Height"));
+                    virtualMap.nfo.dbRefMapSize = new Tool.Size(rowW.Field<UInt32>("DB_refWidth"), rowW.Field<UInt32>("DB_refHeight"));
+                    virtualMap.nfo.dbMapOffsetUnit = new Tool.Point(rowW.Field<int>("DB_X") / virtualMap.nfo.dbRefMapSize.Width,
+                                                                     rowW.Field<int>("DB_Y") / virtualMap.nfo.dbRefMapSize.Height);
                 }
 
-                if ( virtualMap.Enabled )
-                    mapZoom.currDepth = Math.Log( virtualMap.ResizeFromZoom(Math.Pow(2, mapZoom.currDepth)), 2);
+                if (virtualMap.Enabled)
+                    mapZoom.currDepth = Math.Log(virtualMap.ResizeFromZoom((float)Math.Pow(2, mapZoom.currDepth)), 2);
 
-                Size sizePanel = splitContainer1.Panel1.Size;
-                Point halfPanel = new Point((int)(sizePanel.Width * 0.5f), (int)(sizePanel.Height * 0.5f));
-                virtualMap.Position.X = (int)(halfPanel.X - virtualMap.Size.Width * 0.5f);
-                virtualMap.Position.Y = (int)(halfPanel.Y - virtualMap.Size.Height * 0.5f);
+                Tool.Size sizePanel = splitContainer1.Panel1.Size;
+                virtualMap.Position = (Tool.Point)((sizePanel - virtualMap.Size) * 0.5f);
 
                 mapHelper = new MapHelper(virtualMap);
 
@@ -1388,16 +1375,16 @@ namespace DBAccess
                     MySqlCommand cmd = cnx.CreateCommand();
                     MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
 
-                    cmd.CommandText = "SELECT count(*) FROM instance_vehicle WHERE instance_id ="+mycfg.instance_id;
+                    cmd.CommandText = "SELECT count(*) FROM instance_vehicle WHERE instance_id =" + mycfg.instance_id;
                     object result = cmd.ExecuteScalar();
                     long vehicle_count = (long)result;
 
                     cmd.CommandText = "SELECT wv.id world_vehicle_id, v.id vehicle_id, wv.worldspace, v.inventory, coalesce(v.parts, '') parts, v.limit_max,"
                                     + " round(least(greatest(rand(), v.damage_min), v.damage_max), 3) damage, round(least(greatest(rand(), v.fuel_min), v.fuel_max), 3) fuel"
-                                    + " FROM world_vehicle wv JOIN vehicle v ON wv.vehicle_id = v.id LEFT JOIN instance_vehicle iv ON iv.world_vehicle_id = wv.id AND iv.instance_id = "+mycfg.instance_id
+                                    + " FROM world_vehicle wv JOIN vehicle v ON wv.vehicle_id = v.id LEFT JOIN instance_vehicle iv ON iv.world_vehicle_id = wv.id AND iv.instance_id = " + mycfg.instance_id
                                     + " LEFT JOIN ( SELECT count(iv.id) AS count, wv.vehicle_id FROM instance_vehicle iv JOIN world_vehicle wv ON iv.world_vehicle_id = wv.id"
-                                    + " WHERE instance_id ="+mycfg.instance_id+" GROUP BY wv.vehicle_id) vc ON vc.vehicle_id = v.id"
-                                    + " WHERE wv.world_id ="+mycfg.world_id+" AND iv.id IS null AND (round(rand(), 3) < wv.chance)"
+                                    + " WHERE instance_id =" + mycfg.instance_id + " GROUP BY wv.vehicle_id) vc ON vc.vehicle_id = v.id"
+                                    + " WHERE wv.world_id =" + mycfg.world_id + " AND iv.id IS null AND (round(rand(), 3) < wv.chance)"
                                     + " and (vc.count IS null OR vc.count BETWEEN v.limit_min AND v.limit_max) GROUP BY wv.worldspace";
                     MySqlDataReader reader = cmd.ExecuteReader();
 
@@ -1421,9 +1408,9 @@ namespace DBAccess
                         Random rand = new Random();
                         string[] to_parts = parts.Split(',');
                         string health = "[";
-                        foreach(string part in to_parts)
+                        foreach (string part in to_parts)
                         {
-                            if(rand.NextDouble() > 0.25)
+                            if (rand.NextDouble() > 0.25)
                                 health += "[\"" + part + "\",1],";
                         }
                         health = health.TrimEnd(',');
@@ -1436,7 +1423,7 @@ namespace DBAccess
                                     + health + "', "
                                     + damage + ", "
                                     + fuel + ", "
-                                    + mycfg.instance_id + ", current_timestamp())" );
+                                    + mycfg.instance_id + ", current_timestamp())");
 
                         spawn_count++;
                     }
@@ -1531,7 +1518,7 @@ namespace DBAccess
                     {
                         tileNfo nfo = tileCache.Find(x => req.path == x.path);
 
-                        if( nfo != null )
+                        if (nfo != null)
                         {
                             e.Graphics.DrawImage(nfo.bitmap, req.rec);
                             nb_tilesDrawn++;
@@ -1544,6 +1531,7 @@ namespace DBAccess
                     {
                         if (checkBoxShowTrail.Checked)
                         {
+                            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
                             foreach (iconDB idb in listIcons)
                             {
                                 UIDType type = GetUIDType(idb.uid);
@@ -1553,6 +1541,7 @@ namespace DBAccess
                             }
                         }
 
+                        e.Graphics.SmoothingMode = SmoothingMode.None;
                         Rectangle recPanel = new Rectangle(Point.Empty, splitContainer1.Panel1.Size);
                         int nb_iconsDrawn = 0;
                         foreach (iconDB idb in listIcons)
@@ -1647,18 +1636,18 @@ namespace DBAccess
                             this.Cursor = Cursors.WaitCursor;
 
                             DirectoryInfo di = new DirectoryInfo(configPath + "\\World" + world_id);
-                            if( di.Exists )
+                            if (di.Exists)
                                 di.Delete(true);
 
-                            Tuple<Size, Size, Size> sizes = Tool.CreateTiles(filepath, tileBasePath, 256);
+                            Tuple<Tool.Size, Tool.Size, Tool.Size> sizes = Tool.CreateTiles(filepath, tileBasePath, 256);
 
                             DataRow rowW = mycfg.worlds_def.Tables[0].Rows.Find(world_id);
-                            rowW.SetField<float>("RatioX", sizes.Item1.Width / (float)sizes.Item2.Width);
-                            rowW.SetField<float>("RatioY", sizes.Item1.Height / (float)sizes.Item2.Height);
-                            rowW.SetField<int>("TileSizeX", sizes.Item3.Width);
-                            rowW.SetField<int>("TileSizeY", sizes.Item3.Height);
+                            rowW.SetField<float>("RatioX", sizes.Item1.Width / sizes.Item2.Width);
+                            rowW.SetField<float>("RatioY", sizes.Item1.Height / sizes.Item2.Height);
+                            rowW.SetField<int>("TileSizeX", (int)sizes.Item3.Width);
+                            rowW.SetField<int>("TileSizeY", (int)sizes.Item3.Height);
 
-                            int tileCount = sizes.Item2.Width / 256;
+                            int tileCount = (int)(sizes.Item2.Width / 256);
                             int depth = (int)Math.Log(tileCount, 2) + 1;
 
                             rowW.SetField<int>("TileDepth", depth);
@@ -1733,7 +1722,7 @@ namespace DBAccess
         {
             public myIcon icon;
             public DataRow row;
-            public PointF pos;
+            public Tool.Point pos;
             public UInt64 uid = 0;
         };
         internal class EntryConverter : TypeConverter
@@ -1965,7 +1954,7 @@ namespace DBAccess
                 // arr[9] = [legs, arms]
                 // arr[10] = unconscious time
                 // arr[11] = [hunger, thirst]
-                
+
                 this.medical = "";
                 if (bool.Parse(arr[1] as string)) this.medical += " unconscious, ";
                 if (bool.Parse(arr[2] as string)) this.medical += " infected, ";
@@ -2090,7 +2079,7 @@ namespace DBAccess
                     aCount = aItems[1] as ArrayList;
                     for (int i = 0; i < aTypes.Count; i++)
                         this.inventory.weapons.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
- 
+
                     aItems = arr[1] as ArrayList;
                     aTypes = aItems[0] as ArrayList;
                     aCount = aItems[1] as ArrayList;
@@ -2120,7 +2109,7 @@ namespace DBAccess
             [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
             public UInt64 spawn_id { get; set; }
             [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
-            public PointF position { get; set; }
+            public Tool.Point position { get; set; }
             [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
             public double fuel { get; set; }
             [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
@@ -2144,7 +2133,7 @@ namespace DBAccess
                 //  arr[1] = [x, y, z]
                 double x = double.Parse((arr[1] as ArrayList)[0] as string, CultureInfo.InvariantCulture.NumberFormat);
                 double y = double.Parse((arr[1] as ArrayList)[1] as string, CultureInfo.InvariantCulture.NumberFormat);
-                this.position = new PointF((float)x, (float)y);
+                this.position = new Tool.Point((float)x, (float)y);
 
 
                 arr = Tool.ParseInventoryString(idb.row.Field<string>("inventory"));
@@ -2190,7 +2179,7 @@ namespace DBAccess
             [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
             public UInt64 uid { get; set; }
             [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
-            public PointF position { get; set; }
+            public Tool.Point position { get; set; }
             [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
             public Decimal chance { get; set; }
             [CategoryAttribute("Inventory"), ReadOnlyAttribute(true)]
@@ -2210,8 +2199,7 @@ namespace DBAccess
                 //  arr[1] = [x, y, z]
                 double x = double.Parse((arr[1] as ArrayList)[0] as string, CultureInfo.InvariantCulture.NumberFormat);
                 double y = double.Parse((arr[1] as ArrayList)[1] as string, CultureInfo.InvariantCulture.NumberFormat);
-                this.position = new PointF((float)x, (float)y);
-
+                this.position = new Tool.Point((float)x, (float)y);
 
                 arr = Tool.ParseInventoryString(idb.row.Field<string>("inventory"));
                 ArrayList aItems;
@@ -2248,14 +2236,13 @@ namespace DBAccess
         {
             private static float depthSpeed = 0.04f;
 
-            public void Start(VirtualMap map, Point center, int depthDir)
+            public void Start(VirtualMap map, Tool.Point center, int depthDir)
             {
-                this.centerUnit = new PointF(center.X / (float)map.SizeCorrected.Width,
-                                             center.Y / (float)map.SizeCorrected.Height);
+                this.centerUnit = center / map.SizeCorrected;
 
                 int newDepth = this.destDepth + depthDir;
 
-                if (newDepth >= 0 && newDepth <= map.nfo.depth-1)
+                if (newDepth >= 0 && newDepth <= map.nfo.depth - 1)
                 {
                     this.destDepth = newDepth;
                     eventFastBgWorker.Set();
@@ -2264,20 +2251,16 @@ namespace DBAccess
 
             internal bool Update(VirtualMap map)
             {
-                Point center = Point.Truncate(new PointF(centerUnit.X * map.SizeCorrected.Width,
-                                                         centerUnit.Y * map.SizeCorrected.Height));
+                Tool.Point center = (centerUnit * map.SizeCorrected).Truncate;
 
                 double deltaDepth = this.destDepth - this.currDepth;
                 if (Math.Abs(deltaDepth) > depthSpeed)
                 {
-                    map.ResizeFromZoom(Math.Pow(2, currDepth));
+                    map.ResizeFromZoom((float)Math.Pow(2, currDepth));
 
-                    Point newPos = Point.Truncate(new PointF(centerUnit.X * map.SizeCorrected.Width,
-                                                             centerUnit.Y * map.SizeCorrected.Height));
+                    Tool.Point newPos = (centerUnit * map.SizeCorrected).Truncate;
 
-                    Size delta = new Size(newPos.X - center.X,
-                                          newPos.Y - center.Y);
-                    map.Position = Point.Subtract(map.Position, delta);
+                    map.Position = map.Position - (newPos - center);
 
                     this.currDepth += Math.Sign(deltaDepth) * depthSpeed;
 
@@ -2286,53 +2269,50 @@ namespace DBAccess
                 else
                 {
                     this.currDepth = this.destDepth;
-                    map.ResizeFromZoom(Math.Pow(2, currDepth));
+                    map.ResizeFromZoom((float)Math.Pow(2, currDepth));
 
-                    Point newPos = Point.Truncate(new PointF(centerUnit.X * map.SizeCorrected.Width,
-                                                             centerUnit.Y * map.SizeCorrected.Height));
+                    Tool.Point newPos = (centerUnit * map.SizeCorrected).Truncate;
 
-                    Size delta = new Size(newPos.X - center.X,
-                                          newPos.Y - center.Y);
-                    map.Position = Point.Subtract(map.Position, delta);
+                    map.Position = map.Position - (newPos - center);
                 }
 
                 return false;
             }
 
-            public PointF centerUnit;
+            public Tool.Point centerUnit;
             public double currDepth = 0;
             public int destDepth = 0;
         }
         public class DragNDrop
         {
-            public void Start(List<Point> refPos)
+            public void Start(List<Tool.Point> refPos)
             {
                 refPositions = refPos;
-                offset = Size.Empty;
+                offset = Tool.Size.Empty;
                 lastPositionMouse = MousePosition;
             }
             public void Start(Point refPos)
             {
-                refPositions = new List<Point>();
+                refPositions = new List<Tool.Point>();
                 refPositions.Add(refPos);
-                offset = Size.Empty;
+                offset = Tool.Size.Empty;
                 lastPositionMouse = MousePosition;
             }
             public void Update()
             {
-                offset = new Size((int)(MousePosition.X - lastPositionMouse.X), (int)(MousePosition.Y - lastPositionMouse.Y));
+                offset = MousePosition - lastPositionMouse;
             }
             public void Stop()
             {
-                offset = Size.Empty;
+                offset = Tool.Size.Empty;
             }
 
-            public Size Offset { get { return offset; } }
-            public Point Position(int idx) { return Point.Add(refPositions[idx], offset); }
+            public Tool.Size Offset { get { return offset; } }
+            public Tool.Point Position(int idx) { return refPositions[idx] + offset; }
 
-            private List<Point> refPositions;
-            private Size offset = Size.Empty;
-            private Point lastPositionMouse;
+            private List<Tool.Point> refPositions;
+            private Tool.Size offset = Tool.Size.Empty;
+            private Tool.Point lastPositionMouse;
         }
         public class myConfig
         {
@@ -2385,15 +2365,15 @@ namespace DBAccess
             public Image image;
             public iconDB iconDB;
             public Rectangle rectangle;
-            public Point Location { get { return rectangle.Location; } set { rectangle.Location = value; } }
-            public Size Size { get { return rectangle.Size; } set { rectangle.Size = value; } }
+            public Tool.Point Location { get { return rectangle.Location; } set { rectangle.Location = value; } }
+            public Tool.Size Size { get { return rectangle.Size; } set { rectangle.Size = value; } }
 
             public event MouseEventHandler Click;
             public ContextMenuStrip contextMenuStrip;
         }
         public class UIDGraph
         {
-            public static PointF InvalidPos = new PointF(float.NaN,float.NaN);
+            public static Tool.Point InvalidPos = new Tool.Point(float.NaN, float.NaN);
 
             public UIDGraph(Pen pen)
             {
@@ -2404,33 +2384,36 @@ namespace DBAccess
 
                 this.pen = pen;
             }
-            public void AddPoint(PointF pos)
+            public void AddPoint(Tool.Point pos)
             {
                 if ((positions.Count == 0) || (pos != positions.Last()))
                     positions.Add(pos);
             }
             public void DisplayInMap(Graphics gfx, VirtualMap map)
             {
-                path.Reset();
-
-                PointF last = InvalidPos;
-                foreach (PointF pt in positions)
+                if (positions.Count > 1)
                 {
-                    PointF newpt = map.VirtualPosition(pt);
+                    path.Reset();
 
-                    // if a point is invalid, break the continuity
-                    if ((last != InvalidPos) && (pt != InvalidPos))
-                        path.AddLine(last, newpt);
+                    Tool.Point last = InvalidPos;
+                    foreach (Tool.Point pt in positions)
+                    {
+                        Tool.Point newpt = map.VirtualPosition(pt);
 
-                    last = newpt;
+                        // if a point is invalid, break the continuity
+                        if ((last != InvalidPos) && (pt != InvalidPos))
+                            path.AddLine(last, newpt);
+
+                        last = newpt;
+                    }
+
+                    gfx.DrawPath(pen, path);
                 }
-
-                gfx.DrawPath(pen, path);
             }
 
             public GraphicsPath path = new GraphicsPath();
             public Pen pen;
-            public List<PointF> positions = new List<PointF>();
+            public List<Tool.Point> positions = new List<Tool.Point>();
         }
         public enum UIDType : ulong
         {
@@ -2462,15 +2445,15 @@ namespace DBAccess
         {
             public VirtualMap()
             {
-                Position = Point.Empty;
-                Size = new Size(400, 400);
+                Position = Tool.Point.Empty;
+                Size = new Tool.Size(400, 400);
             }
 
             public bool Enabled { get { return nfo.depth > 0; } }
 
-            public Point Position;
+            public Tool.Point Position;
 
-            public Size Size 
+            public Tool.Size Size
             {
                 get { return _size; }
                 set { _size = value; UpdateData(); }
@@ -2478,96 +2461,88 @@ namespace DBAccess
 
             public BitmapNfo nfo = new BitmapNfo();
 
-            public Size SizeCorrected { get { return _sizeCorrected; } }
-            public Size DefTileSize { get { return nfo.defTileSize; } }
-            public Size TileCount { get { return _tileCount; } }
-            public Size TileSize { get { return _tileSize; } }
+            public Tool.Size SizeCorrected { get { return _sizeCorrected; } }
+            public Tool.Size DefTileSize { get { return nfo.defTileSize; } }
+            public Tool.Size TileCount { get { return _tileCount; } }
+            public Tool.Size TileSize { get { return _tileSize; } }
             public int Depth { get { return _depth; } }
 
-            public Rectangle TileRectangle(int x, int y)
+            public Rectangle TileRectangle(Tool.Point p)
             {
-                return new Rectangle(Point.Add(Position, new Size(x * _tileSize.Width, y * _tileSize.Height)), _tileSize);
+                return new Rectangle(Position + p * _tileSize, _tileSize);
             }
-            public PointF VirtualPosition(PointF from)
+            public Tool.Point VirtualPosition(Tool.Point from)
             {
-                return new PointF(Position.X + from.X * SizeCorrected.Width, 
-                                  Position.Y + from.Y * SizeCorrected.Height);
+                return Position + from * SizeCorrected;
             }
-            public Point VirtualPosition(iconDB from)
+            public Tool.Point VirtualPosition(iconDB from)
             {
-                float ratioX = (nfo.dbMapSize.Width / nfo.dbRefMapSize.Width);
-                float ratioY = (nfo.dbMapSize.Height / nfo.dbRefMapSize.Height);
-                float unitPosX = from.pos.X * ratioX + nfo.dbMapOffsetUnit.X;
-                float unitPosY = from.pos.Y * ratioY + nfo.dbMapOffsetUnit.Y;
+                Tool.Size ratio = nfo.dbMapSize / nfo.dbRefMapSize;
+                Tool.Point unitPos = from.pos * ratio + nfo.dbMapOffsetUnit;
 
-                float x = Position.X + unitPosX * SizeCorrected.Width - from.icon.Size.Width * 0.5f;
-                float y = Position.Y + unitPosY * SizeCorrected.Height - from.icon.Size.Height * 0.5f;
-                
-                return new Point((int)x, (int)y);
+                return Position + unitPos * SizeCorrected - from.icon.Size * 0.5f;
             }
 
-            public double ResizeFromZoom(double zoom)
+            public float ResizeFromZoom(float zoom)
             {
-                int max_sizeX = /*2**/nfo.defTileSize.Width << (nfo.depth - 1);
-                int max_sizeY = /*2**/nfo.defTileSize.Height << (nfo.depth - 1);
+                Tool.Size maxSize = new Tool.Size(/*2**/(int)nfo.defTileSize.Width << (nfo.depth - 1),
+                    /*2**/(int)nfo.defTileSize.Height << (nfo.depth - 1));
 
-                Size temp = new Size((int)(nfo.defTileSize.Width * zoom),
-                                     (int)(nfo.defTileSize.Height * zoom));
+                Tool.Size temp = nfo.defTileSize * zoom;
 
-                Size = new Size(Math.Max(nfo.defTileSize.Width, Math.Min(max_sizeX, temp.Width)),
-                                Math.Max(nfo.defTileSize.Height, Math.Min(max_sizeY, temp.Height)));
+                Size = Tool.Size.Max(nfo.defTileSize, Tool.Size.Min(maxSize, temp));
 
-                return Size.Width / (double)nfo.defTileSize.Width;
+                return Size.Width / nfo.defTileSize.Width;
             }
 
-            public void SetRatio(SizeF ratio) { _ratio = ratio; }
+            public void SetRatio(Tool.Size ratio) { _ratio = ratio; }
 
             //
             //
             //
             private int _depth;
-            private Size _size;
-            private Size _sizeCorrected;
-            private Size _tileCount;
-            private Size _tileSize;
-            private SizeF _ratio;
+            private Tool.Size _size;
+            private Tool.Size _sizeCorrected;
+            private Tool.Size _tileCount;
+            private Tool.Size _tileSize;
+            private Tool.Size _ratio;
 
             private void UpdateData()
             {
-                int reqTileCountX = Tool.UpperPowerOf2((_size.Width / (float)nfo.defTileSize.Width));
-                int reqTileCountY = Tool.UpperPowerOf2((_size.Width / (float)nfo.defTileSize.Width));
+                Tool.Size reqTileCount = (_size / nfo.defTileSize).UpperPowerOf2;
 
-                _depth = (int)Math.Log(Math.Max(reqTileCountX, reqTileCountY), 2);
+                _depth = (int)Math.Log(Math.Max(reqTileCount.Width, reqTileCount.Height), 2);
 
                 // Clamp to max depth
-                _depth = Math.Min(_depth, nfo.depth-1);
+                _depth = Math.Min(_depth, nfo.depth - 1);
 
                 // Clamp tile count
-                _tileCount = new Size(Math.Min(reqTileCountX, 1<<_depth),
-                                      Math.Min(reqTileCountY, 1<<_depth));
+                Tool.Size maxSize = new Tool.Size(1 << _depth, 1 << _depth);
 
-                _tileSize = Size.Ceiling(new SizeF(_size.Width / (float)_tileCount.Width, _size.Height / (float)_tileCount.Height));
+                _tileCount = Tool.Size.Min(reqTileCount, maxSize);
+
+                _tileSize = (_size / _tileCount).Ceiling;
 
                 // and re-adjust size from new tile size
-                _size = new Size(_tileSize.Width * _tileCount.Width, _tileSize.Height * _tileCount.Height);
-                _sizeCorrected = Size.Ceiling(new SizeF(_size.Width * _ratio.Width, _size.Height * _ratio.Height));
+                _size = _tileSize * _tileCount;
+                _sizeCorrected = (_size * _ratio).Ceiling;
             }
 
             public class BitmapNfo
             {
                 public string tileBasePath = "";
                 public int depth = 0;
-                public Size defTileSize = new Size(1,1);
-                public SizeF dbMapSize = new SizeF(1, 1);
-                public PointF dbMapOffsetUnit = PointF.Empty;
-                public SizeF dbRefMapSize = new SizeF(1, 1);
-           }
+                public Tool.Size defTileSize = new Tool.Size(1, 1);
+                public Tool.Size dbMapSize = new Tool.Size(1, 1);
+                public Tool.Point dbMapOffsetUnit = Tool.Point.Empty;
+                public Tool.Size dbRefMapSize = new Tool.Size(1, 1);
+            }
         }
         public class MapHelper
         {
-            public PointF[] defBoundaries = new PointF[2];
-            public PointF[] boundaries = new PointF[2];
-            public PointF[] controls = new PointF[4];
+            public Tool.Point[] defBoundaries = new Tool.Point[2];
+            public Tool.Point[] boundaries = new Tool.Point[2];
+            public Tool.Point[] controls = new Tool.Point[4];
             public int isDraggingCtrlPoint;
             public bool enabled;
 
@@ -2580,102 +2555,93 @@ namespace DBAccess
                 //  DB NEAF
                 def = new PathDef();
                 paths.Add(def);
-                def.points.Add(new PointF(11777, 12848));
-                def.points.Add(new PointF(11767, 12823));
-                def.points.Add(new PointF(12470, 12566));
-                def.points.Add(new PointF(12480, 12593));
-                def.points.Add(new PointF(11777, 12848));
+                def.points.Add(new Tool.Point(11777, 12848));
+                def.points.Add(new Tool.Point(11767, 12823));
+                def.points.Add(new Tool.Point(12470, 12566));
+                def.points.Add(new Tool.Point(12480, 12593));
+                def.points.Add(new Tool.Point(11777, 12848));
                 //  DB NWAF
                 def = new PathDef();
                 paths.Add(def);
-                def.points.Add(new PointF(5055, 9732));
-                def.points.Add(new PointF(4778, 9572));
-                def.points.Add(new PointF(4057, 10820));
-                def.points.Add(new PointF(4335, 10979));
-                def.points.Add(new PointF(5055, 9732));
+                def.points.Add(new Tool.Point(5055, 9732));
+                def.points.Add(new Tool.Point(4778, 9572));
+                def.points.Add(new Tool.Point(4057, 10820));
+                def.points.Add(new Tool.Point(4335, 10979));
+                def.points.Add(new Tool.Point(5055, 9732));
                 //  DB SWAF
                 def = new PathDef();
                 paths.Add(def);
-                def.points.Add(new PointF(4617, 2583));
-                def.points.Add(new PointF(4605, 2565));
-                def.points.Add(new PointF(5230, 2203));
-                def.points.Add(new PointF(5241, 2222));
-                def.points.Add(new PointF(4617, 2583));
+                def.points.Add(new Tool.Point(4617, 2583));
+                def.points.Add(new Tool.Point(4605, 2565));
+                def.points.Add(new Tool.Point(5230, 2203));
+                def.points.Add(new Tool.Point(5241, 2222));
+                def.points.Add(new Tool.Point(4617, 2583));
 
-                PointF min = new PointF(9999999, 9999999);
-                PointF max = new PointF(-9999999, -9999999);
+                Tool.Point min = new Tool.Point(9999999, 9999999);
+                Tool.Point max = new Tool.Point(-9999999, -9999999);
                 foreach (PathDef _def in paths)
                 {
-                    foreach (PointF pt in _def.points)
+                    foreach (Tool.Point pt in _def.points)
                     {
-                        min.X = Math.Min(min.X, pt.X);
-                        min.Y = Math.Min(min.Y, pt.Y);
-                        max.X = Math.Max(max.X, pt.X);
-                        max.Y = Math.Max(max.Y, pt.Y);
+                        min = Tool.Point.Min(min, pt);
+                        max = Tool.Point.Max(max, pt);
                     }
                 }
-                SizeF size = new SizeF(max.X - min.X, max.Y - min.Y);
+                Tool.Size size = (max - min);
 
                 //  DB Map boundaries
                 def = new PathDef();
                 paths.Add(def);
-                def.points.Add(new PointF(0, 15360));
-                def.points.Add(new PointF(15360, 15360));
-                def.points.Add(new PointF(15360, 0));
-                def.points.Add(new PointF(0, 0));
-                def.points.Add(new PointF(0, 15360));
+                def.points.Add(new Tool.Point(0, 15360));
+                def.points.Add(new Tool.Point(15360, 15360));
+                def.points.Add(new Tool.Point(15360, 0));
+                def.points.Add(new Tool.Point(0, 0));
+                def.points.Add(new Tool.Point(0, 15360));
 
                 foreach (PathDef _def in paths)
                 {
                     for (int i = 0; i < _def.points.Count; i++)
                     {
-                        PointF pt = _def.points[i];
+                        Tool.Point pt = _def.points[i];
 
-                        pt.X = (pt.X - min.X) / size.Width;
-                        pt.Y = (pt.Y - min.Y) / size.Height;
+                        pt = (Tool.Point)((pt - min) / size);
+
                         _def.points[i] = pt;
                     }
                 }
 
-                defBoundaries[0] = new PointF(def.points[0].X, def.points[0].Y);
-                defBoundaries[1] = new PointF(def.points[2].X, def.points[2].Y);
+                defBoundaries[0] = def.points[0];
+                defBoundaries[1] = def.points[2];
 
                 //  DB bounding box
                 def = new PathDef();
                 paths.Add(def);
-                def.points.Add(new PointF(0, 0));
-                def.points.Add(new PointF(0, 1));
-                def.points.Add(new PointF(1, 1));
-                def.points.Add(new PointF(1, 0));
-                def.points.Add(new PointF(0, 0));
+                def.points.Add(new Tool.Point(0, 0));
+                def.points.Add(new Tool.Point(0, 1));
+                def.points.Add(new Tool.Point(1, 1));
+                def.points.Add(new Tool.Point(1, 0));
+                def.points.Add(new Tool.Point(0, 0));
 
                 // DB map boundaries
                 boundaries[0] = map.nfo.dbMapOffsetUnit;
-                boundaries[1] = PointF.Add(boundaries[0], new SizeF(map.nfo.dbMapSize.Width / map.nfo.dbRefMapSize.Width,
-                                                                    map.nfo.dbMapSize.Height / map.nfo.dbRefMapSize.Height));
-                // Control points
-                SizeF Csize = new SizeF((boundaries[1].X - boundaries[0].X) / (defBoundaries[1].X - defBoundaries[0].X),
-                                        (boundaries[1].Y - boundaries[0].Y) / (defBoundaries[1].Y - defBoundaries[0].Y));
+                boundaries[1] = boundaries[0] + map.nfo.dbMapSize / map.nfo.dbRefMapSize;
 
-                controls[0] = new PointF(boundaries[0].X - defBoundaries[0].X * Csize.Width,
-                                         boundaries[0].Y - defBoundaries[0].Y * Csize.Height);
-                controls[1] = new PointF(controls[0].X + Csize.Width,
-                                         controls[0].Y + Csize.Height);
-                controls[2] = new PointF(controls[1].X, controls[0].Y);
-                controls[3] = new PointF(controls[0].X, controls[1].Y);
+                // Control points
+                Tool.Size Csize = (boundaries[1] - boundaries[0]) / (defBoundaries[1] - defBoundaries[0]);
+
+                controls[0] = (Tool.Point)(boundaries[0] - defBoundaries[0] * Csize);
+                controls[1] = controls[0] + Csize;
+
+                controls[2] = new Tool.Point(controls[1].X, controls[0].Y);
+                controls[3] = new Tool.Point(controls[0].X, controls[1].Y);
             }
-            public int IntersectControl(PointF pos, float radius)
+            public int IntersectControl(Tool.Point pos, float radius)
             {
-                SizeF delta = new SizeF();
                 for (int i = 0; i < 4; i++)
                 {
-                    PointF posInMap = new PointF(controls[i].X * map.SizeCorrected.Width,
-                                                 controls[i].Y * map.SizeCorrected.Height);
+                    Tool.Point posInMap = controls[i] * map.SizeCorrected;
 
-                    delta.Width = (posInMap.X - pos.X);
-                    delta.Height = (posInMap.Y - pos.Y);
-
-                    float distance = (float)Math.Sqrt(delta.Width*delta.Width + delta.Height*delta.Height);
+                    float distance = (posInMap - pos).Lenght;
 
                     if (distance <= radius)
                         return i;
@@ -2685,24 +2651,18 @@ namespace DBAccess
             }
             public void Display(Graphics gfx)
             {
-                PointF offset = new PointF(controls[0].X * map.SizeCorrected.Width + map.Position.X,
-                                           controls[0].Y * map.SizeCorrected.Height + map.Position.Y);
+                Tool.Point offset = controls[0] * map.SizeCorrected + map.Position;
 
-                SizeF size = SizeF.Subtract(new SizeF(controls[1]), new SizeF(controls[0]));
-                size.Width *= map.SizeCorrected.Width;
-                size.Height *= map.SizeCorrected.Height;
+                Tool.Size size = (controls[1] - controls[0]) * map.SizeCorrected;
 
                 foreach (PathDef def in paths)
                 {
                     def.path.Reset();
 
-                    PointF last = new PointF(offset.X + (def.points[0].X * size.Width),
-                                             offset.Y + (def.points[0].Y * size.Height));
-                    for (int i = 1; i < def.points.Count; i++)
+                    Tool.Point last = offset + def.points[0] * size;
+                    foreach (Tool.Point point in def.points)
                     {
-                        PointF pt = def.points[i];
-                        PointF newpt = new PointF(offset.X + (pt.X * size.Width),
-                                                  offset.Y + (pt.Y * size.Height));
+                        Tool.Point newpt = offset + point * size;
 
                         // if a point is invalid, break the continuity
                         def.path.AddLine(last, newpt);
@@ -2713,23 +2673,12 @@ namespace DBAccess
                 }
 
                 int j = 0;
-                foreach (PointF point in controls)
+                foreach (Tool.Point point in controls)
                 {
-                    Point pt = Point.Truncate(new PointF(point.X * map.SizeCorrected.Width + map.Position.X,
-                                                         point.Y * map.SizeCorrected.Height + map.Position.Y));
+                    Tool.Point pt = (point * map.SizeCorrected + map.Position).Truncate;
 
                     Brush brush = (isDraggingCtrlPoint == j) ? brushSelected : brushUnselected;
-                    gfx.FillEllipse(brush, new Rectangle(pt.X - 5, pt.Y - 5, 11, 11));
-                    j++;
-                }
-
-                j = 0;
-                foreach (PointF point in boundaries)
-                {
-                    Point pt = Point.Truncate(new PointF(point.X * map.SizeCorrected.Width + map.Position.X,
-                                                         point.Y * map.SizeCorrected.Height + map.Position.Y));
-
-                    gfx.FillEllipse(brushSelected, new Rectangle(pt.X - 8, pt.Y - 8, 17, 17));
+                    gfx.FillEllipse(brush, new Rectangle((int)pt.X - 5, (int)pt.Y - 5, 11, 11));
                     j++;
                 }
             }
@@ -2738,29 +2687,26 @@ namespace DBAccess
                 if (idx < 2)
                 {
                     // Update 2 & 3
-                    controls[2] = new PointF(controls[1].X, controls[0].Y);
-                    controls[3] = new PointF(controls[0].X, controls[1].Y);
+                    controls[2] = new Tool.Point(controls[1].X, controls[0].Y);
+                    controls[3] = new Tool.Point(controls[0].X, controls[1].Y);
                 }
                 else
                 {
                     // Update 1 & 2
-                    controls[0] = new PointF(controls[3].X, controls[2].Y);
-                    controls[1] = new PointF(controls[2].X, controls[3].Y);
+                    controls[0] = new Tool.Point(controls[3].X, controls[2].Y);
+                    controls[1] = new Tool.Point(controls[2].X, controls[3].Y);
                 }
 
-                SizeF size = new SizeF(controls[1].X - controls[0].X,
-                                       controls[1].Y - controls[0].Y);
+                Tool.Size size = (controls[1] - controls[0]);
 
-                boundaries[0] = new PointF(controls[0].X + defBoundaries[0].X * size.Width,
-                                           controls[0].Y + defBoundaries[0].Y * size.Height);
-                boundaries[1] = new PointF(controls[0].X + defBoundaries[1].X * size.Width,
-                                           controls[0].Y + defBoundaries[1].Y * size.Height);
+                boundaries[0] = controls[0] + defBoundaries[0] * size;
+                boundaries[1] = controls[0] + defBoundaries[1] * size;
             }
 
             private class PathDef
             {
                 public GraphicsPath path = new GraphicsPath();
-                public List<PointF> points = new List<PointF>();
+                public List<Tool.Point> points = new List<Tool.Point>();
             }
             private Pen pen = new Pen(Color.Red, 1.5f);
             private SolidBrush brushUnselected = new SolidBrush(Color.Red);
@@ -2783,32 +2729,28 @@ namespace DBAccess
                 return;
 
             mapHelper.enabled = cb.Checked;
-            
+
             if (!cb.Checked)
             {
                 // Apply map helper's new size
                 DataRow row = mycfg.worlds_def.Tables[0].Rows.Find(mycfg.world_id);
 
-                UInt32 refWidth = row.Field<UInt32>("DB_refWidth");
-                UInt32 refHeight = row.Field<UInt32>("DB_refHeight");
+                Tool.Size refSize = new Tool.Size(row.Field<UInt32>("DB_refWidth"),
+                                                    row.Field<UInt32>("DB_refHeight"));
 
-                PointF offUnit = mapHelper.boundaries[0];
-                SizeF sizeUnit = new SizeF(mapHelper.boundaries[1].X - mapHelper.boundaries[0].X,
-                                           mapHelper.boundaries[1].Y - mapHelper.boundaries[0].Y);
+                Tool.Point offUnit = mapHelper.boundaries[0];
+                Tool.Size sizeUnit = mapHelper.boundaries[1] - mapHelper.boundaries[0];
+                Tool.Point offset = offUnit * refSize;
+                Tool.Size size = sizeUnit * refSize;
 
-                int offsetX = (int)(offUnit.X * refWidth);
-                int offsetY = (int)(offUnit.Y * refWidth);
-                UInt32 width = (UInt32)(sizeUnit.Width * refWidth);
-                UInt32 height = (UInt32)(sizeUnit.Height * refWidth);
+                virtualMap.nfo.dbMapOffsetUnit = offset / refSize;
+                virtualMap.nfo.dbMapSize = size;
+                virtualMap.nfo.dbRefMapSize = refSize;
 
-                virtualMap.nfo.dbMapOffsetUnit = new PointF(offsetX / (float)refWidth, offsetY / (float)refHeight);
-                virtualMap.nfo.dbMapSize = new SizeF(width, height);
-                virtualMap.nfo.dbRefMapSize = new SizeF(refWidth, refHeight);
-
-                row.SetField<int>("DB_X", offsetX);
-                row.SetField<int>("DB_Y", offsetY);
-                row.SetField<UInt32>("DB_Width", width);
-                row.SetField<UInt32>("DB_Height", height);
+                row.SetField<int>("DB_X", (int)offset.X);
+                row.SetField<int>("DB_Y", (int)offset.Y);
+                row.SetField<UInt32>("DB_Width", (UInt32)size.Width);
+                row.SetField<UInt32>("DB_Height", (UInt32)size.Height);
             }
 
             splitContainer1.Panel1.Invalidate();
@@ -2816,7 +2758,7 @@ namespace DBAccess
         private void bgWorkerFast_DoWork(object sender, DoWorkEventArgs e)
         {
             BackgroundWorker bw = sender as BackgroundWorker;
-            
+
             while (!bw.CancellationPending)
             {
                 eventFastBgWorker.WaitOne();
@@ -2844,8 +2786,92 @@ namespace DBAccess
             }
         }
     }
-    internal class Tool
+    public class Tool
     {
+        public struct Point
+        {
+            public static Point Empty = new Point(0, 0);
+
+            public Point(float x, float y) { X = x; Y = y; }
+            public Point(System.Drawing.PointF p) { X = p.X; Y = p.Y; }
+
+            public static implicit operator System.Drawing.Point(Point p) { return new System.Drawing.Point((int)p.X, (int)p.Y); }
+            public static implicit operator System.Drawing.PointF(Point p) { return new System.Drawing.PointF(p.X, p.Y); }
+            public static explicit operator Size(Point p) { return new Size(p.X, p.Y); }
+            public static implicit operator Point(System.Drawing.Point p) { return new Point(p.X, p.Y); }
+
+            public static Point operator +(Point p1, Point p2) { return new Point(p1.X + p2.X, p1.Y + p2.Y); }
+            public static Point operator +(Point pt, Size sz) { return new Point(pt.X + sz.Width, pt.Y + sz.Height); }
+            public static Point operator -(Point pt, Size sz) { return new Point(pt.X - sz.Width, pt.Y - sz.Height); }
+            public static Size operator -(Point p1, Point p2) { return new Size(p1.X - p2.X, p1.Y - p2.Y); }
+            public static Point operator *(Point pt, float f) { return new Point(pt.X * f, pt.Y * f); }
+            public static Point operator *(Point pt, Size sz) { return new Point(pt.X * sz.Width, pt.Y * sz.Height); }
+            public static Point operator /(Point pt, float f) { return new Point(pt.X / f, pt.Y / f); }
+            public static Point operator /(Point pt, Size sz) { return new Point(pt.X / sz.Width, pt.Y / sz.Height); }
+            public static bool operator !=(Point left, Point right) { return !(left == right); }
+            public static bool operator ==(Point left, Point right) { return (left.X == right.X) && (left.Y == right.Y); }
+
+            public static Point Min(Point p1, Point p2) { return new Point(Math.Min(p1.X, p2.X), Math.Min(p1.Y, p2.Y)); }
+            public static Point Max(Point p1, Point p2) { return new Point(Math.Max(p1.X, p2.X), Math.Max(p1.Y, p2.Y)); }
+
+            public Point Floor { get { return new Point((float)Math.Floor(X), (float)Math.Floor(Y)); } }
+            public Point Ceiling { get { return new Point((float)Math.Ceiling(X), (float)Math.Ceiling(Y)); } }
+            public Point Truncate { get { return new Point((float)Math.Truncate(X), (float)Math.Truncate(Y)); } }
+
+            public override bool Equals(object obj)
+            {
+                if (obj is Point)
+                    return ((Point)obj == this);
+
+                return false;
+            }
+            public override int GetHashCode() { return ((int)(X * 16777216) ^ ((int)(Y * 16777216)) << 8); }
+
+            public float X;
+            public float Y;
+        }
+        public struct Size
+        {
+            public static Size Empty = new Size(0, 0);
+
+            public Size(float w, float h) { Width = w; Height = h; }
+            public Size(System.Drawing.SizeF sz) { Width = sz.Width; Height = sz.Height; }
+
+            public static implicit operator System.Drawing.Size(Size sz) { return new System.Drawing.Size((int)sz.Width, (int)sz.Height); }
+            public static implicit operator System.Drawing.SizeF(Size sz) { return new System.Drawing.SizeF(sz.Width, sz.Height); }
+            public static explicit operator Point(Size sz) { return new Point(sz.Width, sz.Height); }
+            public static implicit operator Size(System.Drawing.Size sz) { return new Size(sz.Width, sz.Height); }
+
+            public static Size operator +(Size s1, Size s2) { return new Size(s1.Width + s2.Width, s1.Height + s2.Height); }
+            public static Size operator -(Size s1, Size s2) { return new Size(s1.Width - s2.Width, s1.Height - s2.Height); }
+            public static Size operator *(Size sz, float f) { return new Size(sz.Width * f, sz.Height * f); }
+            public static Size operator *(Size s1, Size s2) { return new Size(s1.Width * s2.Width, s1.Height * s2.Height); }
+            public static Size operator /(Size sz, float f) { return new Size(sz.Width / f, sz.Height / f); }
+            public static Size operator /(Size s1, Size s2) { return new Size(s1.Width / s2.Width, s1.Height / s2.Height); }
+            public static bool operator !=(Size left, Size right) { return !(left == right); }
+            public static bool operator ==(Size left, Size right) { return (left.Width == right.Width) && (left.Height == right.Height); }
+
+            public static Size Min(Size p1, Size p2) { return new Size(Math.Min(p1.Width, p2.Width), Math.Min(p1.Height, p2.Height)); }
+            public static Size Max(Size p1, Size p2) { return new Size(Math.Max(p1.Width, p2.Width), Math.Max(p1.Height, p2.Height)); }
+
+            public Size Floor { get { return new Size((float)Math.Floor(Width), (float)Math.Floor(Height)); } }
+            public Size Ceiling { get { return new Size((float)Math.Ceiling(Width), (float)Math.Ceiling(Height)); } }
+            public Size BelowPowerOf2 { get { return new Size(BelowPowerOf2(Width), BelowPowerOf2(Height)); } }
+            public Size UpperPowerOf2 { get { return new Size(UpperPowerOf2(Width), UpperPowerOf2(Height)); } }
+            public float Lenght { get { return (float)Math.Sqrt(Width * Width + Height * Height); } }
+
+            public override bool Equals(object obj)
+            {
+                if (obj is Size)
+                    return ((Size)obj == this);
+
+                return false;
+            }
+            public override int GetHashCode() { return ((int)(Width * 16777216) ^ ((int)(Height * 16777216)) << 8); }
+
+            public float Width;
+            public float Height;
+        }
         public static int BelowPowerOf2(int v)
         {
             int r = 30;
@@ -2943,29 +2969,17 @@ namespace DBAccess
         }
         public static Bitmap ResizeImage(Bitmap imgToResize, Size size)
         {
-            int sourceWidth = imgToResize.Width;
-            int sourceHeight = imgToResize.Height;
+            Size sourceSize = imgToResize.Size;
+            Size nPercentSize = size / sourceSize;
+            float nPercent = Math.Min(nPercentSize.Width, nPercentSize.Height);
 
-            float nPercent = 0;
-            float nPercentW = 0;
-            float nPercentH = 0;
+            Size destSize = sourceSize * nPercent;
 
-            nPercentW = ((float)size.Width / (float)sourceWidth);
-            nPercentH = ((float)size.Height / (float)sourceHeight);
-
-            if (nPercentH < nPercentW)
-                nPercent = nPercentH;
-            else
-                nPercent = nPercentW;
-
-            int destWidth = (int)(sourceWidth * nPercent);
-            int destHeight = (int)(sourceHeight * nPercent);
-
-            Bitmap b = new Bitmap(destWidth, destHeight);
+            Bitmap b = new Bitmap((int)destSize.Width, (int)destSize.Height);
             Graphics g = Graphics.FromImage((Image)b);
             g.InterpolationMode = InterpolationMode.Bilinear/*NearestNeighbor*/;
 
-            g.DrawImage(imgToResize, 0, 0, destWidth, destHeight);
+            g.DrawImage(imgToResize, 0, 0, (int)destSize.Width, (int)destSize.Height);
             g.Dispose();
 
             return b;
@@ -2977,7 +2991,7 @@ namespace DBAccess
         }
         public static Bitmap IncreaseImageSize(Bitmap imgToResize, Size newSize)
         {
-            Bitmap b = new Bitmap(newSize.Width, newSize.Height);
+            Bitmap b = new Bitmap((int)newSize.Width, (int)newSize.Height);
             Graphics g = Graphics.FromImage((Image)b);
             g.InterpolationMode = InterpolationMode.NearestNeighbor;
 
@@ -2992,15 +3006,16 @@ namespace DBAccess
             Bitmap input = new Bitmap(filepath);
 
             Size inSize = input.Size;
-            Size sqSize = new Size(Tool.UpperPowerOf2(input.Width), Tool.UpperPowerOf2(input.Height));
+            Size sqSize = inSize.UpperPowerOf2;
 
             Bitmap sqInput = IncreaseImageSize(input, sqSize);
 
             input.Dispose();
 
-            double iMax = 1.0 / (float)Math.Min(sqSize.Width, sqSize.Height);
+            double iMax = 1.0 / Math.Min(sqSize.Width, sqSize.Height);
 
-            Size limits = new Size((int)(sqSize.Width * limit * iMax), (int)(sqSize.Height * limit * iMax));
+            Size limits = sqSize * (float)(limit * iMax);
+
             RecursCreateTiles(Point.Empty, Size.Empty, basepath, "Tile", sqInput, limits, 0);
             sqInput.Dispose();
 
@@ -3008,7 +3023,7 @@ namespace DBAccess
         }
         private static void RecursCreateTiles(Point father, Size child, string basepath, string name, Bitmap input, Size limits, int recCnt)
         {
-            Point pos = Point.Add(father, child);
+            Point pos = father + child;
 
             if (Directory.Exists(basepath + recCnt) == false)
                 Directory.CreateDirectory(basepath + recCnt);
@@ -3029,7 +3044,7 @@ namespace DBAccess
                 Marshal.Copy(ptr, rgbValues, 0, numBytes);
 
                 for (int i = 0; i < numBytes; i++)
-                    if( rgbValues[i] != 255 )
+                    if (rgbValues[i] != 255)
                         bReject = false;
 
                 // Unlock the bits.
@@ -3047,9 +3062,9 @@ namespace DBAccess
                 if (bSplitH || bSplitV)
                 {
                     recCnt++;
-                    Size cropSize = new Size(Math.Max(input.Width / 2, limits.Width), Math.Max(input.Height / 2, limits.Height));
+                    Size cropSize = Size.Max((Size)input.Size / 2, limits);
 
-                    father = new Point(pos.X * 2, pos.Y * 2);
+                    father = pos * 2;
 
                     RecursCreateTiles(father, new Size(0, 0), basepath, name, CropImage(input, new Rectangle(new Point(0, 0), cropSize)), limits, recCnt);
 
