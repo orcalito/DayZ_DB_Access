@@ -1,7 +1,32 @@
 DayZ DB Access
 ==============
 
-Simple tool to show some data from a DayZ database.
+(WIP) Simple tool to show some data from a DayZ database.
+
+ - Supporting classic DayZ databases. (Basic access to the Epoch's specific DB)
+ - Show on map:
+	- players online *
+	- players alive
+	- vehicles
+	- vehicle spawn points *
+	- deployables
+ - Show players/vehicles/deployables inventory.
+ - Bitmap selection for each World's type.
+ - Map helper to do the link between selected bitmap & DB's coordinates **
+ - Vehicles Tab : associate an icon to each vehicle's class.
+ - Deployables Tab :associate an icon to each deployable's class.
+
+ *  : not available with Epoch's DB.
+ ** : for now, Helper is done for a Chernarus world's type.
+
+
+Executable (ClickOnce) can be found here:
+
+http://82.67.37.43/publish
+
+
+History
+=======
 
 - v2.2.0
 	added customizable deployables Tab.

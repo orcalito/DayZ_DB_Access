@@ -59,6 +59,7 @@ namespace DBAccess
         private MapZoom mapZoom = new MapZoom();
 
         private MapHelper mapHelper;
+        private UIDGraph cartographer = new UIDGraph(new Pen(Color.Black, 2));
 
         public Form1()
         {
@@ -115,7 +116,44 @@ namespace DBAccess
         {
             ApplyMapChanges();
         }
+
         private void Panel1_MouseClick(object sender, MouseEventArgs e)
+        {
+            System.Threading.Interlocked.CompareExchange(ref bUserAction, 1, 0);
+
+            if ((mapHelper != null) && mapHelper.enabled)
+                return;
+
+            if (cbCartographer.Checked)
+            {
+                if (e.Button.HasFlag(MouseButtons.Left))
+                {
+                    Tool.Point mp = virtualMap.UnitToDB(virtualMap.PanelToUnit(e.Location));
+                    mp = mp / virtualMap.nfo.dbRefMapSize;
+                    mp.Y = 1.0f - mp.Y;
+                    cartographer.AddPoint(mp);
+                }
+                else if (e.Button.HasFlag(MouseButtons.Right))
+                {
+                    cartographer.RemoveLastPoint();
+                }
+            }
+            else
+            {
+                Rectangle mouseRec = new Rectangle(e.Location, Size.Empty);
+                foreach (iconDB idb in listIcons)
+                {
+                    if (mouseRec.IntersectsWith(idb.icon.rectangle))
+                    {
+                        // Call Click event from icon
+                        idb.icon.OnClick(this, e);
+
+                        break;
+                    }
+                }
+            }
+        }
+        private void Panel1_MouseDown(object sender, MouseEventArgs e)
         {
             System.Threading.Interlocked.CompareExchange(ref bUserAction, 1, 0);
 
@@ -148,21 +186,6 @@ namespace DBAccess
             else
             {
                 dragndrop.Start(virtualMap.Position);
-
-                if ((mapHelper == null) || !mapHelper.enabled)
-                {
-                    Rectangle mouseRec = new Rectangle(e.Location, Size.Empty);
-                    foreach (iconDB idb in listIcons)
-                    {
-                        if (mouseRec.IntersectsWith(idb.icon.rectangle))
-                        {
-                            // Call Click event from icon
-                            idb.icon.OnClick(this, e);
-
-                            break;
-                        }
-                    }
-                }
             }
         }
         private void Panel1_MouseMove(object sender, MouseEventArgs e)
@@ -212,6 +235,22 @@ namespace DBAccess
                 }
 
                 dragndrop.Stop();
+            }
+
+            string pathstr = "public static Point[] ptsXXX = new Point[]\r\n{";
+
+            if (((mapHelper == null) || !mapHelper.enabled) && cbCartographer.Checked)
+            {
+                foreach (Tool.Point pt in cartographer.positions)
+                {
+                    Tool.Point npt = pt;
+                    npt.Y = 1.0f - npt.Y;
+                    npt = npt * virtualMap.nfo.dbRefMapSize;
+                    pathstr += "\r\nnew Point" + npt.ToStringInt() + ",";
+                }
+                pathstr = pathstr.TrimEnd(',');
+                pathstr += "\r\n};";
+                textBoxCmdStatus.Text = pathstr;
             }
         }
         private void Panel1_MouseUp(object sender, MouseEventArgs e)
@@ -489,7 +528,7 @@ namespace DBAccess
 
             if (currDisplayedItems != null)
                 foreach (iconDB idb in listIcons)
-                    idb.icon.Location = virtualMap.VirtualPosition(idb);
+                    idb.icon.Location = virtualMap.UnitToPanel(idb);
 
             splitContainer1.Panel1.Invalidate();
 
@@ -512,13 +551,13 @@ namespace DBAccess
                 if (idx >= iconPlayers.Count)
                 {
                     myIcon icon = new myIcon();
-                    icon.Size = new Tool.Size(24, 24);
                     icon.Click += OnPlayerClick;
                     iconPlayers.Add(icon);
                 }
 
                 idb.icon = iconPlayers[idx];
                 idb.icon.image = global::DBAccess.Properties.Resources.iconOnline;
+                idb.icon.Size = idb.icon.image.Size;
                 idb.icon.iconDB = idb;
 
                 //toolTip1.SetToolTip(idb.icon, row.Field<string>("name"));
@@ -548,13 +587,13 @@ namespace DBAccess
                 if (idx >= iconPlayers.Count)
                 {
                     myIcon icon = new myIcon();
-                    icon.Size = new Tool.Size(24, 24);
                     icon.Click += OnPlayerClick;
                     iconPlayers.Add(icon);
                 }
 
                 idb.icon = iconPlayers[idx];
                 idb.icon.image = global::DBAccess.Properties.Resources.iconAlive;
+                idb.icon.Size = idb.icon.image.Size;
                 idb.icon.iconDB = idb;
 
                 //toolTip1.SetToolTip(idb.icon, row.Field<string>("name"));
@@ -586,7 +625,6 @@ namespace DBAccess
                 if (idx >= iconVehicles.Count)
                 {
                     myIcon icon = new myIcon();
-                    icon.Size = new Tool.Size(24, 24);
                     icon.Click += OnVehicleClick;
                     iconVehicles.Add(icon);
                 }
@@ -619,6 +657,7 @@ namespace DBAccess
                 Control tr = new Control();
                 tr.ContextMenuStrip = null;
                 idb.icon.iconDB = idb;
+                idb.icon.Size = idb.icon.image.Size;
                 idb.icon.contextMenuStrip = contextMenuStripVehicle;
 
                 //toolTip1.SetToolTip(idb.icon, row.Field<UInt64>("id").ToString() + ": "+ row.Field<string>("class_name"));
@@ -651,7 +690,6 @@ namespace DBAccess
                 if (idx >= iconVehicles.Count)
                 {
                     myIcon icon = new myIcon();
-                    icon.Size = new Tool.Size(24, 24);
                     icon.Click += OnVehicleClick;
                     iconVehicles.Add(icon);
                 }
@@ -675,6 +713,7 @@ namespace DBAccess
                 }
 
                 idb.icon.iconDB = idb;
+                idb.icon.Size = idb.icon.image.Size;
                 idb.icon.contextMenuStrip = contextMenuStripSpawn;
 
                 //toolTip1.SetToolTip(idb.icon, row.Field<UInt64>("id").ToString() + ": " + row.Field<string>("class_name"));
@@ -701,7 +740,6 @@ namespace DBAccess
                 if (idx >= iconDeployables.Count)
                 {
                     myIcon icon = new myIcon();
-                    icon.Size = new Tool.Size(24, 24);
                     icon.Click += OnDeployableClick;
                     iconDeployables.Add(icon);
                 }
@@ -721,6 +759,7 @@ namespace DBAccess
                     default: idb.icon.image = global::DBAccess.Properties.Resources.unknown; break;
                 }
 
+                idb.icon.Size = idb.icon.image.Size;
                 listIcons.Add(idb);
 
                 idx++;
@@ -1015,7 +1054,7 @@ namespace DBAccess
                 Tool.Size sizePanel = splitContainer1.Panel1.Size;
                 virtualMap.Position = (Tool.Point)((sizePanel - virtualMap.Size) * 0.5f);
 
-                mapHelper = new MapHelper(virtualMap);
+                mapHelper = new MapHelper(virtualMap, mycfg.world_id);
 
                 ApplyMapChanges();
             }
@@ -1181,7 +1220,8 @@ namespace DBAccess
                     //
                     cmd.CommandText = "SELECT id.id id, d.class_name class_name, id.worldspace, id.inventory"
                                     + " FROM instance_deployable as id, deployable as d"
-                                    + " WHERE instance_id=" + mycfg.instance_id;
+                                    + " WHERE instance_id=" + mycfg.instance_id
+                                    + " AND id.deployable_id=d.id";
                     _dsDeployables.Clear();
                     adapter.Fill(_dsDeployables);
                 }
@@ -1558,8 +1598,8 @@ namespace DBAccess
                         mapHelper.Display(e.Graphics);
                     }
 
-                    //textBoxCmdStatus.Text = "\r\nTiles Requested=" + tileRequests.Count + "\r\nTiles displayed: " + nb_tilesDrawn;
-                    //textBoxCmdStatus.Text += "\r\nIcons Requested=" + listIcons.Count + "\r\nIcons displayed: " + nb_iconsDrawn;
+                    if (((mapHelper == null) || !mapHelper.enabled) && cbCartographer.Checked)
+                        cartographer.DisplayInMap(e.Graphics, virtualMap);
                 }
             }
             catch (Exception ex)
@@ -1706,12 +1746,24 @@ namespace DBAccess
                 }
             }
         }
+
+        static int penCount = 0;
+        static Pen[] pens = new Pen[6]
+        {
+            new Pen(Color.Red, 2),
+            new Pen(Color.Green, 2),
+            new Pen(Color.Blue, 2),
+            new Pen(Color.Yellow, 2),
+            new Pen(Color.Orange, 2),
+            new Pen(Color.Violet, 2)
+        };
+
         internal UIDGraph GetUIDGraph(UInt64 uid)
         {
             UIDGraph uidgraph = null;
 
             if (dicUIDGraph.TryGetValue(uid, out uidgraph) == false)
-                dicUIDGraph[uid] = uidgraph = new UIDGraph(new Pen(Color.Red, 2));
+                dicUIDGraph[uid] = uidgraph = new UIDGraph(pens[(penCount++)%6]);
 
             return uidgraph;
         }
@@ -1784,6 +1836,9 @@ namespace DBAccess
             {
                 get
                 {
+                    if (index >= this.collection.Count)
+                        return "";
+
                     Entry entry = this.collection[index];
                     return entry.name;
                 }
@@ -1793,6 +1848,9 @@ namespace DBAccess
             {
                 get
                 {
+                    if (index >= this.collection.Count)
+                        return "";
+
                     Entry entry = this.collection[index];
                     StringBuilder sb = new StringBuilder();
                     sb.Append(entry.name + " : " + entry.count);
@@ -2377,11 +2435,6 @@ namespace DBAccess
 
             public UIDGraph(Pen pen)
             {
-                Random rnd = new Random();
-
-                byte[] rgb = { 0, 0, 0 };
-                rnd.NextBytes(rgb);
-
                 this.pen = pen;
             }
             public void AddPoint(Tool.Point pos)
@@ -2398,11 +2451,11 @@ namespace DBAccess
                     Tool.Point last = InvalidPos;
                     foreach (Tool.Point pt in positions)
                     {
-                        Tool.Point newpt = map.VirtualPosition(pt);
+                        Tool.Point newpt = map.UnitToPanel(pt);
 
                         // if a point is invalid, break the continuity
-                        if ((last != InvalidPos) && (pt != InvalidPos))
-                            path.AddLine(last, newpt);
+                        if (!(last.IsNaN || pt.IsNaN))
+                            path.AddLine((System.Drawing.Point)last, (System.Drawing.Point)newpt);
 
                         last = newpt;
                     }
@@ -2411,9 +2464,15 @@ namespace DBAccess
                 }
             }
 
-            public GraphicsPath path = new GraphicsPath();
-            public Pen pen;
-            public List<Tool.Point> positions = new List<Tool.Point>();
+            internal GraphicsPath path = new GraphicsPath();
+            internal Pen pen;
+            internal List<Tool.Point> positions = new List<Tool.Point>();
+
+            internal void RemoveLastPoint()
+            {
+                if(positions.Count > 0)
+                    positions.RemoveAt(positions.Count - 1);
+            }
         }
         public enum UIDType : ulong
         {
@@ -2452,13 +2511,11 @@ namespace DBAccess
             public bool Enabled { get { return nfo.depth > 0; } }
 
             public Tool.Point Position;
-
             public Tool.Size Size
             {
                 get { return _size; }
                 set { _size = value; UpdateData(); }
             }
-
             public BitmapNfo nfo = new BitmapNfo();
 
             public Tool.Size SizeCorrected { get { return _sizeCorrected; } }
@@ -2466,23 +2523,40 @@ namespace DBAccess
             public Tool.Size TileCount { get { return _tileCount; } }
             public Tool.Size TileSize { get { return _tileSize; } }
             public int Depth { get { return _depth; } }
-
             public Rectangle TileRectangle(Tool.Point p)
             {
                 return new Rectangle(Position + p * _tileSize, _tileSize);
             }
-            public Tool.Point VirtualPosition(Tool.Point from)
+            public Tool.Point UnitToPanel(Tool.Point from)
             {
-                return Position + from * SizeCorrected;
+//                return Position + from * SizeCorrected;
+                Tool.Size ratio = nfo.dbMapSize / nfo.dbRefMapSize;
+                Tool.Point unitPos = from * ratio + nfo.dbMapOffsetUnit;
+
+                return Position + unitPos * SizeCorrected;
             }
-            public Tool.Point VirtualPosition(iconDB from)
+            public Tool.Point UnitToPanel(iconDB from)
             {
                 Tool.Size ratio = nfo.dbMapSize / nfo.dbRefMapSize;
                 Tool.Point unitPos = from.pos * ratio + nfo.dbMapOffsetUnit;
 
                 return Position + unitPos * SizeCorrected - from.icon.Size * 0.5f;
             }
+            public Tool.Point PanelToUnit(Tool.Point from)
+            {
+                Tool.Point unitInMap = (Tool.Point)((from - Position) / SizeCorrected);
+                unitInMap = (Tool.Point)(unitInMap - nfo.dbMapOffsetUnit);
+                Tool.Size ratio = nfo.dbRefMapSize / nfo.dbMapSize;
 
+                Tool.Point pt = unitInMap * ratio;
+                pt.Y = 1.0f - pt.Y;
+
+                return pt;
+            }
+            public Tool.Point UnitToDB(Tool.Point from)
+            {
+                return from * nfo.dbRefMapSize;
+            }
             public float ResizeFromZoom(float zoom)
             {
                 Tool.Size maxSize = new Tool.Size(/*2**/(int)nfo.defTileSize.Width << (nfo.depth - 1),
@@ -2494,11 +2568,8 @@ namespace DBAccess
 
                 return Size.Width / nfo.defTileSize.Width;
             }
-
             public void SetRatio(Tool.Size ratio) { _ratio = ratio; }
 
-            //
-            //
             //
             private int _depth;
             private Tool.Size _size;
@@ -2545,37 +2616,19 @@ namespace DBAccess
             public Tool.Point[] controls = new Tool.Point[4];
             public int isDraggingCtrlPoint;
             public bool enabled;
-
-            public MapHelper(VirtualMap map)
+            private void AddPathDef(Tool.Point[] path, Pen pen = null)
+            {
+                PathDef def = new PathDef(pen);
+                foreach (Tool.Point pt in path)
+                    def.points.Add(pt);
+                paths.Add(def);
+            }
+            public MapHelper(VirtualMap map, int worldId)
             {
                 this.map = map;
 
-                PathDef def;
-
-                //  DB NEAF
-                def = new PathDef();
-                paths.Add(def);
-                def.points.Add(new Tool.Point(11777, 12848));
-                def.points.Add(new Tool.Point(11767, 12823));
-                def.points.Add(new Tool.Point(12470, 12566));
-                def.points.Add(new Tool.Point(12480, 12593));
-                def.points.Add(new Tool.Point(11777, 12848));
-                //  DB NWAF
-                def = new PathDef();
-                paths.Add(def);
-                def.points.Add(new Tool.Point(5055, 9732));
-                def.points.Add(new Tool.Point(4778, 9572));
-                def.points.Add(new Tool.Point(4057, 10820));
-                def.points.Add(new Tool.Point(4335, 10979));
-                def.points.Add(new Tool.Point(5055, 9732));
-                //  DB SWAF
-                def = new PathDef();
-                paths.Add(def);
-                def.points.Add(new Tool.Point(4617, 2583));
-                def.points.Add(new Tool.Point(4605, 2565));
-                def.points.Add(new Tool.Point(5230, 2203));
-                def.points.Add(new Tool.Point(5241, 2222));
-                def.points.Add(new Tool.Point(4617, 2583));
+                foreach (Tool.Point[] arr in Tool.MapHelperDefs[worldId - 1])
+                    AddPathDef(arr);
 
                 Tool.Point min = new Tool.Point(9999999, 9999999);
                 Tool.Point max = new Tool.Point(-9999999, -9999999);
@@ -2590,37 +2643,43 @@ namespace DBAccess
                 Tool.Size size = (max - min);
 
                 //  DB Map boundaries
-                def = new PathDef();
-                paths.Add(def);
-                def.points.Add(new Tool.Point(0, 15360));
-                def.points.Add(new Tool.Point(15360, 15360));
-                def.points.Add(new Tool.Point(15360, 0));
-                def.points.Add(new Tool.Point(0, 0));
-                def.points.Add(new Tool.Point(0, 15360));
+                {
+                    Tool.Point[] points = new Tool.Point[]
+                    {
+                        new Tool.Point(0, map.nfo.dbRefMapSize.Height),
+                        new Tool.Point(map.nfo.dbRefMapSize.Width, map.nfo.dbRefMapSize.Height),
+                        new Tool.Point(map.nfo.dbRefMapSize.Width, 0),
+                        new Tool.Point(0, 0),
+                        new Tool.Point(0, map.nfo.dbRefMapSize.Height)
+                    };
+                    AddPathDef(points, new Pen(Color.Red, 2));
+                }
 
                 foreach (PathDef _def in paths)
                 {
                     for (int i = 0; i < _def.points.Count; i++)
                     {
                         Tool.Point pt = _def.points[i];
-
                         pt = (Tool.Point)((pt - min) / size);
-
                         _def.points[i] = pt;
                     }
                 }
 
-                defBoundaries[0] = def.points[0];
-                defBoundaries[1] = def.points[2];
+                defBoundaries[0] = (Tool.Point)((new Tool.Point(0, map.nfo.dbRefMapSize.Height) - min) / size);
+                defBoundaries[1] = (Tool.Point)((new Tool.Point(map.nfo.dbRefMapSize.Width, 0) - min) / size);
 
                 //  DB bounding box
-                def = new PathDef();
-                paths.Add(def);
-                def.points.Add(new Tool.Point(0, 0));
-                def.points.Add(new Tool.Point(0, 1));
-                def.points.Add(new Tool.Point(1, 1));
-                def.points.Add(new Tool.Point(1, 0));
-                def.points.Add(new Tool.Point(0, 0));
+                {
+                    Tool.Point[] points = new Tool.Point[]
+                    {
+                        new Tool.Point(0, 0),
+                        new Tool.Point(0, 1),
+                        new Tool.Point(1, 1),
+                        new Tool.Point(1, 0),
+                        new Tool.Point(0, 0)
+                    };
+                    AddPathDef(points, new Pen(Color.Green, 1));
+                }
 
                 // DB map boundaries
                 boundaries[0] = map.nfo.dbMapOffsetUnit;
@@ -2663,13 +2722,11 @@ namespace DBAccess
                     foreach (Tool.Point point in def.points)
                     {
                         Tool.Point newpt = offset + point * size;
-
-                        // if a point is invalid, break the continuity
                         def.path.AddLine(last, newpt);
                         last = newpt;
                     }
 
-                    gfx.DrawPath(pen, def.path);
+                    gfx.DrawPath(def.pen, def.path);
                 }
 
                 int j = 0;
@@ -2705,10 +2762,19 @@ namespace DBAccess
 
             private class PathDef
             {
+                private static Pen defPen = new Pen(Color.Black, 2);
+
+                public PathDef(Pen pen = null)
+                {
+                    if(pen == null)
+                        pen = defPen;
+
+                    this.pen = pen;
+                }
+                public Pen pen;
                 public GraphicsPath path = new GraphicsPath();
                 public List<Tool.Point> points = new List<Tool.Point>();
             }
-            private Pen pen = new Pen(Color.Red, 1.5f);
             private SolidBrush brushUnselected = new SolidBrush(Color.Red);
             private SolidBrush brushSelected = new SolidBrush(Color.Green);
             private List<PathDef> paths = new List<PathDef>();
@@ -2785,6 +2851,11 @@ namespace DBAccess
                 eventFastBgWorker.Reset();
             }
         }
+        private void cbCartographer_CheckedChanged(object sender, EventArgs e)
+        {
+            if ((sender as CheckBox).Checked == true)
+                cartographer.positions.Clear();
+        }
     }
     public class Tool
     {
@@ -2818,6 +2889,8 @@ namespace DBAccess
             public Point Ceiling { get { return new Point((float)Math.Ceiling(X), (float)Math.Ceiling(Y)); } }
             public Point Truncate { get { return new Point((float)Math.Truncate(X), (float)Math.Truncate(Y)); } }
 
+            public bool IsNaN { get { return float.IsNaN(X) || float.IsNaN(Y); } }
+
             public override bool Equals(object obj)
             {
                 if (obj is Point)
@@ -2826,6 +2899,8 @@ namespace DBAccess
                 return false;
             }
             public override int GetHashCode() { return ((int)(X * 16777216) ^ ((int)(Y * 16777216)) << 8); }
+            public override string ToString() { return "(" + X + "," + Y + ")"; }
+            public string ToStringInt() { return "(" + (int)X + "," + (int)Y + ")"; }
 
             public float X;
             public float Y;
@@ -2868,6 +2943,7 @@ namespace DBAccess
                 return false;
             }
             public override int GetHashCode() { return ((int)(Width * 16777216) ^ ((int)(Height * 16777216)) << 8); }
+            public override string ToString() { return "(" + Width + "," + Height + ")"; }
 
             public float Width;
             public float Height;
@@ -3096,6 +3172,342 @@ namespace DBAccess
                     return codecs[i];
             return null;
         }
+        //
+        //
+        //
+        private static Point[] ptsWorld1_ChernoDocks = new Point[]
+        {
+            new Point(6867,2241),
+            new Point(7009,2348),
+            new Point(7044,2298),
+            new Point(7067,2325),
+            new Point(7044,2363),
+            new Point(7056,2459),
+            new Point(7128,2509),
+            new Point(7225,2398),
+            new Point(7236,2306),
+            new Point(7136,2275),
+            new Point(7140,2218),
+            new Point(6956,2175),
+            new Point(6959,2145),
+            new Point(7251,2183),
+            new Point(7363,2260),
+            new Point(7209,2517)
+        };
+        private static Point[] ptsWorld1_ElectroDocks = new Point[]
+        {
+            new Point(9998,1758),
+            new Point(10148,1765),
+            new Point(10317,1765),
+            new Point(10348,1689),
+            new Point(10294,1627),
+            new Point(10014,1669),
+            new Point(9925,1662),
+            new Point(9933,1620),
+            new Point(10214,1573),
+            new Point(10337,1558),
+            new Point(10436,1681),
+            new Point(10383,1785),
+            new Point(10440,1812)
+        };
+        public static Point[] ptsWorld1_RoadBereElectro = new Point[]
+        {
+            new Point(10828,2583),
+            new Point(10936,2909),
+            new Point(11066,3090),
+            new Point(11270,3293),
+            new Point(11497,3374),
+            new Point(11838,3462),
+            new Point(12192,3516),
+            new Point(12484,3555),
+            new Point(12657,3597),
+            new Point(13168,3919),
+            new Point(13329,4085),
+            new Point(13441,4288),
+            new Point(13498,4484),
+            new Point(13498,4864),
+            new Point(13398,5160),
+            new Point(13383,5471),
+            new Point(13398,5774),
+            new Point(13456,6224),
+            new Point(13468,6424),
+            new Point(13398,6662),
+            new Point(13306,6954),
+            new Point(13060,7484),
+            new Point(13033,8136),
+            new Point(12987,8363),
+            new Point(12834,8785),
+            new Point(12822,9020),
+            new Point(13018,10118),
+            new Point(13118,10399)
+        };
+        private static Point[] ptsWorld1_Skalisty = new Point[]
+        {
+            new Point(13426, 3531),
+            new Point(13295, 3389),
+            new Point(13049, 3305),
+            new Point(12973, 3228),
+            new Point(12973, 3171),
+            new Point(13099, 3094),
+            new Point(13334, 3028),
+            new Point(13434, 3036),
+            new Point(13434, 2856),
+            new Point(13330, 2821),
+            new Point(13257, 2741),
+            new Point(13311, 2691),
+            new Point(13411, 2710),
+            new Point(13522, 2764),
+            new Point(13733, 2718),
+            new Point(13818, 2756),
+            new Point(14014, 2710),
+            new Point(14172, 2652),
+            new Point(14198, 2810),
+            new Point(14141, 2982),
+            new Point(13956, 3098),
+            new Point(13841, 3082),
+            new Point(13764, 3117),
+            new Point(13699, 3362),
+            new Point(13426, 3531)
+        };
+        private static Point[] ptsWorld1_NEAF = new Point[]
+        {
+           new Point(11777, 12848),
+           new Point(11767, 12823),
+           new Point(12470, 12566),
+           new Point(12480, 12593),
+           new Point(11777, 12848)
+        };
+        private static Point[] ptsWorld1_NWAF = new Point[]
+        {
+            new Point(5055, 9732),
+            new Point(4778, 9572),
+            new Point(4057, 10820),
+            new Point(4335, 10979),
+            new Point(5055, 9732)
+        };
+        private static Point[] ptsWorld1_BalotaAF = new Point[]
+        {
+           new Point(4617, 2583),
+           new Point(4605, 2565),
+           new Point(5230, 2203),
+           new Point(5241, 2222),
+           new Point(4617, 2583)
+        };
+        public static Point[] ptsWorld1_AxisNWSE = new Point[]
+        {
+            new Point(10530,2361),
+            new Point(10484,2434),
+            new Point(10464,2557),
+            new Point(10514,2668),
+            new Point(10368,2776),
+            new Point(10334,2868),
+            new Point(10272,2906),
+            new Point(10272,2991),
+            new Point(10210,3056),
+            new Point(10218,3141),
+            new Point(10395,3433),
+            new Point(10341,3740),
+            new Point(10337,3844),
+            new Point(10207,4059),
+            new Point(10441,4332),
+            new Point(10691,4559),
+            new Point(10672,4620),
+            new Point(10707,4755),
+            new Point(10588,4978),
+            new Point(10414,5104),
+            new Point(10153,5220),
+            new Point(10149,5469),
+            new Point(10106,5504),
+            new Point(10072,5627),
+            new Point(9983,5738),
+            new Point(9979,5877),
+            new Point(9941,6015),
+            new Point(9872,6007),
+            new Point(9775,6084),
+            new Point(9629,6080),
+            new Point(9541,6015),
+            new Point(9414,6000),
+            new Point(9306,6100),
+            new Point(8836,6419),
+            new Point(8656,6561),
+            new Point(8632,6611),
+            new Point(8509,6703),
+            new Point(8463,6780),
+            new Point(8328,6807),
+            new Point(7974,7202),
+            new Point(7736,7329),
+            new Point(7451,7610),
+            new Point(7305,7683),
+            new Point(7220,7679),
+            new Point(7155,7706),
+            new Point(6797,7594),
+            new Point(6612,7518),
+            new Point(6393,7521),
+            new Point(6062,7783),
+            new Point(5842,8144),
+            new Point(5488,8386),
+            new Point(5400,8567),
+            new Point(5280,8640),
+            new Point(5173,8609),
+            new Point(4730,8755),
+            new Point(4464,8851),
+            new Point(4372,8770),
+            new Point(4264,8747),
+            new Point(3941,8820),
+            new Point(3664,8951),
+            new Point(3575,9035),
+            new Point(3533,9139),
+            new Point(3441,9105),
+            new Point(3183,9258),
+            new Point(3083,9289),
+            new Point(2821,9412),
+            new Point(2644,9577),
+            new Point(2506,9623),
+            new Point(2532,9773),
+            new Point(2629,9869),
+            new Point(2690,10015),
+            new Point(2633,10146),
+            new Point(2417,10342),
+            new Point(2275,10865),
+            new Point(2259,10968),
+            new Point(2244,11187),
+            new Point(2205,11287),
+            new Point(2109,11364),
+            new Point(2009,11645),
+            new Point(2001,11760),
+            new Point(1844,12067),
+            new Point(1859,12394),
+            new Point(1805,12505),
+            new Point(1628,12824),
+            new Point(1593,13005),
+            new Point(1617,13093),
+            new Point(1432,13382),
+            new Point(1347,13435),
+            new Point(1386,13508),
+            new Point(1347,13566),
+            new Point(1058,13635),
+            new Point(1008,13612),
+            new Point(778,13678),
+            new Point(631,13777),
+            new Point(593,13850),
+            new Point(658,13970),
+            new Point(778,13993),
+            new Point(1224,14046),
+            new Point(1366,14154),
+            new Point(1513,14177),
+            new Point(1828,14362),
+            new Point(2194,14926),
+            new Point(2190,15030),
+            new Point(2225,15080),
+            new Point(2236,15215),
+            new Point(2282,15338)
+        };
+        private static Tool.Point[] ptsWorld9_HighwayWest = new Tool.Point[]
+        {
+            new Tool.Point(3595,51),
+            new Tool.Point(3351,624),
+            new Tool.Point(2893,1253),
+            new Tool.Point(2786,1392),
+            new Tool.Point(1781,3414),
+            new Tool.Point(1655,3800),
+            new Tool.Point(1530,4818),
+            new Tool.Point(1433,5369),
+            new Tool.Point(1215,6108),
+            new Tool.Point(1175,6482),
+            new Tool.Point(1212,6832),
+            new Tool.Point(1585,8978),
+            new Tool.Point(1725,9294),
+            new Tool.Point(1884,9430),
+            new Tool.Point(2306,9654),
+            new Tool.Point(2583,9886),
+            new Tool.Point(2960,10385),
+            new Tool.Point(3333,10764),
+            new Tool.Point(3725,11264),
+            new Tool.Point(3965,11473),
+            new Tool.Point(4785,11980),
+            new Tool.Point(5048,12216)
+        };
+        private static Point[] ptsWorld9_SouthAF = new Point[]
+        {
+            new Point(6982,1091),
+            new Point(8145,1289),
+            new Point(8089,1392),
+            new Point(7953,1392),
+            new Point(7853,1491),
+            new Point(7657,1451),
+            new Point(7591,1315),
+            new Point(7008,1201),
+            new Point(6974,1095)
+        };
+        private static Point[] ptsWorld9_NorthAF = new Point[]
+        {
+            new Point(10379,11317),
+            new Point(11889,11317),
+            new Point(11889,11281),
+            new Point(11841,11229),
+            new Point(11206,11222),
+            new Point(11202,11130),
+            new Point(11180,11090),
+            new Point(11054,11023),
+            new Point(11080,10961),
+            new Point(10859,10843),
+            new Point(10777,10976),
+            new Point(10796,10987),
+            new Point(10777,11042),
+            new Point(10984,11137),
+            new Point(11047,11053),
+            new Point(11165,11119),
+            new Point(11169,11226),
+            new Point(10471,11226),
+            new Point(10382,11281),
+            new Point(10379,11317)
+        };
+        //
+        public static List<List<Point[]>> MapHelperDefs = new List<List<Point[]>>
+        {
+            // Chernarus
+            new List<Point[]>
+            {
+                ptsWorld1_NEAF,
+                ptsWorld1_NWAF,
+                ptsWorld1_BalotaAF,
+                ptsWorld1_AxisNWSE,
+                ptsWorld1_RoadBereElectro,
+                ptsWorld1_Skalisty
+            },
+            new List<Point[]>
+            {
+            },
+            new List<Point[]>
+            {
+            },
+            new List<Point[]>
+            {
+            },
+            new List<Point[]>
+            {
+            },
+            new List<Point[]>
+            {
+            },
+            new List<Point[]>
+            {
+            },
+            new List<Point[]>
+            {
+            },
+            // Celle 2
+            new List<Point[]>
+            {
+                ptsWorld9_HighwayWest,
+                ptsWorld9_SouthAF,
+                ptsWorld9_NorthAF
+            },
+            // Taviana
+            new List<Point[]>
+            {
+            }
+        };
     }
     [Serializable]
     public class ModuleVersion : ICloneable, IComparable

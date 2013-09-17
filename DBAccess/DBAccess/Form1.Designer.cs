@@ -69,6 +69,7 @@
             this.label8 = new System.Windows.Forms.Label();
             this.tbVehicles = new System.Windows.Forms.TextBox();
             this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.cbCartographer = new System.Windows.Forms.CheckBox();
             this.checkBoxMapHelper = new System.Windows.Forms.CheckBox();
             this.checkBoxShowTrail = new System.Windows.Forms.CheckBox();
             this.radioButtonDeployables = new System.Windows.Forms.RadioButton();
@@ -100,6 +101,8 @@
             this.ColumnType = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.tabPage6 = new System.Windows.Forms.TabPage();
             this.dataGridViewDeployableTypes = new System.Windows.Forms.DataGridView();
+            this.ClassName = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Type = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.bgWorkerDatabase = new System.ComponentModel.BackgroundWorker();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
@@ -108,8 +111,6 @@
             this.contextMenuStripSpawn = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.toolStripMenuItemDeleteSpawn = new System.Windows.Forms.ToolStripMenuItem();
             this.bgWorkerFast = new System.ComponentModel.BackgroundWorker();
-            this.ClassName = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Type = new System.Windows.Forms.DataGridViewComboBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
@@ -179,7 +180,8 @@
             // 
             this.splitContainer1.Panel1.BackColor = System.Drawing.Color.White;
             this.splitContainer1.Panel1.Paint += new System.Windows.Forms.PaintEventHandler(this.Panel1_Paint);
-            this.splitContainer1.Panel1.MouseDown += new System.Windows.Forms.MouseEventHandler(this.Panel1_MouseClick);
+            this.splitContainer1.Panel1.MouseClick += new System.Windows.Forms.MouseEventHandler(this.Panel1_MouseClick);
+            this.splitContainer1.Panel1.MouseDown += new System.Windows.Forms.MouseEventHandler(this.Panel1_MouseDown);
             this.splitContainer1.Panel1.MouseMove += new System.Windows.Forms.MouseEventHandler(this.Panel1_MouseMove);
             this.splitContainer1.Panel1.MouseUp += new System.Windows.Forms.MouseEventHandler(this.Panel1_MouseUp);
             // 
@@ -187,8 +189,8 @@
             // 
             this.splitContainer1.Panel2.Controls.Add(this.tabControl1);
             this.splitContainer1.Panel2MinSize = 220;
-            this.splitContainer1.Size = new System.Drawing.Size(915, 522);
-            this.splitContainer1.SplitterDistance = 591;
+            this.splitContainer1.Size = new System.Drawing.Size(800, 522);
+            this.splitContainer1.SplitterDistance = 536;
             this.splitContainer1.TabIndex = 1;
             // 
             // tabControl1
@@ -203,7 +205,7 @@
             this.tabControl1.Location = new System.Drawing.Point(0, 0);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(316, 518);
+            this.tabControl1.Size = new System.Drawing.Size(256, 518);
             this.tabControl1.TabIndex = 4;
             // 
             // tabPage1
@@ -214,7 +216,7 @@
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(308, 492);
+            this.tabPage1.Size = new System.Drawing.Size(248, 492);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "Database";
             // 
@@ -513,6 +515,7 @@
             // tabPage2
             // 
             this.tabPage2.BackColor = System.Drawing.Color.Transparent;
+            this.tabPage2.Controls.Add(this.cbCartographer);
             this.tabPage2.Controls.Add(this.checkBoxMapHelper);
             this.tabPage2.Controls.Add(this.checkBoxShowTrail);
             this.tabPage2.Controls.Add(this.radioButtonDeployables);
@@ -524,14 +527,25 @@
             this.tabPage2.Location = new System.Drawing.Point(4, 22);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(308, 492);
+            this.tabPage2.Size = new System.Drawing.Size(248, 492);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Display";
+            // 
+            // cbCartographer
+            // 
+            this.cbCartographer.AutoSize = true;
+            this.cbCartographer.Location = new System.Drawing.Point(158, 80);
+            this.cbCartographer.Name = "cbCartographer";
+            this.cbCartographer.Size = new System.Drawing.Size(78, 17);
+            this.cbCartographer.TabIndex = 7;
+            this.cbCartographer.Text = "Cartograph";
+            this.cbCartographer.UseVisualStyleBackColor = true;
+            this.cbCartographer.CheckedChanged += new System.EventHandler(this.cbCartographer_CheckedChanged);
             // 
             // checkBoxMapHelper
             // 
             this.checkBoxMapHelper.AutoSize = true;
-            this.checkBoxMapHelper.Location = new System.Drawing.Point(114, 80);
+            this.checkBoxMapHelper.Location = new System.Drawing.Point(81, 80);
             this.checkBoxMapHelper.Name = "checkBoxMapHelper";
             this.checkBoxMapHelper.Size = new System.Drawing.Size(81, 17);
             this.checkBoxMapHelper.TabIndex = 6;
@@ -580,7 +594,7 @@
             this.groupBoxInfo.Controls.Add(this.propertyGrid1);
             this.groupBoxInfo.Location = new System.Drawing.Point(3, 103);
             this.groupBoxInfo.Name = "groupBoxInfo";
-            this.groupBoxInfo.Size = new System.Drawing.Size(241, 386);
+            this.groupBoxInfo.Size = new System.Drawing.Size(239, 386);
             this.groupBoxInfo.TabIndex = 3;
             this.groupBoxInfo.TabStop = false;
             this.groupBoxInfo.Text = "Info";
@@ -592,7 +606,7 @@
             this.propertyGrid1.Location = new System.Drawing.Point(3, 16);
             this.propertyGrid1.Name = "propertyGrid1";
             this.propertyGrid1.PropertySort = System.Windows.Forms.PropertySort.Categorized;
-            this.propertyGrid1.Size = new System.Drawing.Size(235, 367);
+            this.propertyGrid1.Size = new System.Drawing.Size(233, 367);
             this.propertyGrid1.TabIndex = 0;
             this.propertyGrid1.ToolbarVisible = false;
             this.propertyGrid1.ViewBackColor = System.Drawing.SystemColors.Control;
@@ -646,7 +660,7 @@
             this.tabPage3.Location = new System.Drawing.Point(4, 22);
             this.tabPage3.Name = "tabPage3";
             this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage3.Size = new System.Drawing.Size(308, 492);
+            this.tabPage3.Size = new System.Drawing.Size(248, 492);
             this.tabPage3.TabIndex = 2;
             this.tabPage3.Text = "Scripts";
             // 
@@ -746,7 +760,7 @@
             this.tabPage4.Location = new System.Drawing.Point(4, 22);
             this.tabPage4.Name = "tabPage4";
             this.tabPage4.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage4.Size = new System.Drawing.Size(308, 492);
+            this.tabPage4.Size = new System.Drawing.Size(248, 492);
             this.tabPage4.TabIndex = 3;
             this.tabPage4.Text = "Maps";
             // 
@@ -770,7 +784,7 @@
             this.dataGridViewMaps.MultiSelect = false;
             this.dataGridViewMaps.Name = "dataGridViewMaps";
             this.dataGridViewMaps.RowHeadersVisible = false;
-            this.dataGridViewMaps.Size = new System.Drawing.Size(302, 486);
+            this.dataGridViewMaps.Size = new System.Drawing.Size(242, 486);
             this.dataGridViewMaps.TabIndex = 0;
             this.dataGridViewMaps.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewMaps_CellClick);
             // 
@@ -815,7 +829,7 @@
             this.tabPage5.Location = new System.Drawing.Point(4, 22);
             this.tabPage5.Name = "tabPage5";
             this.tabPage5.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage5.Size = new System.Drawing.Size(308, 492);
+            this.tabPage5.Size = new System.Drawing.Size(248, 492);
             this.tabPage5.TabIndex = 4;
             this.tabPage5.Text = "Vehicles";
             // 
@@ -834,7 +848,7 @@
             this.dataGridViewVehicleTypes.Name = "dataGridViewVehicleTypes";
             this.dataGridViewVehicleTypes.RowHeadersVisible = false;
             this.dataGridViewVehicleTypes.ShowEditingIcon = false;
-            this.dataGridViewVehicleTypes.Size = new System.Drawing.Size(302, 486);
+            this.dataGridViewVehicleTypes.Size = new System.Drawing.Size(242, 486);
             this.dataGridViewVehicleTypes.TabIndex = 0;
             // 
             // ColumnClassName
@@ -865,7 +879,7 @@
             this.tabPage6.Location = new System.Drawing.Point(4, 22);
             this.tabPage6.Name = "tabPage6";
             this.tabPage6.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage6.Size = new System.Drawing.Size(308, 492);
+            this.tabPage6.Size = new System.Drawing.Size(248, 492);
             this.tabPage6.TabIndex = 5;
             this.tabPage6.Text = "Deployables";
             // 
@@ -886,8 +900,26 @@
             this.dataGridViewDeployableTypes.RowHeadersVisible = false;
             this.dataGridViewDeployableTypes.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
             this.dataGridViewDeployableTypes.ShowEditingIcon = false;
-            this.dataGridViewDeployableTypes.Size = new System.Drawing.Size(302, 486);
+            this.dataGridViewDeployableTypes.Size = new System.Drawing.Size(242, 486);
             this.dataGridViewDeployableTypes.TabIndex = 0;
+            // 
+            // ClassName
+            // 
+            this.ClassName.HeaderText = "ClassName";
+            this.ClassName.Name = "ClassName";
+            this.ClassName.ReadOnly = true;
+            // 
+            // Type
+            // 
+            this.Type.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.Type.HeaderText = "Type";
+            this.Type.Items.AddRange(new object[] {
+            "Unknown",
+            "Tent",
+            "Stach",
+            "Small Build",
+            "Large Build"});
+            this.Type.Name = "Type";
             // 
             // bgWorkerDatabase
             // 
@@ -934,29 +966,11 @@
             // 
             this.bgWorkerFast.DoWork += new System.ComponentModel.DoWorkEventHandler(this.bgWorkerFast_DoWork);
             // 
-            // ClassName
-            // 
-            this.ClassName.HeaderText = "ClassName";
-            this.ClassName.Name = "ClassName";
-            this.ClassName.ReadOnly = true;
-            // 
-            // Type
-            // 
-            this.Type.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.Type.HeaderText = "Type";
-            this.Type.Items.AddRange(new object[] {
-            "Unknown",
-            "Tent",
-            "Stach",
-            "Small Build",
-            "Large Build"});
-            this.Type.Name = "Type";
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(915, 522);
+            this.ClientSize = new System.Drawing.Size(800, 522);
             this.Controls.Add(this.splitContainer1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MinimumSize = new System.Drawing.Size(628, 497);
@@ -1072,6 +1086,7 @@
         private System.Windows.Forms.DataGridView dataGridViewDeployableTypes;
         private System.Windows.Forms.DataGridViewTextBoxColumn ClassName;
         private System.Windows.Forms.DataGridViewComboBoxColumn Type;
+        private System.Windows.Forms.CheckBox cbCartographer;
 
     }
 }
