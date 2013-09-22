@@ -851,7 +851,7 @@ namespace DBAccess
                     string name = row.Field<string>("class_name");
 
                     if (mycfg.vehicle_types.Tables[0].Rows.Find(name) == null)
-                        mycfg.vehicle_types.Tables[0].Rows.Add(true, name, "Car");
+                        mycfg.vehicle_types.Tables[0].Rows.Add(name, "Car", true);
                 }
 
                 foreach (DataRow row in _dsWorlds.Tables[0].Rows)
@@ -966,7 +966,7 @@ namespace DBAccess
                     string name = row.Field<string>("class_name");
 
                     if (mycfg.deployable_types.Tables[0].Rows.Find(name) == null)
-                        mycfg.deployable_types.Tables[0].Rows.Add(true, name, "Unknown");
+                        mycfg.deployable_types.Tables[0].Rows.Add(name, "Unknown", true);
                 }
 
                 mtxUpdateDB.ReleaseMutex();
@@ -1021,7 +1021,7 @@ namespace DBAccess
                     string name = row.Field<string>("class_name");
 
                     if (mycfg.vehicle_types.Tables[0].Rows.Find(name) == null)
-                        mycfg.vehicle_types.Tables[0].Rows.Add(true, name, "Car");
+                        mycfg.vehicle_types.Tables[0].Rows.Add(name, "Car", true);
                 }
             }
             catch (Exception ex)
@@ -1089,7 +1089,7 @@ namespace DBAccess
                     string name = row.Field<string>("class_name");
 
                     if (mycfg.deployable_types.Tables[0].Rows.Find(name) == null)
-                        mycfg.deployable_types.Tables[0].Rows.Add(true, name, "Unknown");
+                        mycfg.deployable_types.Tables[0].Rows.Add(name, "Unknown", true);
                 }
 
                 mtxUpdateDB.ReleaseMutex();

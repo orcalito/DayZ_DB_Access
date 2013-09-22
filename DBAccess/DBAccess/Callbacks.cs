@@ -864,7 +864,10 @@ namespace DBAccess
                 if (System.Threading.Interlocked.CompareExchange(ref bUserAction, 1, 0) == 0)
                 {
                     dlgUpdateIcons = this.BuildIcons;
-                    this.Invoke(dlgUpdateIcons);
+                        
+                    if (bConnected)
+                        this.Invoke(dlgUpdateIcons);
+
                     System.Threading.Interlocked.Exchange(ref bUserAction, 0);
                 }
             }
