@@ -7,17 +7,24 @@ DayZ DB Access
  - Show on map:
 	- players online *
 	- players alive
-	- vehicles
-	- vehicle spawn points *
-	- deployables
+	- vehicles - can be filtered by types
+	- vehicle spawn points - can be filtered by types **
+	- deployables - can be filtered by types
  - Show players/vehicles/deployables inventory.
  - Bitmap selection for each World's type.
- - Map helper to do the link between selected bitmap & DB's coordinates **
- - Vehicles Tab : associate an icon to each vehicle's class.
- - Deployables Tab :associate an icon to each deployable's class.
+ - Map helper to do the link between selected bitmap & DB's coordinates
+ - Vehicles Tab: associate an icon to each vehicle's class.
+ - Deployables Tab: associate an icon to each deployable's class.
+ - Scripts Tab:
+	- backup database
+	- remove destroyed vehicles **
+	- spawn new vehicles **
+	- remove old bodies **
+	- remove old tents **
+	- 3 custom SQL or BAT scripts can be set & called.
 
- *  : not available with Epoch's DB.
- ** : for now, Helper is done for a Chernarus world's type.
+ *  : not yet available with Epoch's DB.
+ ** : disabled with Epoch's DB because useless.
 
 
 Executable (ClickOnce) can be found here:
@@ -27,6 +34,17 @@ http://82.67.37.43/publish
 
 History
 =======
+
+- v2.5.0
+	added checkboxes to filter displayed deployables/vehicles types.
+
+- v2.4.0
+	added button to backup the database.
+	added 3 buttons to call custom SQL files, or BAT files.
+
+- v2.3.0
+	added separate definition of Map helpers - Only Chernarus & Celle2 are done
+	redone the Map helper for Chernarus, now a grid + NWAF + Skalisty island
 
 - v2.2.0
 	added customizable deployables Tab.

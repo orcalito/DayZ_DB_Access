@@ -35,7 +35,7 @@
             this.RightToolStripPanel = new System.Windows.Forms.ToolStripPanel();
             this.LeftToolStripPanel = new System.Windows.Forms.ToolStripPanel();
             this.ContentPanel = new System.Windows.Forms.ToolStripContentPanel();
-            this.splitContainer1 = new DBAccess.Form1.MySplitContainer();
+            this.splitContainer1 = new DBAccess.MySplitContainer();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
@@ -69,6 +69,12 @@
             this.label8 = new System.Windows.Forms.Label();
             this.tbVehicles = new System.Windows.Forms.TextBox();
             this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.tbDBPosY = new System.Windows.Forms.TextBox();
+            this.tbDBPosX = new System.Windows.Forms.TextBox();
+            this.tbMapPosY = new System.Windows.Forms.TextBox();
+            this.tbMapPosX = new System.Windows.Forms.TextBox();
+            this.label15 = new System.Windows.Forms.Label();
+            this.label14 = new System.Windows.Forms.Label();
             this.cbCartographer = new System.Windows.Forms.CheckBox();
             this.checkBoxMapHelper = new System.Windows.Forms.CheckBox();
             this.checkBoxShowTrail = new System.Windows.Forms.CheckBox();
@@ -80,6 +86,12 @@
             this.radioButtonOnline = new System.Windows.Forms.RadioButton();
             this.radioButtonAlive = new System.Windows.Forms.RadioButton();
             this.tabPage3 = new System.Windows.Forms.TabPage();
+            this.buttonSelectCustom3 = new System.Windows.Forms.Button();
+            this.buttonSelectCustom2 = new System.Windows.Forms.Button();
+            this.buttonSelectCustom1 = new System.Windows.Forms.Button();
+            this.buttonCustom3 = new System.Windows.Forms.Button();
+            this.buttonCustom2 = new System.Windows.Forms.Button();
+            this.buttonCustom1 = new System.Windows.Forms.Button();
             this.textBoxOldTentLimit = new System.Windows.Forms.TextBox();
             this.buttonRemoveTents = new System.Windows.Forms.Button();
             this.textBoxCmdStatus = new System.Windows.Forms.TextBox();
@@ -87,22 +99,25 @@
             this.textBoxVehicleMax = new System.Windows.Forms.TextBox();
             this.buttonRemoveBodies = new System.Windows.Forms.Button();
             this.buttonSpawnNew = new System.Windows.Forms.Button();
+            this.buttonBackup = new System.Windows.Forms.Button();
             this.buttonRemoveDestroyed = new System.Windows.Forms.Button();
             this.tabPage4 = new System.Windows.Forms.TabPage();
             this.dataGridViewMaps = new System.Windows.Forms.DataGridView();
-            this.ColumnID = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ColumnName = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ColumnChoosePath = new System.Windows.Forms.DataGridViewButtonColumn();
-            this.ColumnPath = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColGVMID = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColGVMName = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColGVMChoosePath = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.ColGVMPath = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dataSetBindingSource = new System.Windows.Forms.BindingSource(this.components);
             this.tabPage5 = new System.Windows.Forms.TabPage();
             this.dataGridViewVehicleTypes = new System.Windows.Forms.DataGridView();
-            this.ColumnClassName = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ColumnType = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            this.ColGVVTShow = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.ColGVVTClassName = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColGVVTType = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.tabPage6 = new System.Windows.Forms.TabPage();
             this.dataGridViewDeployableTypes = new System.Windows.Forms.DataGridView();
-            this.ClassName = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Type = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            this.ColGVDTShow = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.ColGVDTClassName = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColGVDTType = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.bgWorkerDatabase = new System.ComponentModel.BackgroundWorker();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
@@ -111,6 +126,7 @@
             this.contextMenuStripSpawn = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.toolStripMenuItemDeleteSpawn = new System.Windows.Forms.ToolStripMenuItem();
             this.bgWorkerFast = new System.ComponentModel.BackgroundWorker();
+            this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
@@ -466,9 +482,9 @@
             this.label9.AutoSize = true;
             this.label9.Location = new System.Drawing.Point(6, 156);
             this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(82, 13);
+            this.label9.Size = new System.Drawing.Size(65, 13);
             this.label9.TabIndex = 9;
-            this.label9.Text = "Tents - Staches";
+            this.label9.Text = "Deployables";
             // 
             // tbDeployables
             // 
@@ -515,6 +531,12 @@
             // tabPage2
             // 
             this.tabPage2.BackColor = System.Drawing.Color.Transparent;
+            this.tabPage2.Controls.Add(this.tbDBPosY);
+            this.tabPage2.Controls.Add(this.tbDBPosX);
+            this.tabPage2.Controls.Add(this.tbMapPosY);
+            this.tabPage2.Controls.Add(this.tbMapPosX);
+            this.tabPage2.Controls.Add(this.label15);
+            this.tabPage2.Controls.Add(this.label14);
             this.tabPage2.Controls.Add(this.cbCartographer);
             this.tabPage2.Controls.Add(this.checkBoxMapHelper);
             this.tabPage2.Controls.Add(this.checkBoxShowTrail);
@@ -531,10 +553,60 @@
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Display";
             // 
+            // tbDBPosY
+            // 
+            this.tbDBPosY.Location = new System.Drawing.Point(189, 102);
+            this.tbDBPosY.Name = "tbDBPosY";
+            this.tbDBPosY.ReadOnly = true;
+            this.tbDBPosY.Size = new System.Drawing.Size(48, 20);
+            this.tbDBPosY.TabIndex = 13;
+            // 
+            // tbDBPosX
+            // 
+            this.tbDBPosX.Location = new System.Drawing.Point(137, 102);
+            this.tbDBPosX.Name = "tbDBPosX";
+            this.tbDBPosX.ReadOnly = true;
+            this.tbDBPosX.Size = new System.Drawing.Size(48, 20);
+            this.tbDBPosX.TabIndex = 12;
+            // 
+            // tbMapPosY
+            // 
+            this.tbMapPosY.Location = new System.Drawing.Point(189, 79);
+            this.tbMapPosY.Name = "tbMapPosY";
+            this.tbMapPosY.ReadOnly = true;
+            this.tbMapPosY.Size = new System.Drawing.Size(48, 20);
+            this.tbMapPosY.TabIndex = 11;
+            // 
+            // tbMapPosX
+            // 
+            this.tbMapPosX.Location = new System.Drawing.Point(137, 79);
+            this.tbMapPosX.Name = "tbMapPosX";
+            this.tbMapPosX.ReadOnly = true;
+            this.tbMapPosX.Size = new System.Drawing.Size(48, 20);
+            this.tbMapPosX.TabIndex = 9;
+            // 
+            // label15
+            // 
+            this.label15.AutoSize = true;
+            this.label15.Location = new System.Drawing.Point(103, 105);
+            this.label15.Name = "label15";
+            this.label15.Size = new System.Drawing.Size(22, 13);
+            this.label15.TabIndex = 8;
+            this.label15.Text = "DB";
+            // 
+            // label14
+            // 
+            this.label14.AutoSize = true;
+            this.label14.Location = new System.Drawing.Point(103, 82);
+            this.label14.Name = "label14";
+            this.label14.Size = new System.Drawing.Size(28, 13);
+            this.label14.TabIndex = 8;
+            this.label14.Text = "Map";
+            // 
             // cbCartographer
             // 
             this.cbCartographer.AutoSize = true;
-            this.cbCartographer.Location = new System.Drawing.Point(158, 80);
+            this.cbCartographer.Location = new System.Drawing.Point(103, 58);
             this.cbCartographer.Name = "cbCartographer";
             this.cbCartographer.Size = new System.Drawing.Size(78, 17);
             this.cbCartographer.TabIndex = 7;
@@ -545,7 +617,7 @@
             // checkBoxMapHelper
             // 
             this.checkBoxMapHelper.AutoSize = true;
-            this.checkBoxMapHelper.Location = new System.Drawing.Point(81, 80);
+            this.checkBoxMapHelper.Location = new System.Drawing.Point(103, 35);
             this.checkBoxMapHelper.Name = "checkBoxMapHelper";
             this.checkBoxMapHelper.Size = new System.Drawing.Size(81, 17);
             this.checkBoxMapHelper.TabIndex = 6;
@@ -556,7 +628,7 @@
             // checkBoxShowTrail
             // 
             this.checkBoxShowTrail.AutoSize = true;
-            this.checkBoxShowTrail.Location = new System.Drawing.Point(6, 80);
+            this.checkBoxShowTrail.Location = new System.Drawing.Point(103, 12);
             this.checkBoxShowTrail.Name = "checkBoxShowTrail";
             this.checkBoxShowTrail.Size = new System.Drawing.Size(72, 17);
             this.checkBoxShowTrail.TabIndex = 5;
@@ -567,18 +639,18 @@
             // radioButtonDeployables
             // 
             this.radioButtonDeployables.AutoSize = true;
-            this.radioButtonDeployables.Location = new System.Drawing.Point(6, 57);
+            this.radioButtonDeployables.Location = new System.Drawing.Point(6, 103);
             this.radioButtonDeployables.Name = "radioButtonDeployables";
-            this.radioButtonDeployables.Size = new System.Drawing.Size(100, 17);
+            this.radioButtonDeployables.Size = new System.Drawing.Size(83, 17);
             this.radioButtonDeployables.TabIndex = 4;
-            this.radioButtonDeployables.Text = "Tents - Staches";
+            this.radioButtonDeployables.Text = "Deployables";
             this.radioButtonDeployables.UseVisualStyleBackColor = true;
             this.radioButtonDeployables.CheckedChanged += new System.EventHandler(this.radioButton_CheckedChanged);
             // 
             // radioButtonSpawn
             // 
             this.radioButtonSpawn.AutoSize = true;
-            this.radioButtonSpawn.Location = new System.Drawing.Point(114, 34);
+            this.radioButtonSpawn.Location = new System.Drawing.Point(6, 80);
             this.radioButtonSpawn.Name = "radioButtonSpawn";
             this.radioButtonSpawn.Size = new System.Drawing.Size(90, 17);
             this.radioButtonSpawn.TabIndex = 3;
@@ -592,9 +664,9 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBoxInfo.Controls.Add(this.propertyGrid1);
-            this.groupBoxInfo.Location = new System.Drawing.Point(3, 103);
+            this.groupBoxInfo.Location = new System.Drawing.Point(3, 126);
             this.groupBoxInfo.Name = "groupBoxInfo";
-            this.groupBoxInfo.Size = new System.Drawing.Size(239, 386);
+            this.groupBoxInfo.Size = new System.Drawing.Size(239, 363);
             this.groupBoxInfo.TabIndex = 3;
             this.groupBoxInfo.TabStop = false;
             this.groupBoxInfo.Text = "Info";
@@ -606,7 +678,7 @@
             this.propertyGrid1.Location = new System.Drawing.Point(3, 16);
             this.propertyGrid1.Name = "propertyGrid1";
             this.propertyGrid1.PropertySort = System.Windows.Forms.PropertySort.Categorized;
-            this.propertyGrid1.Size = new System.Drawing.Size(233, 367);
+            this.propertyGrid1.Size = new System.Drawing.Size(233, 344);
             this.propertyGrid1.TabIndex = 0;
             this.propertyGrid1.ToolbarVisible = false;
             this.propertyGrid1.ViewBackColor = System.Drawing.SystemColors.Control;
@@ -614,7 +686,7 @@
             // radioButtonVehicles
             // 
             this.radioButtonVehicles.AutoSize = true;
-            this.radioButtonVehicles.Location = new System.Drawing.Point(6, 34);
+            this.radioButtonVehicles.Location = new System.Drawing.Point(6, 57);
             this.radioButtonVehicles.Name = "radioButtonVehicles";
             this.radioButtonVehicles.Size = new System.Drawing.Size(65, 17);
             this.radioButtonVehicles.TabIndex = 2;
@@ -638,10 +710,10 @@
             // radioButtonAlive
             // 
             this.radioButtonAlive.AutoSize = true;
-            this.radioButtonAlive.Location = new System.Drawing.Point(114, 11);
+            this.radioButtonAlive.Location = new System.Drawing.Point(6, 34);
             this.radioButtonAlive.Name = "radioButtonAlive";
             this.radioButtonAlive.Size = new System.Drawing.Size(48, 17);
-            this.radioButtonAlive.TabIndex = 0;
+            this.radioButtonAlive.TabIndex = 1;
             this.radioButtonAlive.Text = "Alive";
             this.radioButtonAlive.UseVisualStyleBackColor = true;
             this.radioButtonAlive.CheckedChanged += new System.EventHandler(this.radioButton_CheckedChanged);
@@ -649,6 +721,12 @@
             // tabPage3
             // 
             this.tabPage3.BackColor = System.Drawing.Color.Transparent;
+            this.tabPage3.Controls.Add(this.buttonSelectCustom3);
+            this.tabPage3.Controls.Add(this.buttonSelectCustom2);
+            this.tabPage3.Controls.Add(this.buttonSelectCustom1);
+            this.tabPage3.Controls.Add(this.buttonCustom3);
+            this.tabPage3.Controls.Add(this.buttonCustom2);
+            this.tabPage3.Controls.Add(this.buttonCustom1);
             this.tabPage3.Controls.Add(this.textBoxOldTentLimit);
             this.tabPage3.Controls.Add(this.buttonRemoveTents);
             this.tabPage3.Controls.Add(this.textBoxCmdStatus);
@@ -656,6 +734,7 @@
             this.tabPage3.Controls.Add(this.textBoxVehicleMax);
             this.tabPage3.Controls.Add(this.buttonRemoveBodies);
             this.tabPage3.Controls.Add(this.buttonSpawnNew);
+            this.tabPage3.Controls.Add(this.buttonBackup);
             this.tabPage3.Controls.Add(this.buttonRemoveDestroyed);
             this.tabPage3.Location = new System.Drawing.Point(4, 22);
             this.tabPage3.Name = "tabPage3";
@@ -664,9 +743,75 @@
             this.tabPage3.TabIndex = 2;
             this.tabPage3.Text = "Scripts";
             // 
+            // buttonSelectCustom3
+            // 
+            this.buttonSelectCustom3.Location = new System.Drawing.Point(161, 209);
+            this.buttonSelectCustom3.Name = "buttonSelectCustom3";
+            this.buttonSelectCustom3.Size = new System.Drawing.Size(32, 23);
+            this.buttonSelectCustom3.TabIndex = 12;
+            this.buttonSelectCustom3.Text = "...";
+            this.toolTip1.SetToolTip(this.buttonSelectCustom3, "Change association");
+            this.buttonSelectCustom3.UseVisualStyleBackColor = true;
+            this.buttonSelectCustom3.Click += new System.EventHandler(this.buttonSelectCustom_Click);
+            // 
+            // buttonSelectCustom2
+            // 
+            this.buttonSelectCustom2.Location = new System.Drawing.Point(161, 180);
+            this.buttonSelectCustom2.Name = "buttonSelectCustom2";
+            this.buttonSelectCustom2.Size = new System.Drawing.Size(32, 23);
+            this.buttonSelectCustom2.TabIndex = 12;
+            this.buttonSelectCustom2.Text = "...";
+            this.toolTip1.SetToolTip(this.buttonSelectCustom2, "Change association");
+            this.buttonSelectCustom2.UseVisualStyleBackColor = true;
+            this.buttonSelectCustom2.Click += new System.EventHandler(this.buttonSelectCustom_Click);
+            // 
+            // buttonSelectCustom1
+            // 
+            this.buttonSelectCustom1.Location = new System.Drawing.Point(161, 151);
+            this.buttonSelectCustom1.Name = "buttonSelectCustom1";
+            this.buttonSelectCustom1.Size = new System.Drawing.Size(32, 23);
+            this.buttonSelectCustom1.TabIndex = 12;
+            this.buttonSelectCustom1.Text = "...";
+            this.toolTip1.SetToolTip(this.buttonSelectCustom1, "Change association");
+            this.buttonSelectCustom1.UseVisualStyleBackColor = true;
+            this.buttonSelectCustom1.Click += new System.EventHandler(this.buttonSelectCustom_Click);
+            // 
+            // buttonCustom3
+            // 
+            this.buttonCustom3.Location = new System.Drawing.Point(7, 209);
+            this.buttonCustom3.Name = "buttonCustom3";
+            this.buttonCustom3.Size = new System.Drawing.Size(148, 23);
+            this.buttonCustom3.TabIndex = 11;
+            this.buttonCustom3.Text = "<Custom 3>";
+            this.toolTip1.SetToolTip(this.buttonCustom3, "Custom SQL or BAT file");
+            this.buttonCustom3.UseVisualStyleBackColor = true;
+            this.buttonCustom3.Click += new System.EventHandler(this.buttonCustom_Click);
+            // 
+            // buttonCustom2
+            // 
+            this.buttonCustom2.Location = new System.Drawing.Point(7, 180);
+            this.buttonCustom2.Name = "buttonCustom2";
+            this.buttonCustom2.Size = new System.Drawing.Size(148, 23);
+            this.buttonCustom2.TabIndex = 10;
+            this.buttonCustom2.Text = "<Custom 2>";
+            this.toolTip1.SetToolTip(this.buttonCustom2, "Custom SQL or BAT file");
+            this.buttonCustom2.UseVisualStyleBackColor = true;
+            this.buttonCustom2.Click += new System.EventHandler(this.buttonCustom_Click);
+            // 
+            // buttonCustom1
+            // 
+            this.buttonCustom1.Location = new System.Drawing.Point(7, 151);
+            this.buttonCustom1.Name = "buttonCustom1";
+            this.buttonCustom1.Size = new System.Drawing.Size(148, 23);
+            this.buttonCustom1.TabIndex = 9;
+            this.buttonCustom1.Text = "<Custom 1>";
+            this.toolTip1.SetToolTip(this.buttonCustom1, "Custom SQL or BAT file");
+            this.buttonCustom1.UseVisualStyleBackColor = true;
+            this.buttonCustom1.Click += new System.EventHandler(this.buttonCustom_Click);
+            // 
             // textBoxOldTentLimit
             // 
-            this.textBoxOldTentLimit.Location = new System.Drawing.Point(160, 95);
+            this.textBoxOldTentLimit.Location = new System.Drawing.Point(160, 124);
             this.textBoxOldTentLimit.MaxLength = 4;
             this.textBoxOldTentLimit.Name = "textBoxOldTentLimit";
             this.textBoxOldTentLimit.Size = new System.Drawing.Size(47, 20);
@@ -676,7 +821,7 @@
             // 
             // buttonRemoveTents
             // 
-            this.buttonRemoveTents.Location = new System.Drawing.Point(6, 93);
+            this.buttonRemoveTents.Location = new System.Drawing.Point(6, 122);
             this.buttonRemoveTents.Name = "buttonRemoveTents";
             this.buttonRemoveTents.Size = new System.Drawing.Size(148, 23);
             this.buttonRemoveTents.TabIndex = 4;
@@ -692,18 +837,18 @@
             this.textBoxCmdStatus.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBoxCmdStatus.Location = new System.Drawing.Point(7, 122);
+            this.textBoxCmdStatus.Location = new System.Drawing.Point(7, 238);
             this.textBoxCmdStatus.MaxLength = 4096;
             this.textBoxCmdStatus.Multiline = true;
             this.textBoxCmdStatus.Name = "textBoxCmdStatus";
             this.textBoxCmdStatus.ReadOnly = true;
             this.textBoxCmdStatus.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.textBoxCmdStatus.Size = new System.Drawing.Size(235, 362);
+            this.textBoxCmdStatus.Size = new System.Drawing.Size(235, 246);
             this.textBoxCmdStatus.TabIndex = 8;
             // 
             // textBoxOldBodyLimit
             // 
-            this.textBoxOldBodyLimit.Location = new System.Drawing.Point(160, 66);
+            this.textBoxOldBodyLimit.Location = new System.Drawing.Point(160, 95);
             this.textBoxOldBodyLimit.MaxLength = 4;
             this.textBoxOldBodyLimit.Name = "textBoxOldBodyLimit";
             this.textBoxOldBodyLimit.Size = new System.Drawing.Size(47, 20);
@@ -714,7 +859,7 @@
             // textBoxVehicleMax
             // 
             this.textBoxVehicleMax.ImeMode = System.Windows.Forms.ImeMode.On;
-            this.textBoxVehicleMax.Location = new System.Drawing.Point(160, 37);
+            this.textBoxVehicleMax.Location = new System.Drawing.Point(160, 66);
             this.textBoxVehicleMax.MaxLength = 4;
             this.textBoxVehicleMax.Name = "textBoxVehicleMax";
             this.textBoxVehicleMax.Size = new System.Drawing.Size(47, 20);
@@ -724,7 +869,7 @@
             // 
             // buttonRemoveBodies
             // 
-            this.buttonRemoveBodies.Location = new System.Drawing.Point(6, 64);
+            this.buttonRemoveBodies.Location = new System.Drawing.Point(6, 93);
             this.buttonRemoveBodies.Name = "buttonRemoveBodies";
             this.buttonRemoveBodies.Size = new System.Drawing.Size(148, 23);
             this.buttonRemoveBodies.TabIndex = 3;
@@ -735,7 +880,7 @@
             // 
             // buttonSpawnNew
             // 
-            this.buttonSpawnNew.Location = new System.Drawing.Point(6, 35);
+            this.buttonSpawnNew.Location = new System.Drawing.Point(6, 64);
             this.buttonSpawnNew.Name = "buttonSpawnNew";
             this.buttonSpawnNew.Size = new System.Drawing.Size(148, 23);
             this.buttonSpawnNew.TabIndex = 2;
@@ -743,9 +888,19 @@
             this.buttonSpawnNew.UseVisualStyleBackColor = true;
             this.buttonSpawnNew.Click += new System.EventHandler(this.buttonSpawnNew_Click);
             // 
+            // buttonBackup
+            // 
+            this.buttonBackup.Location = new System.Drawing.Point(6, 6);
+            this.buttonBackup.Name = "buttonBackup";
+            this.buttonBackup.Size = new System.Drawing.Size(148, 23);
+            this.buttonBackup.TabIndex = 1;
+            this.buttonBackup.Text = "Backup database";
+            this.buttonBackup.UseVisualStyleBackColor = true;
+            this.buttonBackup.Click += new System.EventHandler(this.buttonBackup_Click);
+            // 
             // buttonRemoveDestroyed
             // 
-            this.buttonRemoveDestroyed.Location = new System.Drawing.Point(6, 6);
+            this.buttonRemoveDestroyed.Location = new System.Drawing.Point(6, 35);
             this.buttonRemoveDestroyed.Name = "buttonRemoveDestroyed";
             this.buttonRemoveDestroyed.Size = new System.Drawing.Size(148, 23);
             this.buttonRemoveDestroyed.TabIndex = 1;
@@ -774,10 +929,10 @@
             this.dataGridViewMaps.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dataGridViewMaps.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
             this.dataGridViewMaps.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.ColumnID,
-            this.ColumnName,
-            this.ColumnChoosePath,
-            this.ColumnPath});
+            this.ColGVMID,
+            this.ColGVMName,
+            this.ColGVMChoosePath,
+            this.ColGVMPath});
             this.dataGridViewMaps.DataSource = this.dataSetBindingSource;
             this.dataGridViewMaps.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dataGridViewMaps.Location = new System.Drawing.Point(3, 3);
@@ -788,34 +943,34 @@
             this.dataGridViewMaps.TabIndex = 0;
             this.dataGridViewMaps.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewMaps_CellClick);
             // 
-            // ColumnID
+            // ColGVMID
             // 
-            this.ColumnID.FillWeight = 10F;
-            this.ColumnID.HeaderText = "World ID";
-            this.ColumnID.Name = "ColumnID";
-            this.ColumnID.ReadOnly = true;
+            this.ColGVMID.FillWeight = 10F;
+            this.ColGVMID.HeaderText = "World ID";
+            this.ColGVMID.Name = "ColGVMID";
+            this.ColGVMID.ReadOnly = true;
             // 
-            // ColumnName
+            // ColGVMName
             // 
-            this.ColumnName.FillWeight = 30F;
-            this.ColumnName.HeaderText = "Name";
-            this.ColumnName.Name = "ColumnName";
-            this.ColumnName.ReadOnly = true;
+            this.ColGVMName.FillWeight = 30F;
+            this.ColGVMName.HeaderText = "Name";
+            this.ColGVMName.Name = "ColGVMName";
+            this.ColGVMName.ReadOnly = true;
             // 
-            // ColumnChoosePath
+            // ColGVMChoosePath
             // 
-            this.ColumnChoosePath.FillWeight = 8F;
-            this.ColumnChoosePath.HeaderText = "Select";
-            this.ColumnChoosePath.Name = "ColumnChoosePath";
-            this.ColumnChoosePath.Text = "...";
-            this.ColumnChoosePath.ToolTipText = "Select your file on disk";
-            this.ColumnChoosePath.UseColumnTextForButtonValue = true;
+            this.ColGVMChoosePath.FillWeight = 8F;
+            this.ColGVMChoosePath.HeaderText = "Select";
+            this.ColGVMChoosePath.Name = "ColGVMChoosePath";
+            this.ColGVMChoosePath.Text = "...";
+            this.ColGVMChoosePath.ToolTipText = "Select your file on disk";
+            this.ColGVMChoosePath.UseColumnTextForButtonValue = true;
             // 
-            // ColumnPath
+            // ColGVMPath
             // 
-            this.ColumnPath.FillWeight = 45F;
-            this.ColumnPath.HeaderText = "Path";
-            this.ColumnPath.Name = "ColumnPath";
+            this.ColGVMPath.FillWeight = 45F;
+            this.ColGVMPath.HeaderText = "Path";
+            this.ColGVMPath.Name = "ColGVMPath";
             // 
             // dataSetBindingSource
             // 
@@ -840,8 +995,9 @@
             this.dataGridViewVehicleTypes.AllowUserToResizeRows = false;
             this.dataGridViewVehicleTypes.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dataGridViewVehicleTypes.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.ColumnClassName,
-            this.ColumnType});
+            this.ColGVVTShow,
+            this.ColGVVTClassName,
+            this.ColGVVTType});
             this.dataGridViewVehicleTypes.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dataGridViewVehicleTypes.Location = new System.Drawing.Point(3, 3);
             this.dataGridViewVehicleTypes.MultiSelect = false;
@@ -850,18 +1006,30 @@
             this.dataGridViewVehicleTypes.ShowEditingIcon = false;
             this.dataGridViewVehicleTypes.Size = new System.Drawing.Size(242, 486);
             this.dataGridViewVehicleTypes.TabIndex = 0;
+            this.dataGridViewVehicleTypes.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewVehicleTypes_CellContentClick);
+            this.dataGridViewVehicleTypes.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewVehicleTypes_CellValueChanged);
+            this.dataGridViewVehicleTypes.ColumnHeaderMouseDoubleClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dataGridViewVehicleTypes_ColumnHeaderMouseDoubleClick);
             // 
-            // ColumnClassName
+            // ColGVVTShow
             // 
-            this.ColumnClassName.HeaderText = "ClassName";
-            this.ColumnClassName.Name = "ColumnClassName";
-            this.ColumnClassName.ReadOnly = true;
+            this.ColGVVTShow.FillWeight = 45.68528F;
+            this.ColGVVTShow.HeaderText = "Show";
+            this.ColGVVTShow.Name = "ColGVVTShow";
+            this.ColGVVTShow.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
             // 
-            // ColumnType
+            // ColGVVTClassName
             // 
-            this.ColumnType.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.ColumnType.HeaderText = "Type";
-            this.ColumnType.Items.AddRange(new object[] {
+            this.ColGVVTClassName.FillWeight = 127.1574F;
+            this.ColGVVTClassName.HeaderText = "ClassName";
+            this.ColGVVTClassName.Name = "ColGVVTClassName";
+            this.ColGVVTClassName.ReadOnly = true;
+            // 
+            // ColGVVTType
+            // 
+            this.ColGVVTType.FillWeight = 127.1574F;
+            this.ColGVVTType.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.ColGVVTType.HeaderText = "Type";
+            this.ColGVVTType.Items.AddRange(new object[] {
             "Air",
             "Bicycle",
             "Boat",
@@ -870,7 +1038,8 @@
             "Helicopter",
             "Motorcycle",
             "Truck"});
-            this.ColumnType.Name = "ColumnType";
+            this.ColGVVTType.Name = "ColGVVTType";
+            this.ColGVVTType.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
             // 
             // tabPage6
             // 
@@ -891,8 +1060,9 @@
             this.dataGridViewDeployableTypes.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dataGridViewDeployableTypes.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
             this.dataGridViewDeployableTypes.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.ClassName,
-            this.Type});
+            this.ColGVDTShow,
+            this.ColGVDTClassName,
+            this.ColGVDTType});
             this.dataGridViewDeployableTypes.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dataGridViewDeployableTypes.Location = new System.Drawing.Point(3, 3);
             this.dataGridViewDeployableTypes.MultiSelect = false;
@@ -902,24 +1072,37 @@
             this.dataGridViewDeployableTypes.ShowEditingIcon = false;
             this.dataGridViewDeployableTypes.Size = new System.Drawing.Size(242, 486);
             this.dataGridViewDeployableTypes.TabIndex = 0;
+            this.dataGridViewDeployableTypes.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewDeployableTypes_CellContentClick);
+            this.dataGridViewDeployableTypes.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewDeployableTypes_CellValueChanged);
+            this.dataGridViewDeployableTypes.ColumnHeaderMouseDoubleClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dataGridViewDeployableTypes_ColumnHeaderMouseDoubleClick);
             // 
-            // ClassName
+            // ColGVDTShow
             // 
-            this.ClassName.HeaderText = "ClassName";
-            this.ClassName.Name = "ClassName";
-            this.ClassName.ReadOnly = true;
+            this.ColGVDTShow.FillWeight = 45.68528F;
+            this.ColGVDTShow.HeaderText = "Show";
+            this.ColGVDTShow.Name = "ColGVDTShow";
+            this.ColGVDTShow.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
             // 
-            // Type
+            // ColGVDTClassName
             // 
-            this.Type.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.Type.HeaderText = "Type";
-            this.Type.Items.AddRange(new object[] {
+            this.ColGVDTClassName.FillWeight = 127.1574F;
+            this.ColGVDTClassName.HeaderText = "ClassName";
+            this.ColGVDTClassName.Name = "ColGVDTClassName";
+            this.ColGVDTClassName.ReadOnly = true;
+            // 
+            // ColGVDTType
+            // 
+            this.ColGVDTType.FillWeight = 127.1574F;
+            this.ColGVDTType.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.ColGVDTType.HeaderText = "Type";
+            this.ColGVDTType.Items.AddRange(new object[] {
             "Unknown",
             "Tent",
             "Stach",
             "Small Build",
             "Large Build"});
-            this.Type.Name = "Type";
+            this.ColGVDTType.Name = "ColGVDTType";
+            this.ColGVDTType.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
             // 
             // bgWorkerDatabase
             // 
@@ -965,6 +1148,11 @@
             // bgWorkerFast
             // 
             this.bgWorkerFast.DoWork += new System.ComponentModel.DoWorkEventHandler(this.bgWorkerFast_DoWork);
+            // 
+            // saveFileDialog1
+            // 
+            this.saveFileDialog1.DefaultExt = "sql";
+            this.saveFileDialog1.Filter = "SQL Files|*.sql";
             // 
             // Form1
             // 
@@ -1069,24 +1257,43 @@
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemDeleteSpawn;
         private System.Windows.Forms.TabPage tabPage5;
         private System.Windows.Forms.DataGridView dataGridViewVehicleTypes;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ColumnClassName;
-        private System.Windows.Forms.DataGridViewComboBoxColumn ColumnType;
         private System.Windows.Forms.Label label12;
         private System.Windows.Forms.TextBox textBoxWorld;
         private System.Windows.Forms.ComboBox comboBoxGameType;
         private System.Windows.Forms.Label label13;
         private System.Windows.Forms.CheckBox checkBoxMapHelper;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ColumnID;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ColumnName;
-        private System.Windows.Forms.DataGridViewButtonColumn ColumnChoosePath;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ColumnPath;
         private System.Windows.Forms.BindingSource dataSetBindingSource;
         private System.ComponentModel.BackgroundWorker bgWorkerFast;
         private System.Windows.Forms.TabPage tabPage6;
         private System.Windows.Forms.DataGridView dataGridViewDeployableTypes;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ClassName;
-        private System.Windows.Forms.DataGridViewComboBoxColumn Type;
         private System.Windows.Forms.CheckBox cbCartographer;
+        private System.Windows.Forms.TextBox tbDBPosY;
+        private System.Windows.Forms.TextBox tbDBPosX;
+        private System.Windows.Forms.TextBox tbMapPosY;
+        private System.Windows.Forms.TextBox tbMapPosX;
+        private System.Windows.Forms.Label label15;
+        private System.Windows.Forms.Label label14;
+        private System.Windows.Forms.Button buttonSelectCustom3;
+        private System.Windows.Forms.Button buttonSelectCustom2;
+        private System.Windows.Forms.Button buttonSelectCustom1;
+        private System.Windows.Forms.Button buttonCustom3;
+        private System.Windows.Forms.Button buttonCustom2;
+        private System.Windows.Forms.Button buttonCustom1;
+        private System.Windows.Forms.Button buttonBackup;
+        //
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColGVMID;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColGVMName;
+        private System.Windows.Forms.DataGridViewButtonColumn ColGVMChoosePath;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColGVMPath;
+        //
+        //
+        private System.Windows.Forms.SaveFileDialog saveFileDialog1;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn ColGVVTShow;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColGVVTClassName;
+        private System.Windows.Forms.DataGridViewComboBoxColumn ColGVVTType;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn ColGVDTShow;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColGVDTClassName;
+        private System.Windows.Forms.DataGridViewComboBoxColumn ColGVDTType;
 
     }
 }

@@ -1,43 +1,35 @@
-﻿using System;
+﻿using MySql.Data.MySqlClient;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.ComponentModel.Design;
 using System.Data;
 using System.Drawing;
-using System.Drawing.Design;
-using System.Drawing.Drawing2D;
 using System.Globalization;
-using System.Linq;
+using System.IO;
 using System.Reflection;
-using System.Text;
 using System.Threading;
 using System.Windows.Forms;
-using System.IO;
-using System.Xml;
 using System.Xml.Serialization;
-using MySql.Data.MySqlClient;
-using System.Drawing.Imaging;
-using System.Runtime.InteropServices;
 
 namespace DBAccess
 {
     public partial class Form1 : Form
     {
-        static ModuleVersion curCfgVersion = new ModuleVersion(2, 0);
+        static ModuleVersion curCfgVersion = new ModuleVersion(3, 0);
 
         private static int bUserAction = 0;
         private static Mutex mtxUpdateDB = new Mutex();
         private static Mutex mtxUseDS = new Mutex();
-        private static EventWaitHandle eventFastBgWorker = new EventWaitHandle(false, EventResetMode.ManualReset);
+        private static EventWaitHandle eventFastBgWorker = new EventWaitHandle(false, EventResetMode.AutoReset);
         public DlgUpdateIcons dlgUpdateIcons;
         public DlgUpdateIcons dlgRefreshMap;
         //
-        private MySqlConnection cnx;
+        private MySqlConnection sqlCnx;
         private bool bConnected = false;
         private RadioButton currDisplayedItems;
         //
-        public myConfig mycfg = new myConfig();
+        public myConfig mycfg = new myConfig(curCfgVersion);
         private string configPath;
         private string configFilePath;
         private VirtualMap virtualMap = new VirtualMap();
@@ -56,7 +48,7 @@ namespace DBAccess
         private List<myIcon> iconVehicles = new List<myIcon>();
         private List<myIcon> iconDeployables = new List<myIcon>();
         private DragNDrop dragndrop = new DragNDrop();
-        private MapZoom mapZoom = new MapZoom();
+        private MapZoom mapZoom = new MapZoom(eventFastBgWorker);
 
         private MapHelper mapHelper;
         private UIDGraph cartographer = new UIDGraph(new Pen(Color.Black, 2));
@@ -112,216 +104,6 @@ namespace DBAccess
 
             RefreshIcons();
         }
-        void Form1Resize(object sender, EventArgs e)
-        {
-            ApplyMapChanges();
-        }
-
-        private void Panel1_MouseClick(object sender, MouseEventArgs e)
-        {
-            System.Threading.Interlocked.CompareExchange(ref bUserAction, 1, 0);
-
-            if ((mapHelper != null) && mapHelper.enabled)
-                return;
-
-            if (cbCartographer.Checked)
-            {
-                if (e.Button.HasFlag(MouseButtons.Left))
-                {
-                    Tool.Point mp = virtualMap.UnitToDB(virtualMap.PanelToUnit(e.Location));
-                    mp = mp / virtualMap.nfo.dbRefMapSize;
-                    mp.Y = 1.0f - mp.Y;
-                    cartographer.AddPoint(mp);
-                }
-                else if (e.Button.HasFlag(MouseButtons.Right))
-                {
-                    cartographer.RemoveLastPoint();
-                }
-            }
-            else
-            {
-                Rectangle mouseRec = new Rectangle(e.Location, Size.Empty);
-                foreach (iconDB idb in listIcons)
-                {
-                    if (mouseRec.IntersectsWith(idb.icon.rectangle))
-                    {
-                        // Call Click event from icon
-                        idb.icon.OnClick(this, e);
-
-                        break;
-                    }
-                }
-            }
-        }
-        private void Panel1_MouseDown(object sender, MouseEventArgs e)
-        {
-            System.Threading.Interlocked.CompareExchange(ref bUserAction, 1, 0);
-
-            if (e.Button.HasFlag(MouseButtons.Right) && (mapHelper != null) && mapHelper.enabled)
-            {
-                Tool.Point mousePos = (Tool.Point)(e.Location - virtualMap.Position);
-
-                mapHelper.isDraggingCtrlPoint = mapHelper.IntersectControl(mousePos, 5);
-
-                if (mapHelper.isDraggingCtrlPoint > 0)
-                {
-                    // Will drag selected Control point
-                    Tool.Point pt = mapHelper.controls[mapHelper.isDraggingCtrlPoint] * virtualMap.SizeCorrected + virtualMap.Position;
-                    dragndrop.Start(pt);
-                }
-                else
-                {
-                    // Will drag all Control points
-                    List<Tool.Point> points = new List<Tool.Point>(4);
-                    for (int i = 0; i < 4; i++)
-                    {
-                        Tool.Point pt = mapHelper.controls[i] * virtualMap.SizeCorrected + virtualMap.Position;
-                        points.Add(pt);
-                    }
-                    dragndrop.Start(points);
-                }
-
-                splitContainer1.Panel1.Invalidate();
-            }
-            else
-            {
-                dragndrop.Start(virtualMap.Position);
-            }
-        }
-        private void Panel1_MouseMove(object sender, MouseEventArgs e)
-        {
-            if (e.Button.HasFlag(MouseButtons.Right) && (mapHelper != null))
-            {
-                if (mapHelper.enabled)
-                {
-                    dragndrop.Update();
-
-                    if (mapHelper.isDraggingCtrlPoint >= 0)
-                    {
-                        Tool.Point newPos = dragndrop.Position(0);
-                        Tool.Point pt = (Tool.Point)((newPos - virtualMap.Position) / virtualMap.SizeCorrected);
-
-                        mapHelper.controls[mapHelper.isDraggingCtrlPoint] = pt;
-                        mapHelper.ControlPointUpdated(mapHelper.isDraggingCtrlPoint);
-                    }
-                    else
-                    {
-                        for (int i = 0; i < 2; i++)
-                        {
-                            Tool.Point newPos = dragndrop.Position(i);
-                            Tool.Point pt = (Tool.Point)((newPos - virtualMap.Position) / virtualMap.SizeCorrected);
-
-                            mapHelper.controls[i] = pt;
-                        }
-                        mapHelper.ControlPointUpdated(0);
-                    }
-
-                    ApplyMapChanges();
-                }
-            }
-            else if (e.Button.HasFlag(MouseButtons.Left))
-            {
-                dragndrop.Update();
-                virtualMap.Position = dragndrop.Position(0);
-                ApplyMapChanges();
-            }
-            else
-            {
-                if (mapHelper != null)
-                {
-                    Tool.Point mousePos = (Tool.Point)(e.Location - virtualMap.Position);
-                    mapHelper.isDraggingCtrlPoint = mapHelper.IntersectControl(mousePos, 5);
-                    splitContainer1.Panel1.Invalidate();
-                }
-
-                dragndrop.Stop();
-            }
-
-            string pathstr = "public static Point[] ptsXXX = new Point[]\r\n{";
-
-            if (((mapHelper == null) || !mapHelper.enabled) && cbCartographer.Checked)
-            {
-                foreach (Tool.Point pt in cartographer.positions)
-                {
-                    Tool.Point npt = pt;
-                    npt.Y = 1.0f - npt.Y;
-                    npt = npt * virtualMap.nfo.dbRefMapSize;
-                    pathstr += "\r\nnew Point" + npt.ToStringInt() + ",";
-                }
-                pathstr = pathstr.TrimEnd(',');
-                pathstr += "\r\n};";
-                textBoxCmdStatus.Text = pathstr;
-            }
-        }
-        private void Panel1_MouseUp(object sender, MouseEventArgs e)
-        {
-            if (mapHelper != null)
-                mapHelper.isDraggingCtrlPoint = -1;
-
-            System.Threading.Interlocked.CompareExchange(ref bUserAction, 0, 1);
-        }
-        private void Form1_MouseWheel(object sender, MouseEventArgs e)
-        {
-            if (!virtualMap.Enabled)
-                return;
-
-            mapZoom.Start(virtualMap,
-                          (Tool.Point)(e.Location - virtualMap.Position),
-                          Math.Sign(e.Delta));
-        }
-        private void buttonConnect_Click(object sender, EventArgs e)
-        {
-            mtxUpdateDB.WaitOne();
-
-            this.Cursor = Cursors.WaitCursor;
-
-            //  "Server=localhost;Database=testdb;Uid=root;Pwd=pass;";
-            string strCnx = "";
-            strCnx += "Server=" + textBoxURL.Text;
-            strCnx += ";Port=" + textBoxPort.Text;
-            strCnx += ";Database=" + textBoxBaseName.Text;
-            strCnx += ";Uid=" + textBoxUser.Text;
-            strCnx += ";Pwd=" + textBoxPassword.Text + ";";
-
-            mycfg.instance_id = textBoxInstanceId.Text;
-
-            cnx = new MySqlConnection(strCnx);
-
-            try
-            {
-                cnx.Open();
-
-                Enable(true);
-
-                switch (mycfg.game_type)
-                {
-                    case "Epoch":
-                        DBEpoch_OnConnection();
-                        DBEpoch_OnRefresh();
-                        break;
-                    default:
-                        DB_OnConnection();
-                        DB_OnRefresh();
-                        break;
-                }
-
-                SetCurrentMap();
-            }
-            catch (Exception ex)
-            {
-                textBoxCmdStatus.Text = ex.ToString();
-                Enable(false);
-            }
-
-            if (bConnected)
-                textBoxStatus.Text = "connected";
-            else
-                textBoxStatus.Text = "Error !";
-
-            this.Cursor = Cursors.Arrow;
-
-            mtxUpdateDB.ReleaseMutex();
-        }
         private void CloseConnection()
         {
             mtxUseDS.WaitOne();
@@ -346,8 +128,9 @@ namespace DBAccess
                 Enable(false);
                 textBoxStatus.Text = "disconnected";
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                MessageBox.Show(ex.Message, "Exception found");
                 Enable(false);
             }
 
@@ -355,27 +138,10 @@ namespace DBAccess
 
             mtxUpdateDB.WaitOne();
 
-            if (cnx != null)
-                cnx.Close();
+            if (sqlCnx != null)
+                sqlCnx.Close();
 
             mtxUpdateDB.ReleaseMutex();
-        }
-        private void radioButton_CheckedChanged(object sender, EventArgs e)
-        {
-            if (!bConnected)
-                return;
-
-            this.Cursor = Cursors.WaitCursor;
-            RadioButton senderRB = sender as RadioButton;
-            if (senderRB.Checked)
-            {
-                propertyGrid1.SelectedObject = null;
-
-                currDisplayedItems = senderRB;
-
-                BuildIcons();
-            }
-            this.Cursor = Cursors.Arrow;
         }
         private void BuildIcons()
         {
@@ -402,7 +168,7 @@ namespace DBAccess
             }
             catch (Exception ex)
             {
-                textBoxCmdStatus.Text = ex.ToString();
+                MessageBox.Show(ex.Message, "Exception found");
             }
             mtxUseDS.ReleaseMutex();
 
@@ -428,61 +194,10 @@ namespace DBAccess
             }
             catch (Exception ex)
             {
-                textBoxCmdStatus.Text = ex.ToString();
+                MessageBox.Show(ex.Message, "Exception found");
             }
 
             mtxUseDS.ReleaseMutex();
-        }
-        private void OnPlayerClick(object sender, EventArgs e)
-        {
-            myIcon pb = sender as myIcon;
-
-            Survivor player = new Survivor(pb.iconDB);
-            player.Rebuild();
-            propertyGrid1.SelectedObject = player;
-            propertyGrid1.ExpandAllGridItems();
-        }
-        private void OnVehicleClick(object sender, EventArgs e)
-        {
-            myIcon pb = sender as myIcon;
-
-            if (GetUIDType(pb.iconDB.uid) == UIDType.TypeVehicle)
-            {
-                Vehicle vehicle = new Vehicle(pb.iconDB);
-                vehicle.Rebuild();
-                propertyGrid1.SelectedObject = vehicle;
-                propertyGrid1.ExpandAllGridItems();
-            }
-            else
-            {
-                Spawn spawn = new Spawn(pb.iconDB);
-                spawn.Rebuild();
-                propertyGrid1.SelectedObject = spawn;
-                propertyGrid1.ExpandAllGridItems();
-            }
-
-            // Select class name in Vehicles table
-            foreach (DataGridViewRow row in dataGridViewVehicleTypes.Rows)
-            {
-                if (row.Cells["ColumnClassName"].Value as string == pb.iconDB.row.Field<string>("class_name"))
-                    row.Cells["ColumnType"].Selected = true;
-            }
-        }
-        private void OnDeployableClick(object sender, EventArgs e)
-        {
-            myIcon pb = sender as myIcon;
-
-            Deployable deployable = new Deployable(pb.iconDB);
-            deployable.Rebuild();
-            propertyGrid1.SelectedObject = deployable;
-            propertyGrid1.ExpandAllGridItems();
-
-            // Select class name in Deployables table
-            foreach (DataGridViewRow row in dataGridViewDeployableTypes.Rows)
-            {
-                if (row.Cells["ClassName"].Value as string == pb.iconDB.row.Field<string>("class_name"))
-                    row.Cells["Type"].Selected = true;
-            }
         }
         private void RefreshIcons()
         {
@@ -611,29 +326,95 @@ namespace DBAccess
             int idx = 0;
             foreach (DataRow row in dsVehicles.Tables[0].Rows)
             {
-                double damage = row.Field<double>("damage");
-
-                if (idx >= iconsDB.Count)
-                    iconsDB.Add(new iconDB());
-
-                iconDB idb = iconsDB[idx];
-
-                idb.uid = row.Field<UInt64>("id") | (UInt64)UIDType.TypeVehicle;
-                idb.row = row;
-                idb.pos = GetUnitPosFromString(row.Field<string>("worldspace"));
-
-                if (idx >= iconVehicles.Count)
+                DataRow rowT = mycfg.vehicle_types.Tables[0].Rows.Find(row.Field<string>("class_name"));
+                if (rowT.Field<bool>("Show"))
                 {
-                    myIcon icon = new myIcon();
-                    icon.Click += OnVehicleClick;
-                    iconVehicles.Add(icon);
+                    double damage = row.Field<double>("damage");
+
+                    if (idx >= iconsDB.Count)
+                        iconsDB.Add(new iconDB());
+
+                    iconDB idb = iconsDB[idx];
+
+                    idb.uid = row.Field<UInt64>("id") | (UInt64)UIDType.TypeVehicle;
+                    idb.row = row;
+                    idb.pos = GetUnitPosFromString(row.Field<string>("worldspace"));
+
+                    if (idx >= iconVehicles.Count)
+                    {
+                        myIcon icon = new myIcon();
+                        icon.Click += OnVehicleClick;
+                        iconVehicles.Add(icon);
+                    }
+
+                    idb.icon = iconVehicles[idx];
+
+                    if (damage < 1.0f)
+                    {
+                        string classname = (rowT != null) ? rowT.Field<string>("Type") : "";
+                        switch (classname)
+                        {
+                            case "Air": idb.icon.image = global::DBAccess.Properties.Resources.air; break;
+                            case "Bicycle": idb.icon.image = global::DBAccess.Properties.Resources.bike; break;
+                            case "Boat": idb.icon.image = global::DBAccess.Properties.Resources.boat; break;
+                            case "Bus": idb.icon.image = global::DBAccess.Properties.Resources.bus; break;
+                            case "Car": idb.icon.image = global::DBAccess.Properties.Resources.car; break;
+                            case "Helicopter": idb.icon.image = global::DBAccess.Properties.Resources.helicopter; break;
+                            case "Motorcycle": idb.icon.image = global::DBAccess.Properties.Resources.motorcycle; break;
+                            case "Truck": idb.icon.image = global::DBAccess.Properties.Resources.truck; break;
+                            default: idb.icon.image = global::DBAccess.Properties.Resources.car; break;
+                        }
+                    }
+                    else
+                    {
+                        idb.icon.image = global::DBAccess.Properties.Resources.iconDestroyed;
+                    }
+
+                    Control tr = new Control();
+                    tr.ContextMenuStrip = null;
+                    idb.icon.iconDB = idb;
+                    idb.icon.Size = idb.icon.image.Size;
+                    idb.icon.contextMenuStrip = contextMenuStripVehicle;
+
+                    //toolTip1.SetToolTip(idb.icon, row.Field<UInt64>("id").ToString() + ": "+ row.Field<string>("class_name"));
+
+                    listIcons.Add(idb);
+
+                    if (checkBoxShowTrail.Checked)
+                        GetUIDGraph(idb.uid).AddPoint(idb.pos);
+
+                    idx++;
                 }
+            }
+        }
+        private void BuildSpawnIcons()
+        {
+            if (dsVehicleSpawnPoints.Tables.Count == 0)
+                return;
 
-                idb.icon = iconVehicles[idx];
-
-                if (damage < 1.0f)
+            int idx = 0;
+            foreach (DataRow row in dsVehicleSpawnPoints.Tables[0].Rows)
+            {
+                DataRow rowT = mycfg.vehicle_types.Tables[0].Rows.Find(row.Field<string>("class_name"));
+                if (rowT.Field<bool>("Show"))
                 {
-                    DataRow rowT = mycfg.vehicle_types.Tables[0].Rows.Find(row.Field<string>("class_name"));
+                    if (idx >= iconsDB.Count)
+                        iconsDB.Add(new iconDB());
+
+                    iconDB idb = iconsDB[idx];
+
+                    idb.uid = row.Field<UInt64>("id") | (UInt64)UIDType.TypeSpawn;
+                    idb.row = row;
+                    idb.pos = GetUnitPosFromString(row.Field<string>("worldspace"));
+
+                    if (idx >= iconVehicles.Count)
+                    {
+                        myIcon icon = new myIcon();
+                        icon.Click += OnVehicleClick;
+                        iconVehicles.Add(icon);
+                    }
+
+                    idb.icon = iconVehicles[idx];
 
                     string classname = (rowT != null) ? rowT.Field<string>("Type") : "";
                     switch (classname)
@@ -648,79 +429,17 @@ namespace DBAccess
                         case "Truck": idb.icon.image = global::DBAccess.Properties.Resources.truck; break;
                         default: idb.icon.image = global::DBAccess.Properties.Resources.car; break;
                     }
+
+                    idb.icon.iconDB = idb;
+                    idb.icon.Size = idb.icon.image.Size;
+                    idb.icon.contextMenuStrip = contextMenuStripSpawn;
+
+                    //toolTip1.SetToolTip(idb.icon, row.Field<UInt64>("id").ToString() + ": " + row.Field<string>("class_name"));
+
+                    listIcons.Add(idb);
+
+                    idx++;
                 }
-                else
-                {
-                    idb.icon.image = global::DBAccess.Properties.Resources.iconDestroyed;
-                }
-
-                Control tr = new Control();
-                tr.ContextMenuStrip = null;
-                idb.icon.iconDB = idb;
-                idb.icon.Size = idb.icon.image.Size;
-                idb.icon.contextMenuStrip = contextMenuStripVehicle;
-
-                //toolTip1.SetToolTip(idb.icon, row.Field<UInt64>("id").ToString() + ": "+ row.Field<string>("class_name"));
-
-                listIcons.Add(idb);
-
-                if (checkBoxShowTrail.Checked)
-                    GetUIDGraph(idb.uid).AddPoint(idb.pos);
-
-                idx++;
-            }
-        }
-        private void BuildSpawnIcons()
-        {
-            if (dsVehicleSpawnPoints.Tables.Count == 0)
-                return;
-
-            int idx = 0;
-            foreach (DataRow row in dsVehicleSpawnPoints.Tables[0].Rows)
-            {
-                if (idx >= iconsDB.Count)
-                    iconsDB.Add(new iconDB());
-
-                iconDB idb = iconsDB[idx];
-
-                idb.uid = row.Field<UInt64>("id") | (UInt64)UIDType.TypeSpawn;
-                idb.row = row;
-                idb.pos = GetUnitPosFromString(row.Field<string>("worldspace"));
-
-                if (idx >= iconVehicles.Count)
-                {
-                    myIcon icon = new myIcon();
-                    icon.Click += OnVehicleClick;
-                    iconVehicles.Add(icon);
-                }
-
-                idb.icon = iconVehicles[idx];
-
-                DataRow rowT = mycfg.vehicle_types.Tables[0].Rows.Find(row.Field<string>("class_name"));
-
-                string classname = (rowT != null) ? rowT.Field<string>("Type") : "";
-                switch (classname)
-                {
-                    case "Air": idb.icon.image = global::DBAccess.Properties.Resources.air; break;
-                    case "Bicycle": idb.icon.image = global::DBAccess.Properties.Resources.bike; break;
-                    case "Boat": idb.icon.image = global::DBAccess.Properties.Resources.boat; break;
-                    case "Bus": idb.icon.image = global::DBAccess.Properties.Resources.bus; break;
-                    case "Car": idb.icon.image = global::DBAccess.Properties.Resources.car; break;
-                    case "Helicopter": idb.icon.image = global::DBAccess.Properties.Resources.helicopter; break;
-                    case "Motorcycle": idb.icon.image = global::DBAccess.Properties.Resources.motorcycle; break;
-                    case "Truck": idb.icon.image = global::DBAccess.Properties.Resources.truck; break;
-                    default: idb.icon.image = global::DBAccess.Properties.Resources.car; break;
-                }
-
-                idb.icon.iconDB = idb;
-                idb.icon.Size = idb.icon.image.Size;
-                idb.icon.contextMenuStrip = contextMenuStripSpawn;
-
-                //toolTip1.SetToolTip(idb.icon, row.Field<UInt64>("id").ToString() + ": " + row.Field<string>("class_name"));
-
-                listIcons.Add(idb);
-
-                idx++;
             }
         }
         private void BuildDeployableIcons()
@@ -728,41 +447,44 @@ namespace DBAccess
             int idx = 0;
             foreach (DataRow row in dsDeployables.Tables[0].Rows)
             {
-                if (idx >= iconsDB.Count)
-                    iconsDB.Add(new iconDB());
-
-                iconDB idb = iconsDB[idx];
-
-                idb.uid = row.Field<UInt64>("id") | (UInt64)UIDType.TypeDeployable;
-                idb.row = row;
-                idb.pos = GetUnitPosFromString(row.Field<string>("worldspace"));
-
-                if (idx >= iconDeployables.Count)
-                {
-                    myIcon icon = new myIcon();
-                    icon.Click += OnDeployableClick;
-                    iconDeployables.Add(icon);
-                }
-
-                idb.icon = iconDeployables[idx];
-                idb.icon.iconDB = idb;
                 string name = row.Field<string>("class_name");
-
                 DataRow rowT = mycfg.deployable_types.Tables[0].Rows.Find(name);
-                string classname = (rowT != null) ? rowT.Field<string>("Type") : "";
-                switch (classname)
+                if (rowT.Field<bool>("Show"))
                 {
-                    case "Tent": idb.icon.image = global::DBAccess.Properties.Resources.tent; break;
-                    case "Stach": idb.icon.image = global::DBAccess.Properties.Resources.stach; break;
-                    case "Small Build": idb.icon.image = global::DBAccess.Properties.Resources.small_build; break;
-                    case "Large Build": idb.icon.image = global::DBAccess.Properties.Resources.large_build; break;
-                    default: idb.icon.image = global::DBAccess.Properties.Resources.unknown; break;
+                    if (idx >= iconsDB.Count)
+                        iconsDB.Add(new iconDB());
+
+                    iconDB idb = iconsDB[idx];
+
+                    idb.uid = row.Field<UInt64>("id") | (UInt64)UIDType.TypeDeployable;
+                    idb.row = row;
+                    idb.pos = GetUnitPosFromString(row.Field<string>("worldspace"));
+
+                    if (idx >= iconDeployables.Count)
+                    {
+                        myIcon icon = new myIcon();
+                        icon.Click += OnDeployableClick;
+                        iconDeployables.Add(icon);
+                    }
+
+                    idb.icon = iconDeployables[idx];
+                    idb.icon.iconDB = idb;
+
+                    string classname = (rowT != null) ? rowT.Field<string>("Type") : "";
+                    switch (classname)
+                    {
+                        case "Tent": idb.icon.image = global::DBAccess.Properties.Resources.tent; break;
+                        case "Stach": idb.icon.image = global::DBAccess.Properties.Resources.stach; break;
+                        case "Small Build": idb.icon.image = global::DBAccess.Properties.Resources.small_build; break;
+                        case "Large Build": idb.icon.image = global::DBAccess.Properties.Resources.large_build; break;
+                        default: idb.icon.image = global::DBAccess.Properties.Resources.unknown; break;
+                    }
+
+                    idb.icon.Size = idb.icon.image.Size;
+                    listIcons.Add(idb);
+
+                    idx++;
                 }
-
-                idb.icon.Size = idb.icon.image.Size;
-                listIcons.Add(idb);
-
-                idx++;
             }
         }
         private void Enable(bool bState)
@@ -778,12 +500,19 @@ namespace DBAccess
             radioButtonSpawn.Enabled = bState && !bEpochGameType;
             radioButtonDeployables.Enabled = bState;
 
+            //
             textBoxURL.Enabled = !bState;
             textBoxBaseName.Enabled = !bState;
             textBoxPort.Enabled = !bState;
             textBoxUser.Enabled = !bState;
             textBoxPassword.Enabled = !bState;
             comboBoxGameType.Enabled = !bState;
+
+            // Script buttons
+            buttonBackup.Enabled = bState;
+            buttonCustom1.Enabled = bState;
+            buttonCustom2.Enabled = bState;
+            buttonCustom3.Enabled = bState;
 
             // Epoch disabled controls...
             textBoxInstanceId.Enabled = !(bState || bEpochGameType);
@@ -807,13 +536,6 @@ namespace DBAccess
                 tbDeployables.Text = "";
             }
         }
-        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            CloseConnection();
-
-            //
-            SaveConfigFile();
-        }
         private void LoadConfigFile()
         {
             try
@@ -827,8 +549,9 @@ namespace DBAccess
                     mycfg = xs.Deserialize(re) as myConfig;
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                MessageBox.Show(ex.Message, "Exception found");
                 Enable(false);
             }
 
@@ -844,6 +567,27 @@ namespace DBAccess
             if (Tool.NullOrEmpty(mycfg.body_time_limit)) mycfg.body_time_limit = "7";
             if (Tool.NullOrEmpty(mycfg.tent_time_limit)) mycfg.tent_time_limit = "7";
             if (Tool.NullOrEmpty(mycfg.online_time_limit)) mycfg.online_time_limit = "5";
+
+            // Custom scripts
+            if (!Tool.NullOrEmpty(mycfg.customscript1))
+            {
+                FileInfo fi = new FileInfo(mycfg.customscript1);
+                if (fi.Exists)
+                    buttonCustom1.Text = fi.Name;
+            }
+            if (!Tool.NullOrEmpty(mycfg.customscript2))
+            {
+                FileInfo fi = new FileInfo(mycfg.customscript2);
+                if (fi.Exists)
+                    buttonCustom2.Text = fi.Name;
+            }
+            if (!Tool.NullOrEmpty(mycfg.customscript3))
+            {
+                FileInfo fi = new FileInfo(mycfg.customscript3);
+                if (fi.Exists)
+                    buttonCustom3.Text = fi.Name;
+            }
+
             if (mycfg.worlds_def.Tables.Count == 0)
             {
                 DataTable table = mycfg.worlds_def.Tables.Add();
@@ -878,51 +622,28 @@ namespace DBAccess
                 table.Rows.Add(10, "Taviana", "", 0, 0, 0, 0, 0, 0, 25600, 25600);
             }
 
-            // -> v1.8
+            // -> v3.0
             if (mycfg.cfgVersion < curCfgVersion)
             {
-                DataColumnCollection cols = mycfg.worlds_def.Tables[0].Columns;
+                DataColumnCollection cols;
 
-                if (cols.Contains("Width")) cols["Width"].ColumnName = "DB_refWidth";
-                if (cols.Contains("Height")) cols["Height"].ColumnName = "DB_refHeight";
+                // Add Column 'Show' to vehicle_types
+                cols = mycfg.vehicle_types.Tables[0].Columns;
+                cols.Add(new DataColumn("Show", typeof(bool)));
+                foreach (DataRow row in mycfg.vehicle_types.Tables[0].Rows)
+                    row.SetField<bool>("Show", true);
 
-                if (!cols.Contains("RatioX")) cols.Add(new DataColumn("RatioX", typeof(float), "", MappingType.Hidden));
-                if (!cols.Contains("RatioY")) cols.Add(new DataColumn("RatioY", typeof(float), "", MappingType.Hidden));
-                if (!cols.Contains("TileSizeX")) cols.Add(new DataColumn("TileSizeX", typeof(int), "", MappingType.Hidden));
-                if (!cols.Contains("TileSizeY")) cols.Add(new DataColumn("TileSizeY", typeof(int), "", MappingType.Hidden));
-                if (!cols.Contains("TileDepth")) cols.Add(new DataColumn("TileDepth", typeof(int), "", MappingType.Hidden));
-
-                if (!cols.Contains("DB_X")) cols.Add(new DataColumn("DB_X", typeof(int), "", MappingType.Hidden));
-                if (!cols.Contains("DB_Y")) cols.Add(new DataColumn("DB_Y", typeof(int), "", MappingType.Hidden));
-
-                if (!cols.Contains("DB_Width"))
-                {
-                    cols.Add(new DataColumn("DB_Width", typeof(UInt32), "", MappingType.Hidden));
-                    foreach (DataRow row in mycfg.worlds_def.Tables[0].Rows)
-                        row.SetField<UInt32>("DB_Width", row.Field<UInt32>("DB_refWidth"));
-                }
-                if (!cols.Contains("DB_Height"))
-                {
-                    cols.Add(new DataColumn("DB_Height", typeof(UInt32), "", MappingType.Hidden));
-                    foreach (DataRow row in mycfg.worlds_def.Tables[0].Rows)
-                        row.SetField<UInt32>("DB_Height", row.Field<UInt32>("DB_refHeight"));
-                }
-
-                foreach (DataRow row in mycfg.worlds_def.Tables[0].Rows)
-                {
-                    row.SetField<float>("RatioX", 0);
-                    row.SetField<float>("RatioY", 0);
-                    row.SetField<int>("TileSizeX", 0);
-                    row.SetField<int>("TileSizeY", 0);
-                    row.SetField<int>("TileDepth", 0);
-                    row.SetField<int>("DB_X", 0);
-                    row.SetField<int>("DB_Y", 0);
-                }
+                // Add Column 'Show' to deployable_types
+                cols = mycfg.deployable_types.Tables[0].Columns;
+                cols.Add(new DataColumn("Show", typeof(bool)));
+                foreach (DataRow row in mycfg.deployable_types.Tables[0].Rows)
+                    row.SetField<bool>("Show", true);
             }
 
             if (mycfg.vehicle_types.Tables.Count == 0)
             {
                 DataTable table = mycfg.vehicle_types.Tables.Add();
+                table.Columns.Add(new DataColumn("Show", typeof(bool)));
                 table.Columns.Add(new DataColumn("ClassName", typeof(string)));
                 table.Columns.Add(new DataColumn("Type", typeof(string)));
                 DataColumn[] keys = new DataColumn[1];
@@ -933,12 +654,19 @@ namespace DBAccess
             if (mycfg.deployable_types.Tables.Count == 0)
             {
                 DataTable table = mycfg.deployable_types.Tables.Add();
+                table.Columns.Add(new DataColumn("Show", typeof(bool)));
                 table.Columns.Add(new DataColumn("ClassName", typeof(string)));
                 table.Columns.Add(new DataColumn("Type", typeof(string)));
                 DataColumn[] keys = new DataColumn[1];
                 keys[0] = mycfg.deployable_types.Tables[0].Columns[0];
                 mycfg.deployable_types.Tables[0].PrimaryKey = keys;
             }
+
+            foreach (DataRow row in mycfg.vehicle_types.Tables[0].Rows)
+                row.SetField<bool>("Show", true);
+
+            foreach (DataRow row in mycfg.deployable_types.Tables[0].Rows)
+                row.SetField<bool>("Show", true);
 
             try
             {
@@ -953,25 +681,27 @@ namespace DBAccess
                 textBoxOldBodyLimit.Text = mycfg.body_time_limit;
                 textBoxOldTentLimit.Text = mycfg.tent_time_limit;
 
-                dataGridViewMaps.Columns["ColumnID"].DataPropertyName = "World ID";
-                dataGridViewMaps.Columns["ColumnName"].DataPropertyName = "World Name";
-                dataGridViewMaps.Columns["ColumnPath"].DataPropertyName = "Filepath";
+                dataGridViewMaps.Columns["ColGVMID"].DataPropertyName = "World ID";
+                dataGridViewMaps.Columns["ColGVMName"].DataPropertyName = "World Name";
+                dataGridViewMaps.Columns["ColGVMPath"].DataPropertyName = "Filepath";
                 dataGridViewMaps.DataSource = mycfg.worlds_def.Tables[0];
-                dataGridViewMaps.Sort(dataGridViewMaps.Columns["ColumnID"], ListSortDirection.Ascending);
+                dataGridViewMaps.Sort(dataGridViewMaps.Columns["ColGVMID"], ListSortDirection.Ascending);
 
-                dataGridViewVehicleTypes.Columns["ColumnClassName"].DataPropertyName = "ClassName";
-                dataGridViewVehicleTypes.Columns["ColumnType"].DataPropertyName = "Type";
+                dataGridViewVehicleTypes.Columns["ColGVVTShow"].DataPropertyName = "Show";
+                dataGridViewVehicleTypes.Columns["ColGVVTClassName"].DataPropertyName = "ClassName";
+                dataGridViewVehicleTypes.Columns["ColGVVTType"].DataPropertyName = "Type";
                 dataGridViewVehicleTypes.DataSource = mycfg.vehicle_types.Tables[0];
-                dataGridViewVehicleTypes.Sort(dataGridViewVehicleTypes.Columns["ColumnClassName"], ListSortDirection.Ascending);
+                dataGridViewVehicleTypes.Sort(dataGridViewVehicleTypes.Columns["ColGVVTClassName"], ListSortDirection.Ascending);
 
-                dataGridViewDeployableTypes.Columns["ClassName"].DataPropertyName = "ClassName";
-                dataGridViewDeployableTypes.Columns["Type"].DataPropertyName = "Type";
+                dataGridViewDeployableTypes.Columns["ColGVDTShow"].DataPropertyName = "Show";
+                dataGridViewDeployableTypes.Columns["ColGVDTClassName"].DataPropertyName = "ClassName";
+                dataGridViewDeployableTypes.Columns["ColGVDTType"].DataPropertyName = "Type";
                 dataGridViewDeployableTypes.DataSource = mycfg.deployable_types.Tables[0];
-                dataGridViewDeployableTypes.Sort(dataGridViewDeployableTypes.Columns["ClassName"], ListSortDirection.Ascending);
+                dataGridViewDeployableTypes.Sort(dataGridViewDeployableTypes.Columns["ColGVDTClassName"], ListSortDirection.Ascending);
             }
             catch (Exception ex)
             {
-                textBoxCmdStatus.Text = ex.ToString();
+                MessageBox.Show(ex.Message, "Exception found");
             }
         }
         private void SaveConfigFile()
@@ -996,8 +726,9 @@ namespace DBAccess
                     xs.Serialize(wr, mycfg);
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                MessageBox.Show(ex.Message, "Exception found");
             }
         }
         private Tool.Point GetUnitPosFromString(string from)
@@ -1060,7 +791,7 @@ namespace DBAccess
             }
             catch (Exception ex)
             {
-                textBoxCmdStatus.Text += ex.ToString();
+                MessageBox.Show(ex.Message, "Exception found");
             }
         }
         private void DB_OnConnection()
@@ -1077,7 +808,7 @@ namespace DBAccess
 
             try
             {
-                MySqlCommand cmd = cnx.CreateCommand();
+                MySqlCommand cmd = sqlCnx.CreateCommand();
                 MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
 
                 //
@@ -1106,7 +837,7 @@ namespace DBAccess
             }
             catch (Exception ex)
             {
-                this.textBoxCmdStatus.Text += ex.ToString();
+                MessageBox.Show(ex.Message, "Exception found");
             }
 
             mtxUpdateDB.ReleaseMutex();
@@ -1120,7 +851,7 @@ namespace DBAccess
                     string name = row.Field<string>("class_name");
 
                     if (mycfg.vehicle_types.Tables[0].Rows.Find(name) == null)
-                        mycfg.vehicle_types.Tables[0].Rows.Add(name, "Car");
+                        mycfg.vehicle_types.Tables[0].Rows.Add(true, name, "Car");
                 }
 
                 foreach (DataRow row in _dsWorlds.Tables[0].Rows)
@@ -1152,7 +883,7 @@ namespace DBAccess
             }
             catch (Exception ex)
             {
-                textBoxCmdStatus.Text += ex.ToString();
+                MessageBox.Show(ex.Message, "Exception found");
             }
 
             mtxUseDS.ReleaseMutex();
@@ -1177,7 +908,7 @@ namespace DBAccess
 
                 try
                 {
-                    MySqlCommand cmd = cnx.CreateCommand();
+                    MySqlCommand cmd = sqlCnx.CreateCommand();
                     MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
 
                     //
@@ -1227,7 +958,7 @@ namespace DBAccess
                 }
                 catch (Exception ex)
                 {
-                    textBoxCmdStatus.Text = ex.ToString();
+                    MessageBox.Show(ex.Message, "Exception found");
                 }
 
                 foreach (DataRow row in _dsDeployables.Tables[0].Rows)
@@ -1235,7 +966,7 @@ namespace DBAccess
                     string name = row.Field<string>("class_name");
 
                     if (mycfg.deployable_types.Tables[0].Rows.Find(name) == null)
-                        mycfg.deployable_types.Tables[0].Rows.Add(name, "Unknown");
+                        mycfg.deployable_types.Tables[0].Rows.Add(true, name, "Unknown");
                 }
 
                 mtxUpdateDB.ReleaseMutex();
@@ -1264,7 +995,7 @@ namespace DBAccess
 
             try
             {
-                MySqlCommand cmd = cnx.CreateCommand();
+                MySqlCommand cmd = sqlCnx.CreateCommand();
                 MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
 
                 //
@@ -1276,7 +1007,7 @@ namespace DBAccess
             }
             catch (Exception ex)
             {
-                this.textBoxCmdStatus.Text += ex.ToString();
+                MessageBox.Show(ex.Message, "Exception found");
             }
 
             mtxUpdateDB.ReleaseMutex();
@@ -1290,12 +1021,12 @@ namespace DBAccess
                     string name = row.Field<string>("class_name");
 
                     if (mycfg.vehicle_types.Tables[0].Rows.Find(name) == null)
-                        mycfg.vehicle_types.Tables[0].Rows.Add(name, "Car");
+                        mycfg.vehicle_types.Tables[0].Rows.Add(true, name, "Car");
                 }
             }
             catch (Exception ex)
             {
-                textBoxCmdStatus.Text += ex.ToString();
+                MessageBox.Show(ex.Message, "Exception found");
             }
 
             mtxUseDS.ReleaseMutex();
@@ -1313,7 +1044,7 @@ namespace DBAccess
 
                 try
                 {
-                    MySqlCommand cmd = cnx.CreateCommand();
+                    MySqlCommand cmd = sqlCnx.CreateCommand();
                     MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
 
                     //
@@ -1350,7 +1081,7 @@ namespace DBAccess
                 }
                 catch (Exception ex)
                 {
-                    textBoxCmdStatus.Text = ex.ToString();
+                    MessageBox.Show(ex.Message, "Exception found");
                 }
 
                 foreach (DataRow row in _dsDeployables.Tables[0].Rows)
@@ -1358,7 +1089,7 @@ namespace DBAccess
                     string name = row.Field<string>("class_name");
 
                     if (mycfg.deployable_types.Tables[0].Rows.Find(name) == null)
-                        mycfg.deployable_types.Tables[0].Rows.Add(name, "Unknown");
+                        mycfg.deployable_types.Tables[0].Rows.Add(true, name, "Unknown");
                 }
 
                 mtxUpdateDB.ReleaseMutex();
@@ -1374,137 +1105,6 @@ namespace DBAccess
 
                 mtxUseDS.ReleaseMutex();
             }
-        }
-        private void bgWorkerRefreshDatabase_DoWork(object sender, DoWorkEventArgs e)
-        {
-            BackgroundWorker bw = sender as BackgroundWorker;
-
-            while (!bw.CancellationPending)
-            {
-                Thread.Sleep(5000);
-
-                switch (mycfg.game_type)
-                {
-                    case "Epoch": DBEpoch_OnRefresh(); break;
-                    default: DB_OnRefresh(); break;
-                }
-
-                if (System.Threading.Interlocked.CompareExchange(ref bUserAction, 1, 0) == 0)
-                {
-                    dlgUpdateIcons = this.BuildIcons;
-                    this.Invoke(dlgUpdateIcons);
-                    System.Threading.Interlocked.Exchange(ref bUserAction, 0);
-                }
-            }
-        }
-        private void buttonRemoveDestroyed_Click(object sender, EventArgs e)
-        {
-            int res = ExecuteSqlNonQuery("DELETE FROM instance_vehicle WHERE instance_id=" + mycfg.instance_id + " AND damage=1");
-
-            textBoxCmdStatus.Text = "removed " + res + " destroyed vehicles.";
-        }
-        private void buttonSpawnNew_Click(object sender, EventArgs e)
-        {
-            if (bConnected)
-            {
-                this.Cursor = Cursors.WaitCursor;
-                mtxUpdateDB.WaitOne();
-
-                try
-                {
-                    MySqlCommand cmd = cnx.CreateCommand();
-                    MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
-
-                    cmd.CommandText = "SELECT count(*) FROM instance_vehicle WHERE instance_id =" + mycfg.instance_id;
-                    object result = cmd.ExecuteScalar();
-                    long vehicle_count = (long)result;
-
-                    cmd.CommandText = "SELECT wv.id world_vehicle_id, v.id vehicle_id, wv.worldspace, v.inventory, coalesce(v.parts, '') parts, v.limit_max,"
-                                    + " round(least(greatest(rand(), v.damage_min), v.damage_max), 3) damage, round(least(greatest(rand(), v.fuel_min), v.fuel_max), 3) fuel"
-                                    + " FROM world_vehicle wv JOIN vehicle v ON wv.vehicle_id = v.id LEFT JOIN instance_vehicle iv ON iv.world_vehicle_id = wv.id AND iv.instance_id = " + mycfg.instance_id
-                                    + " LEFT JOIN ( SELECT count(iv.id) AS count, wv.vehicle_id FROM instance_vehicle iv JOIN world_vehicle wv ON iv.world_vehicle_id = wv.id"
-                                    + " WHERE instance_id =" + mycfg.instance_id + " GROUP BY wv.vehicle_id) vc ON vc.vehicle_id = v.id"
-                                    + " WHERE wv.world_id =" + mycfg.world_id + " AND iv.id IS null AND (round(rand(), 3) < wv.chance)"
-                                    + " and (vc.count IS null OR vc.count BETWEEN v.limit_min AND v.limit_max) GROUP BY wv.worldspace";
-                    MySqlDataReader reader = cmd.ExecuteReader();
-
-                    int spawn_count = 0;
-                    int max_vehicle = int.Parse(textBoxVehicleMax.Text);
-
-                    List<string> queries = new List<string>();
-
-                    while (reader.Read() && (spawn_count + vehicle_count < max_vehicle))
-                    {
-                        UInt64 world_vehicle_id = reader.GetUInt64(0);
-                        UInt16 vehicle_id = reader.GetUInt16(1);
-                        string worldspace = reader.GetString(2);
-                        string inventory = reader.GetString(3);
-                        string parts = reader.GetString(4);
-                        byte limit_max = reader.GetByte(5);
-                        double damage = reader.GetDouble(6);
-                        double fuel = reader.GetDouble(7);
-
-                        // Generate parts damage
-                        Random rand = new Random();
-                        string[] to_parts = parts.Split(',');
-                        string health = "[";
-                        foreach (string part in to_parts)
-                        {
-                            if (rand.NextDouble() > 0.25)
-                                health += "[\"" + part + "\",1],";
-                        }
-                        health = health.TrimEnd(',');
-                        health += "]";
-
-                        queries.Add("INSERT INTO instance_vehicle (world_vehicle_id, worldspace, inventory, parts, damage, fuel, instance_id, created) values ("
-                                    + world_vehicle_id + ", '"
-                                    + worldspace + "', '"
-                                    + inventory + "', '"
-                                    + health + "', "
-                                    + damage + ", "
-                                    + fuel + ", "
-                                    + mycfg.instance_id + ", current_timestamp())");
-
-                        spawn_count++;
-                    }
-
-                    reader.Close();
-
-                    foreach (string query in queries)
-                    {
-                        cmd.CommandText = query;
-                        int res = cmd.ExecuteNonQuery();
-                    }
-
-                    textBoxCmdStatus.Text = "spawned " + queries.Count + " new vehicles.";
-                }
-                catch (Exception ex)
-                {
-                    textBoxCmdStatus.Text = ex.ToString();
-                    Enable(false);
-                }
-
-                mtxUpdateDB.ReleaseMutex();
-                this.Cursor = Cursors.Arrow;
-            }
-        }
-        private void buttonRemoveBodies_Click(object sender, EventArgs e)
-        {
-            int limit = int.Parse(textBoxOldBodyLimit.Text);
-
-            string query = "DELETE FROM survivor WHERE world_id=" + mycfg.world_id + " AND is_dead=1 AND last_updated < now() - interval " + limit + " day";
-            int res = ExecuteSqlNonQuery(query);
-
-            textBoxCmdStatus.Text = "removed " + res + " bodies older than " + limit + " days.";
-        }
-        private void buttonRemoveTents_Click(object sender, EventArgs e)
-        {
-            int limit = int.Parse(textBoxOldTentLimit.Text);
-
-            string query = "DELETE FROM id using instance_deployable id inner join deployable d on id.deployable_id = d.id"
-                         + " inner join survivor s on id.owner_id = s.id and s.is_dead=1"
-                         + " WHERE id.instance_id=" + mycfg.instance_id + " AND d.class_name = 'TentStorage' AND id.last_updated < now() - interval " + limit + " day";
-            int res = ExecuteSqlNonQuery(query);
         }
 
         class tileReq
@@ -1542,79 +1142,6 @@ namespace DBAccess
         List<tileReq> tileRequests = new List<tileReq>();
         List<tileNfo> tileCache = new List<tileNfo>();
 
-        private void Panel1_Paint(object sender, PaintEventArgs e)
-        {
-            try
-            {
-                if (virtualMap.Enabled)
-                {
-                    e.Graphics.CompositingMode = CompositingMode.SourceCopy;
-                    e.Graphics.CompositingQuality = CompositingQuality.HighQuality;
-                    e.Graphics.InterpolationMode = InterpolationMode.NearestNeighbor;
-                    e.Graphics.PixelOffsetMode = PixelOffsetMode.Half;
-
-                    int nb_tilesDrawn = 0;
-                    foreach (tileReq req in tileRequests)
-                    {
-                        tileNfo nfo = tileCache.Find(x => req.path == x.path);
-
-                        if (nfo != null)
-                        {
-                            e.Graphics.DrawImage(nfo.bitmap, req.rec);
-                            nb_tilesDrawn++;
-                        }
-                    }
-
-                    e.Graphics.CompositingMode = CompositingMode.SourceOver;
-
-                    if (!mapHelper.enabled)
-                    {
-                        if (checkBoxShowTrail.Checked)
-                        {
-                            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                            foreach (iconDB idb in listIcons)
-                            {
-                                UIDType type = GetUIDType(idb.uid);
-
-                                if ((type == UIDType.TypePlayer) || (type == UIDType.TypeVehicle))
-                                    GetUIDGraph(idb.uid).DisplayInMap(e.Graphics, virtualMap);
-                            }
-                        }
-
-                        e.Graphics.SmoothingMode = SmoothingMode.None;
-                        Rectangle recPanel = new Rectangle(Point.Empty, splitContainer1.Panel1.Size);
-                        int nb_iconsDrawn = 0;
-                        foreach (iconDB idb in listIcons)
-                        {
-                            if (recPanel.IntersectsWith(idb.icon.rectangle))
-                            {
-                                e.Graphics.DrawImage(idb.icon.image, idb.icon.rectangle);
-                                nb_iconsDrawn++;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        mapHelper.Display(e.Graphics);
-                    }
-
-                    if (((mapHelper == null) || !mapHelper.enabled) && cbCartographer.Checked)
-                        cartographer.DisplayInMap(e.Graphics, virtualMap);
-                }
-            }
-            catch (Exception ex)
-            {
-                textBoxCmdStatus.Text = ex.ToString();
-            }
-        }
-        private void checkBoxShowTrail_CheckedChanged(object sender, EventArgs e)
-        {
-            if ((sender as CheckBox).Checked == false)
-            {
-                foreach (KeyValuePair<UInt64, UIDGraph> pair in dicUIDGraph)
-                    pair.Value.path.Reset();
-            }
-        }
         private int ExecuteSqlNonQuery(string query)
         {
             if (!bConnected)
@@ -1627,7 +1154,7 @@ namespace DBAccess
 
             try
             {
-                MySqlCommand cmd = cnx.CreateCommand();
+                MySqlCommand cmd = sqlCnx.CreateCommand();
 
                 cmd.CommandText = query;
 
@@ -1635,7 +1162,7 @@ namespace DBAccess
             }
             catch (Exception ex)
             {
-                textBoxCmdStatus.Text = ex.ToString();
+                MessageBox.Show(ex.Message, "Exception found");
                 Enable(false);
             }
 
@@ -1644,836 +1171,17 @@ namespace DBAccess
 
             return res;
         }
-        private void dataGridViewMaps_CellClick(object sender, DataGridViewCellEventArgs e)
-        {
-            if ((e.RowIndex < 0) || (e.RowIndex >= dataGridViewMaps.Rows.Count))
-                return;
-
-            // Ignore clicks that are not on button cells.  
-            if (e.ColumnIndex == dataGridViewMaps.Columns["ColumnChoosePath"].Index)
-            {
-                DialogResult res = openFileDialog1.ShowDialog();
-
-                if (res == DialogResult.OK)
-                {
-                    dataGridViewMaps["ColumnPath", e.RowIndex].Value = openFileDialog1.FileName;
-
-                    try
-                    {
-                        string filepath = openFileDialog1.FileName;
-                        int world_id = int.Parse(dataGridViewMaps["ColumnID", e.RowIndex].Value.ToString());
-
-                        if (File.Exists(filepath))
-                        {
-                            FileInfo fi = new FileInfo(filepath);
-
-                            string tileBasePath = configPath + "\\World" + world_id + "\\LOD";
-
-                            MessageBox.Show("Please wait while generating tiles...\r\nThis is done once when selecting a new map.");
-
-                            tileCache.Clear();
-
-                            this.Cursor = Cursors.WaitCursor;
-
-                            DirectoryInfo di = new DirectoryInfo(configPath + "\\World" + world_id);
-                            if (di.Exists)
-                                di.Delete(true);
-
-                            Tuple<Tool.Size, Tool.Size, Tool.Size> sizes = Tool.CreateTiles(filepath, tileBasePath, 256);
-
-                            DataRow rowW = mycfg.worlds_def.Tables[0].Rows.Find(world_id);
-                            rowW.SetField<float>("RatioX", sizes.Item1.Width / sizes.Item2.Width);
-                            rowW.SetField<float>("RatioY", sizes.Item1.Height / sizes.Item2.Height);
-                            rowW.SetField<int>("TileSizeX", (int)sizes.Item3.Width);
-                            rowW.SetField<int>("TileSizeY", (int)sizes.Item3.Height);
-
-                            int tileCount = (int)(sizes.Item2.Width / 256);
-                            int depth = (int)Math.Log(tileCount, 2) + 1;
-
-                            rowW.SetField<int>("TileDepth", depth);
-
-                            this.Cursor = Cursors.Arrow;
-                            MessageBox.Show("Tiles generation done.");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show("Error while generating tiles !\r\nMaybe the bitmap is too large to be processed...");
-                        textBoxCmdStatus.Text += ex.ToString();
-                        this.Cursor = Cursors.Arrow;
-                    }
-
-                    if (dataGridViewMaps["ColumnID", e.RowIndex].Value.ToString() == mycfg.world_id.ToString())
-                        SetCurrentMap();
-                }
-            }
-        }
-        private void toolStripMenuItemDelete_Click(object sender, EventArgs e)
-        {
-            ToolStripItem menuItem = sender as ToolStripItem;
-            if (menuItem != null)
-            {
-                ContextMenuStrip owner = menuItem.Owner as ContextMenuStrip;
-                if (owner != null)
-                {
-                    Control sourceControl = owner.SourceControl;
-
-                    iconDB idb = sourceControl.Tag as iconDB;
-
-                    UInt64 id = GetUIDData(idb.uid);
-                    int res = ExecuteSqlNonQuery("DELETE FROM instance_vehicle WHERE id=" + id + " AND instance_id=" + mycfg.instance_id);
-                    if (res == 1)
-                        textBoxCmdStatus.Text = "removed vehicle id " + id;
-                }
-            }
-        }
-        private void toolStripMenuItemDeleteSpawn_Click(object sender, EventArgs e)
-        {
-            ToolStripItem menuItem = sender as ToolStripItem;
-            if (menuItem != null)
-            {
-                ContextMenuStrip owner = menuItem.Owner as ContextMenuStrip;
-                if (owner != null)
-                {
-                    Control sourceControl = owner.SourceControl;
-
-                    iconDB idb = sourceControl.Tag as iconDB;
-
-                    UInt64 id = GetUIDData(idb.uid);
-                    int res = ExecuteSqlNonQuery("DELETE FROM world_vehicle WHERE id=" + id + " AND world_id=" + mycfg.world_id);
-                    if (res == 1)
-                        textBoxCmdStatus.Text = "removed vehicle spawnpoint id " + id;
-                }
-            }
-        }
-
-        static int penCount = 0;
-        static Pen[] pens = new Pen[6]
-        {
-            new Pen(Color.Red, 2),
-            new Pen(Color.Green, 2),
-            new Pen(Color.Blue, 2),
-            new Pen(Color.Yellow, 2),
-            new Pen(Color.Orange, 2),
-            new Pen(Color.Violet, 2)
-        };
 
         internal UIDGraph GetUIDGraph(UInt64 uid)
         {
             UIDGraph uidgraph = null;
 
             if (dicUIDGraph.TryGetValue(uid, out uidgraph) == false)
-                dicUIDGraph[uid] = uidgraph = new UIDGraph(pens[(penCount++)%6]);
+                dicUIDGraph[uid] = uidgraph = new UIDGraph(pens[(penCount++) % 6]);
 
             return uidgraph;
         }
-        //
-        //
-        //
-        public class iconDB
-        {
-            public myIcon icon;
-            public DataRow row;
-            public Tool.Point pos;
-            public UInt64 uid = 0;
-        };
-        internal class EntryConverter : TypeConverter
-        {
-            public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destType)
-            {
-                if (destType == typeof(string) && value is Entry)
-                {
-                    Entry entry = (Entry)value;
-                    return entry.count.ToString();
-                }
-                return base.ConvertTo(context, culture, value, destType);
-            }
-        }
-        internal class NullConverter<T> : ExpandableObjectConverter
-        {
-            public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destType)
-            {
-                if (destType == typeof(string))
-                {
-                    if (value is Cargo)
-                    {
-                        Cargo cargo = value as Cargo;
-                        return "total = " + cargo.Total;
-                    }
-                    else if (value is T)
-                    {
-                        return "";
-                    }
-                }
-                return base.ConvertTo(context, culture, value, destType);
-            }
-        }
-        internal class NullEditor : CollectionEditor
-        {
-            public NullEditor(Type type) : base(type) { }
-            public override UITypeEditorEditStyle GetEditStyle(ITypeDescriptorContext context)
-            {
-                return UITypeEditorEditStyle.None;
-            }
-        }
-        internal class CargoPropertyDescriptor : PropertyDescriptor
-        {
-            private Cargo collection = null;
-            private int index = -1;
 
-            public CargoPropertyDescriptor(Cargo coll, int idx) :
-                base("#" + idx.ToString(), null)
-            {
-                this.collection = coll;
-                this.index = idx;
-            }
-
-            public override AttributeCollection Attributes { get { return new AttributeCollection(null); } }
-            public override bool CanResetValue(object component) { return true; }
-            public override Type ComponentType { get { return this.collection.GetType(); } }
-
-            public override string DisplayName
-            {
-                get
-                {
-                    if (index >= this.collection.Count)
-                        return "";
-
-                    Entry entry = this.collection[index];
-                    return entry.name;
-                }
-            }
-
-            public override string Description
-            {
-                get
-                {
-                    if (index >= this.collection.Count)
-                        return "";
-
-                    Entry entry = this.collection[index];
-                    StringBuilder sb = new StringBuilder();
-                    sb.Append(entry.name + " : " + entry.count);
-                    return sb.ToString();
-                }
-            }
-
-            public override object GetValue(object component) { return this.collection[index]; }
-            public override bool IsReadOnly { get { return true; } }
-            public override string Name { get { return "#" + index.ToString(); } }
-            public override Type PropertyType { get { return this.collection[index].GetType(); } }
-            public override void ResetValue(object component) { }
-            public override bool ShouldSerializeValue(object component) { return true; }
-            public override void SetValue(object component, object value) { }
-        };
-        [TypeConverterAttribute(typeof(NullConverter<Cargo>)), EditorAttribute(typeof(NullEditor), typeof(UITypeEditor))]
-        public class Cargo : CollectionBase, ICustomTypeDescriptor
-        {
-            #region Collection Implementation
-
-            public void Add(Entry zone) { this.List.Add(zone); }
-            public void Remove(Entry zone) { this.List.Remove(zone); }
-            public Entry this[int index] { get { return (Entry)this.List[index]; } }
-
-            #endregion
-
-            // Implementation of interface ICustomTypeDescriptor 
-            #region ICustomTypeDescriptor impl
-
-            public String GetClassName() { return TypeDescriptor.GetClassName(this, true); }
-            public AttributeCollection GetAttributes() { return TypeDescriptor.GetAttributes(this, true); }
-            public String GetComponentName() { return TypeDescriptor.GetComponentName(this, true); }
-            public TypeConverter GetConverter() { return TypeDescriptor.GetConverter(this, true); }
-            public EventDescriptor GetDefaultEvent() { return TypeDescriptor.GetDefaultEvent(this, true); }
-            public PropertyDescriptor GetDefaultProperty() { return TypeDescriptor.GetDefaultProperty(this, true); }
-            public object GetEditor(Type editorBaseType) { return TypeDescriptor.GetEditor(this, editorBaseType, true); }
-            public EventDescriptorCollection GetEvents(Attribute[] attributes) { return TypeDescriptor.GetEvents(this, attributes, true); }
-            public EventDescriptorCollection GetEvents() { return TypeDescriptor.GetEvents(this, true); }
-            public object GetPropertyOwner(PropertyDescriptor pd) { return this; }
-            public PropertyDescriptorCollection GetProperties(Attribute[] attributes) { return GetProperties(); }
-            public PropertyDescriptorCollection GetProperties()
-            {
-                // Create a collection object to hold property descriptors
-                PropertyDescriptorCollection pds = new PropertyDescriptorCollection(null);
-
-                // Iterate the list of employees
-                for (int i = 0; i < this.List.Count; i++)
-                {
-                    // Create a property descriptor for the zone item and add to the property descriptor collection
-                    CargoPropertyDescriptor pd = new CargoPropertyDescriptor(this, i);
-                    pds.Add(pd);
-                }
-                // return the property descriptor collection
-                return pds;
-            }
-
-            #endregion
-
-            public int Total
-            {
-                get
-                {
-                    int total = 0;
-                    foreach (Entry entry in List)
-                        total += entry.count;
-                    return total;
-                }
-            }
-        }
-        [TypeConverter(typeof(EntryConverter))]
-        public class Entry
-        {
-            public Entry(string n = "", int c = 0)
-            {
-                name = n;
-                count = c;
-            }
-
-            public string name { get; set; }
-            public int count { get; set; }
-        };
-        [TypeConverterAttribute(typeof(NullConverter<Storage>))]
-        public class Storage
-        {
-            public Storage()
-            {
-                weapons = new Cargo();
-                items = new Cargo();
-                bags = new Cargo();
-            }
-
-            public Cargo weapons { get; set; }
-            public Cargo items { get; set; }
-            public Cargo bags { get; set; }
-        };
-        public abstract class PropObjectBase
-        {
-            public PropObjectBase(iconDB idb)
-            {
-                this.idb = idb;
-            }
-
-            public iconDB idb;
-
-            public abstract void Rebuild();
-        }
-        public class Survivor : PropObjectBase
-        {
-            public Survivor(iconDB idb)
-                : base(idb)
-            {
-                this.inventory = new Cargo();
-                this.backpack = new Cargo();
-                this.tools = new Cargo();
-            }
-
-            [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
-            public string name { get; set; }
-            [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
-            public UInt64 uid { get; set; }
-            [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
-            public int humanity { get; set; }
-            [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
-            public int blood { get; set; }
-            [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
-            public string hunger { get; set; }
-            [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
-            public string thirst { get; set; }
-            [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
-            public string medical { get; set; }
-            [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
-            public string weapon { get; set; }
-            [CategoryAttribute("Inventory"), ReadOnlyAttribute(true)]
-            public Cargo inventory { get; set; }
-            [CategoryAttribute("Inventory"), ReadOnlyAttribute(true)]
-            public string backpackclass { get; set; }
-            [CategoryAttribute("Inventory"), ReadOnlyAttribute(true)]
-            public Cargo backpack { get; set; }
-            [CategoryAttribute("Inventory"), ReadOnlyAttribute(true)]
-            public Cargo tools { get; set; }
-            public override void Rebuild()
-            {
-                this.inventory.Clear();
-                this.backpack.Clear();
-                this.tools.Clear();
-
-                Dictionary<string, int> dicInventory = new Dictionary<string, int>();
-
-                ArrayList arr = Tool.ParseInventoryString(idb.row.Field<string>("medical"));
-                // arr[0] = is dead
-                // arr[1] = unconscious
-                // arr[2] = infected
-                // arr[3] = injured
-                // arr[4] = in pain
-                // arr[5] = is cardiac
-                // arr[6] = low blood
-                // arr[7] = blood quantity
-                // arr[8] = [wounds]
-                // arr[9] = [legs, arms]
-                // arr[10] = unconscious time
-                // arr[11] = [hunger, thirst]
-
-                this.medical = "";
-                if (bool.Parse(arr[1] as string)) this.medical += " unconscious, ";
-                if (bool.Parse(arr[2] as string)) this.medical += " infected, ";
-                if (bool.Parse(arr[3] as string)) this.medical += " injured, ";
-                if (bool.Parse(arr[4] as string)) this.medical += " in pain, ";
-                if (bool.Parse(arr[6] as string)) this.medical += " low blood, ";
-                this.medical = this.medical.Trim();
-                this.medical = this.medical.TrimEnd(',');
-
-                this.blood = (int)double.Parse(arr[7] as string, CultureInfo.InvariantCulture.NumberFormat);
-                this.hunger = ((int)(double.Parse((arr[11] as ArrayList)[0] as string, CultureInfo.InvariantCulture.NumberFormat) / 21.60f)).ToString() + "%";
-                this.thirst = ((int)(double.Parse((arr[11] as ArrayList)[1] as string, CultureInfo.InvariantCulture.NumberFormat) / 14.40f)).ToString() + "%";
-
-                arr = Tool.ParseInventoryString(idb.row.Field<string>("inventory"));
-
-                if (arr.Count > 0)
-                {
-                    // arr[0] = tools
-                    // arr[1] = items
-
-                    foreach (string o in arr[0] as ArrayList)
-                        this.tools.Add(new Entry(o, 1));
-
-                    foreach (object o in (arr[1] as ArrayList))
-                    {
-                        if (o is string)
-                        {
-                            string name = o as string;
-                            if (dicInventory.ContainsKey(name) == false)
-                                dicInventory.Add(name, 1);
-                            else
-                                dicInventory[name]++;
-                        }
-                        else if (o is ArrayList)
-                        {
-                            ArrayList oal = o as ArrayList;
-
-                            string name = oal[0] as string;
-                            if (dicInventory.ContainsKey(name) == false)
-                                dicInventory.Add(name, 1);
-                            else
-                                dicInventory[name]++;
-                        }
-                    }
-
-                    foreach (KeyValuePair<string, int> pair in dicInventory)
-                        this.inventory.Add(new Entry(pair.Key, pair.Value));
-                }
-
-                arr = Tool.ParseInventoryString(idb.row.Field<string>("backpack"));
-                // arr[0] = backpack's class
-                // arr[1] = weapons
-                // arr[2] = items
-
-                if (arr.Count > 0)
-                {
-                    this.backpackclass = arr[0] as string;
-
-                    {
-                        ArrayList aWeapons = arr[1] as ArrayList;
-                        ArrayList aTypes = aWeapons[0] as ArrayList;
-                        ArrayList aCount = aWeapons[1] as ArrayList;
-                        for (int i = 0; i < aTypes.Count; i++)
-                            this.backpack.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
-                    }
-
-                    {
-                        ArrayList aItems = arr[2] as ArrayList;
-                        ArrayList aTypes = aItems[0] as ArrayList;
-                        ArrayList aCount = aItems[1] as ArrayList;
-                        for (int i = 0; i < aTypes.Count; i++)
-                            this.backpack.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
-                    }
-                }
-
-                arr = Tool.ParseInventoryString(idb.row.Field<string>("state"));
-
-                if (arr.Count > 0)
-                {
-                    this.weapon = arr[0] as string;
-                    if (this.weapon == "")
-                        this.weapon = "none";
-                }
-
-                this.name = idb.row.Field<string>("name");
-                this.uid = UInt64.Parse(idb.row.Field<string>("unique_id"));
-                this.humanity = idb.row.Field<int>("humanity");
-            }
-        }
-        public class Deployable : PropObjectBase
-        {
-            public Deployable(iconDB idb)
-                : base(idb)
-            {
-                this.inventory = new Storage();
-            }
-
-            [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
-            public string name { get; set; }
-            [CategoryAttribute("Inventory"), ReadOnlyAttribute(true)]
-            public Storage inventory { get; set; }
-            public override void Rebuild()
-            {
-                this.inventory.weapons.Clear();
-                this.inventory.items.Clear();
-                this.inventory.bags.Clear();
-
-                this.name = idb.row.Field<string>("class_name");
-
-                ArrayList arr = Tool.ParseInventoryString(idb.row.Field<string>("inventory"));
-                ArrayList aItems;
-                ArrayList aTypes;
-                ArrayList aCount;
-
-                if (arr.Count > 0)
-                {
-                    // arr[0] = weapons
-                    // arr[1] = items
-                    // arr[2] = bags
-                    aItems = arr[0] as ArrayList;
-                    aTypes = aItems[0] as ArrayList;
-                    aCount = aItems[1] as ArrayList;
-                    for (int i = 0; i < aTypes.Count; i++)
-                        this.inventory.weapons.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
-
-                    aItems = arr[1] as ArrayList;
-                    aTypes = aItems[0] as ArrayList;
-                    aCount = aItems[1] as ArrayList;
-                    for (int i = 0; i < aTypes.Count; i++)
-                        this.inventory.items.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
-
-                    aItems = arr[2] as ArrayList;
-                    aTypes = aItems[0] as ArrayList;
-                    aCount = aItems[1] as ArrayList;
-                    for (int i = 0; i < aTypes.Count; i++)
-                        this.inventory.bags.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
-                }
-            }
-        }
-        public class Vehicle : PropObjectBase
-        {
-            public Vehicle(iconDB idb)
-                : base(idb)
-            {
-                this.inventory = new Storage();
-            }
-
-            [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
-            public string classname { get; set; }
-            [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
-            public UInt64 uid { get; set; }
-            [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
-            public UInt64 spawn_id { get; set; }
-            [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
-            public Tool.Point position { get; set; }
-            [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
-            public double fuel { get; set; }
-            [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
-            public double damage { get; set; }
-            [CategoryAttribute("Inventory"), ReadOnlyAttribute(true)]
-            public Storage inventory { get; set; }
-            public override void Rebuild()
-            {
-                this.inventory.weapons.Clear();
-                this.inventory.items.Clear();
-                this.inventory.bags.Clear();
-
-                this.uid = idb.row.Field<UInt64>("id");
-                this.spawn_id = idb.row.Field<UInt64>("spawn_id");
-                this.fuel = idb.row.Field<double>("fuel");
-                this.damage = idb.row.Field<double>("damage");
-                this.classname = idb.row.Field<string>("class_name");
-
-                ArrayList arr = Tool.ParseInventoryString(idb.row.Field<string>("worldspace"));
-                //  arr[0] = angle
-                //  arr[1] = [x, y, z]
-                double x = double.Parse((arr[1] as ArrayList)[0] as string, CultureInfo.InvariantCulture.NumberFormat);
-                double y = double.Parse((arr[1] as ArrayList)[1] as string, CultureInfo.InvariantCulture.NumberFormat);
-                this.position = new Tool.Point((float)x, (float)y);
-
-
-                arr = Tool.ParseInventoryString(idb.row.Field<string>("inventory"));
-                ArrayList aItems;
-                ArrayList aTypes;
-                ArrayList aCount;
-
-                if (arr.Count > 0)
-                {
-                    // arr[0] = weapons
-                    // arr[1] = items
-                    // arr[2] = bags
-                    aItems = arr[0] as ArrayList;
-                    aTypes = aItems[0] as ArrayList;
-                    aCount = aItems[1] as ArrayList;
-                    for (int i = 0; i < aTypes.Count; i++)
-                        this.inventory.weapons.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
-
-                    aItems = arr[1] as ArrayList;
-                    aTypes = aItems[0] as ArrayList;
-                    aCount = aItems[1] as ArrayList;
-                    for (int i = 0; i < aTypes.Count; i++)
-                        this.inventory.items.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
-
-                    aItems = arr[2] as ArrayList;
-                    aTypes = aItems[0] as ArrayList;
-                    aCount = aItems[1] as ArrayList;
-                    for (int i = 0; i < aTypes.Count; i++)
-                        this.inventory.bags.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
-                }
-            }
-        }
-        public class Spawn : PropObjectBase
-        {
-            public Spawn(iconDB idb)
-                : base(idb)
-            {
-                this.inventory = new Storage();
-            }
-
-            [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
-            public string classname { get; set; }
-            [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
-            public UInt64 uid { get; set; }
-            [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
-            public Tool.Point position { get; set; }
-            [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
-            public Decimal chance { get; set; }
-            [CategoryAttribute("Inventory"), ReadOnlyAttribute(true)]
-            public Storage inventory { get; set; }
-            public override void Rebuild()
-            {
-                this.inventory.weapons.Clear();
-                this.inventory.items.Clear();
-                this.inventory.bags.Clear();
-
-                this.classname = idb.row.Field<string>("class_name");
-                this.uid = idb.row.Field<UInt64>("id");
-                this.chance = idb.row.Field<Decimal>("chance");
-
-                ArrayList arr = Tool.ParseInventoryString(idb.row.Field<string>("worldspace"));
-                //  arr[0] = angle
-                //  arr[1] = [x, y, z]
-                double x = double.Parse((arr[1] as ArrayList)[0] as string, CultureInfo.InvariantCulture.NumberFormat);
-                double y = double.Parse((arr[1] as ArrayList)[1] as string, CultureInfo.InvariantCulture.NumberFormat);
-                this.position = new Tool.Point((float)x, (float)y);
-
-                arr = Tool.ParseInventoryString(idb.row.Field<string>("inventory"));
-                ArrayList aItems;
-                ArrayList aTypes;
-                ArrayList aCount;
-
-                if (arr.Count > 0)
-                {
-                    // arr[0] = weapons
-                    // arr[1] = items
-                    // arr[2] = bags
-                    aItems = arr[0] as ArrayList;
-                    aTypes = aItems[0] as ArrayList;
-                    aCount = aItems[1] as ArrayList;
-                    for (int i = 0; i < aTypes.Count; i++)
-                        this.inventory.weapons.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
-
-                    aItems = arr[1] as ArrayList;
-                    aTypes = aItems[0] as ArrayList;
-                    aCount = aItems[1] as ArrayList;
-                    for (int i = 0; i < aTypes.Count; i++)
-                        this.inventory.items.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
-
-                    aItems = arr[2] as ArrayList;
-                    aTypes = aItems[0] as ArrayList;
-                    aCount = aItems[1] as ArrayList;
-                    for (int i = 0; i < aTypes.Count; i++)
-                        this.inventory.bags.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
-                }
-            }
-        }
-        public delegate void DlgUpdateIcons();
-        public class MapZoom
-        {
-            private static float depthSpeed = 0.04f;
-
-            public void Start(VirtualMap map, Tool.Point center, int depthDir)
-            {
-                this.centerUnit = center / map.SizeCorrected;
-
-                int newDepth = this.destDepth + depthDir;
-
-                if (newDepth >= 0 && newDepth <= map.nfo.depth - 1)
-                {
-                    this.destDepth = newDepth;
-                    eventFastBgWorker.Set();
-                }
-            }
-
-            internal bool Update(VirtualMap map)
-            {
-                Tool.Point center = (centerUnit * map.SizeCorrected).Truncate;
-
-                double deltaDepth = this.destDepth - this.currDepth;
-                if (Math.Abs(deltaDepth) > depthSpeed)
-                {
-                    map.ResizeFromZoom((float)Math.Pow(2, currDepth));
-
-                    Tool.Point newPos = (centerUnit * map.SizeCorrected).Truncate;
-
-                    map.Position = map.Position - (newPos - center);
-
-                    this.currDepth += Math.Sign(deltaDepth) * depthSpeed;
-
-                    return true;
-                }
-                else
-                {
-                    this.currDepth = this.destDepth;
-                    map.ResizeFromZoom((float)Math.Pow(2, currDepth));
-
-                    Tool.Point newPos = (centerUnit * map.SizeCorrected).Truncate;
-
-                    map.Position = map.Position - (newPos - center);
-                }
-
-                return false;
-            }
-
-            public Tool.Point centerUnit;
-            public double currDepth = 0;
-            public int destDepth = 0;
-        }
-        public class DragNDrop
-        {
-            public void Start(List<Tool.Point> refPos)
-            {
-                refPositions = refPos;
-                offset = Tool.Size.Empty;
-                lastPositionMouse = MousePosition;
-            }
-            public void Start(Point refPos)
-            {
-                refPositions = new List<Tool.Point>();
-                refPositions.Add(refPos);
-                offset = Tool.Size.Empty;
-                lastPositionMouse = MousePosition;
-            }
-            public void Update()
-            {
-                offset = MousePosition - lastPositionMouse;
-            }
-            public void Stop()
-            {
-                offset = Tool.Size.Empty;
-            }
-
-            public Tool.Size Offset { get { return offset; } }
-            public Tool.Point Position(int idx) { return refPositions[idx] + offset; }
-
-            private List<Tool.Point> refPositions;
-            private Tool.Size offset = Tool.Size.Empty;
-            private Tool.Point lastPositionMouse;
-        }
-        public class myConfig
-        {
-            public myConfig()
-            {
-                cfgVersion = curCfgVersion;
-                worlds_def = new DataSet();
-                vehicle_types = new DataSet();
-                deployable_types = new DataSet();
-            }
-            public string game_type;
-            public string url;
-            public string port;
-            public string basename;
-            public string username;
-            public string password;
-            public string instance_id;
-            public string vehicle_limit;
-            public string body_time_limit;
-            public string tent_time_limit;
-            public string online_time_limit;
-            public ModuleVersion cfgVersion { get; set; }
-            public DataSet worlds_def { get; set; }
-            public DataSet vehicle_types { get; set; }
-            public DataSet deployable_types { get; set; }
-            //
-            [XmlIgnore]
-            public UInt16 world_id = 0;
-        }
-        public class myIcon
-        {
-            public myIcon()
-            {
-            }
-
-            // Wrap event invocations inside a protected virtual method 
-            // to allow derived classes to override the event invocation behavior 
-            public void OnClick(Control parent, MouseEventArgs e)
-            {
-                if (e.Button.HasFlag(MouseButtons.Left) && (Click != null))
-                {
-                    Click(this, e);
-                }
-                else if (e.Button.HasFlag(MouseButtons.Right) && (contextMenuStrip != null))
-                {
-                    contextMenuStrip.Show(parent, e.Location);
-                }
-            }
-
-            public Image image;
-            public iconDB iconDB;
-            public Rectangle rectangle;
-            public Tool.Point Location { get { return rectangle.Location; } set { rectangle.Location = value; } }
-            public Tool.Size Size { get { return rectangle.Size; } set { rectangle.Size = value; } }
-
-            public event MouseEventHandler Click;
-            public ContextMenuStrip contextMenuStrip;
-        }
-        public class UIDGraph
-        {
-            public static Tool.Point InvalidPos = new Tool.Point(float.NaN, float.NaN);
-
-            public UIDGraph(Pen pen)
-            {
-                this.pen = pen;
-            }
-            public void AddPoint(Tool.Point pos)
-            {
-                if ((positions.Count == 0) || (pos != positions.Last()))
-                    positions.Add(pos);
-            }
-            public void DisplayInMap(Graphics gfx, VirtualMap map)
-            {
-                if (positions.Count > 1)
-                {
-                    path.Reset();
-
-                    Tool.Point last = InvalidPos;
-                    foreach (Tool.Point pt in positions)
-                    {
-                        Tool.Point newpt = map.UnitToPanel(pt);
-
-                        // if a point is invalid, break the continuity
-                        if (!(last.IsNaN || pt.IsNaN))
-                            path.AddLine((System.Drawing.Point)last, (System.Drawing.Point)newpt);
-
-                        last = newpt;
-                    }
-
-                    gfx.DrawPath(pen, path);
-                }
-            }
-
-            internal GraphicsPath path = new GraphicsPath();
-            internal Pen pen;
-            internal List<Tool.Point> positions = new List<Tool.Point>();
-
-            internal void RemoveLastPoint()
-            {
-                if(positions.Count > 0)
-                    positions.RemoveAt(positions.Count - 1);
-            }
-        }
         public enum UIDType : ulong
         {
             TypePlayer = 0x100000000,
@@ -2490,1161 +1198,145 @@ namespace DBAccess
         {
             return (UIDType)(uid & (UInt64)UIDType.TypeMask);
         }
-        private class MySplitContainer : SplitContainer
+
+        public delegate void DlgUpdateIcons();
+
+        private void BackupDatabase(string filename)
         {
-            public MySplitContainer()
-            {
-                MethodInfo mi = typeof(Control).GetMethod("SetStyle", BindingFlags.NonPublic | BindingFlags.Instance);
-                object[] args = new object[] { ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true };
-                mi.Invoke(this.Panel1, args);
-                mi.Invoke(this.Panel2, args);
-            }
-        }
-        public class VirtualMap
-        {
-            public VirtualMap()
-            {
-                Position = Tool.Point.Empty;
-                Size = new Tool.Size(400, 400);
-            }
-
-            public bool Enabled { get { return nfo.depth > 0; } }
-
-            public Tool.Point Position;
-            public Tool.Size Size
-            {
-                get { return _size; }
-                set { _size = value; UpdateData(); }
-            }
-            public BitmapNfo nfo = new BitmapNfo();
-
-            public Tool.Size SizeCorrected { get { return _sizeCorrected; } }
-            public Tool.Size DefTileSize { get { return nfo.defTileSize; } }
-            public Tool.Size TileCount { get { return _tileCount; } }
-            public Tool.Size TileSize { get { return _tileSize; } }
-            public int Depth { get { return _depth; } }
-            public Rectangle TileRectangle(Tool.Point p)
-            {
-                return new Rectangle(Position + p * _tileSize, _tileSize);
-            }
-            public Tool.Point UnitToPanel(Tool.Point from)
-            {
-//                return Position + from * SizeCorrected;
-                Tool.Size ratio = nfo.dbMapSize / nfo.dbRefMapSize;
-                Tool.Point unitPos = from * ratio + nfo.dbMapOffsetUnit;
-
-                return Position + unitPos * SizeCorrected;
-            }
-            public Tool.Point UnitToPanel(iconDB from)
-            {
-                Tool.Size ratio = nfo.dbMapSize / nfo.dbRefMapSize;
-                Tool.Point unitPos = from.pos * ratio + nfo.dbMapOffsetUnit;
-
-                return Position + unitPos * SizeCorrected - from.icon.Size * 0.5f;
-            }
-            public Tool.Point PanelToUnit(Tool.Point from)
-            {
-                Tool.Point unitInMap = (Tool.Point)((from - Position) / SizeCorrected);
-                unitInMap = (Tool.Point)(unitInMap - nfo.dbMapOffsetUnit);
-                Tool.Size ratio = nfo.dbRefMapSize / nfo.dbMapSize;
-
-                Tool.Point pt = unitInMap * ratio;
-                pt.Y = 1.0f - pt.Y;
-
-                return pt;
-            }
-            public Tool.Point UnitToDB(Tool.Point from)
-            {
-                return from * nfo.dbRefMapSize;
-            }
-            public float ResizeFromZoom(float zoom)
-            {
-                Tool.Size maxSize = new Tool.Size(/*2**/(int)nfo.defTileSize.Width << (nfo.depth - 1),
-                    /*2**/(int)nfo.defTileSize.Height << (nfo.depth - 1));
-
-                Tool.Size temp = nfo.defTileSize * zoom;
-
-                Size = Tool.Size.Max(nfo.defTileSize, Tool.Size.Min(maxSize, temp));
-
-                return Size.Width / nfo.defTileSize.Width;
-            }
-            public void SetRatio(Tool.Size ratio) { _ratio = ratio; }
-
-            //
-            private int _depth;
-            private Tool.Size _size;
-            private Tool.Size _sizeCorrected;
-            private Tool.Size _tileCount;
-            private Tool.Size _tileSize;
-            private Tool.Size _ratio;
-
-            private void UpdateData()
-            {
-                Tool.Size reqTileCount = (_size / nfo.defTileSize).UpperPowerOf2;
-
-                _depth = (int)Math.Log(Math.Max(reqTileCount.Width, reqTileCount.Height), 2);
-
-                // Clamp to max depth
-                _depth = Math.Min(_depth, nfo.depth - 1);
-
-                // Clamp tile count
-                Tool.Size maxSize = new Tool.Size(1 << _depth, 1 << _depth);
-
-                _tileCount = Tool.Size.Min(reqTileCount, maxSize);
-
-                _tileSize = (_size / _tileCount).Ceiling;
-
-                // and re-adjust size from new tile size
-                _size = _tileSize * _tileCount;
-                _sizeCorrected = (_size * _ratio).Ceiling;
-            }
-
-            public class BitmapNfo
-            {
-                public string tileBasePath = "";
-                public int depth = 0;
-                public Tool.Size defTileSize = new Tool.Size(1, 1);
-                public Tool.Size dbMapSize = new Tool.Size(1, 1);
-                public Tool.Point dbMapOffsetUnit = Tool.Point.Empty;
-                public Tool.Size dbRefMapSize = new Tool.Size(1, 1);
-            }
-        }
-        public class MapHelper
-        {
-            public Tool.Point[] defBoundaries = new Tool.Point[2];
-            public Tool.Point[] boundaries = new Tool.Point[2];
-            public Tool.Point[] controls = new Tool.Point[4];
-            public int isDraggingCtrlPoint;
-            public bool enabled;
-            private void AddPathDef(Tool.Point[] path, Pen pen = null)
-            {
-                PathDef def = new PathDef(pen);
-                foreach (Tool.Point pt in path)
-                    def.points.Add(pt);
-                paths.Add(def);
-            }
-            public MapHelper(VirtualMap map, int worldId)
-            {
-                this.map = map;
-
-                foreach (Tool.Point[] arr in Tool.MapHelperDefs[worldId - 1])
-                    AddPathDef(arr);
-
-                Tool.Point min = new Tool.Point(9999999, 9999999);
-                Tool.Point max = new Tool.Point(-9999999, -9999999);
-                foreach (PathDef _def in paths)
-                {
-                    foreach (Tool.Point pt in _def.points)
-                    {
-                        min = Tool.Point.Min(min, pt);
-                        max = Tool.Point.Max(max, pt);
-                    }
-                }
-                Tool.Size size = (max - min);
-
-                //  DB Map boundaries
-                {
-                    Tool.Point[] points = new Tool.Point[]
-                    {
-                        new Tool.Point(0, map.nfo.dbRefMapSize.Height),
-                        new Tool.Point(map.nfo.dbRefMapSize.Width, map.nfo.dbRefMapSize.Height),
-                        new Tool.Point(map.nfo.dbRefMapSize.Width, 0),
-                        new Tool.Point(0, 0),
-                        new Tool.Point(0, map.nfo.dbRefMapSize.Height)
-                    };
-                    AddPathDef(points, new Pen(Color.Red, 2));
-                }
-
-                foreach (PathDef _def in paths)
-                {
-                    for (int i = 0; i < _def.points.Count; i++)
-                    {
-                        Tool.Point pt = _def.points[i];
-                        pt = (Tool.Point)((pt - min) / size);
-                        _def.points[i] = pt;
-                    }
-                }
-
-                defBoundaries[0] = (Tool.Point)((new Tool.Point(0, map.nfo.dbRefMapSize.Height) - min) / size);
-                defBoundaries[1] = (Tool.Point)((new Tool.Point(map.nfo.dbRefMapSize.Width, 0) - min) / size);
-
-                //  DB bounding box
-                {
-                    Tool.Point[] points = new Tool.Point[]
-                    {
-                        new Tool.Point(0, 0),
-                        new Tool.Point(0, 1),
-                        new Tool.Point(1, 1),
-                        new Tool.Point(1, 0),
-                        new Tool.Point(0, 0)
-                    };
-                    AddPathDef(points, new Pen(Color.Green, 1));
-                }
-
-                // DB map boundaries
-                boundaries[0] = map.nfo.dbMapOffsetUnit;
-                boundaries[1] = boundaries[0] + map.nfo.dbMapSize / map.nfo.dbRefMapSize;
-
-                // Control points
-                Tool.Size Csize = (boundaries[1] - boundaries[0]) / (defBoundaries[1] - defBoundaries[0]);
-
-                controls[0] = (Tool.Point)(boundaries[0] - defBoundaries[0] * Csize);
-                controls[1] = controls[0] + Csize;
-
-                controls[2] = new Tool.Point(controls[1].X, controls[0].Y);
-                controls[3] = new Tool.Point(controls[0].X, controls[1].Y);
-            }
-            public int IntersectControl(Tool.Point pos, float radius)
-            {
-                for (int i = 0; i < 4; i++)
-                {
-                    Tool.Point posInMap = controls[i] * map.SizeCorrected;
-
-                    float distance = (posInMap - pos).Lenght;
-
-                    if (distance <= radius)
-                        return i;
-                }
-
-                return -1;
-            }
-            public void Display(Graphics gfx)
-            {
-                Tool.Point offset = controls[0] * map.SizeCorrected + map.Position;
-
-                Tool.Size size = (controls[1] - controls[0]) * map.SizeCorrected;
-
-                foreach (PathDef def in paths)
-                {
-                    def.path.Reset();
-
-                    Tool.Point last = offset + def.points[0] * size;
-                    foreach (Tool.Point point in def.points)
-                    {
-                        Tool.Point newpt = offset + point * size;
-                        def.path.AddLine(last, newpt);
-                        last = newpt;
-                    }
-
-                    gfx.DrawPath(def.pen, def.path);
-                }
-
-                int j = 0;
-                foreach (Tool.Point point in controls)
-                {
-                    Tool.Point pt = (point * map.SizeCorrected + map.Position).Truncate;
-
-                    Brush brush = (isDraggingCtrlPoint == j) ? brushSelected : brushUnselected;
-                    gfx.FillEllipse(brush, new Rectangle((int)pt.X - 5, (int)pt.Y - 5, 11, 11));
-                    j++;
-                }
-            }
-            public void ControlPointUpdated(int idx)
-            {
-                if (idx < 2)
-                {
-                    // Update 2 & 3
-                    controls[2] = new Tool.Point(controls[1].X, controls[0].Y);
-                    controls[3] = new Tool.Point(controls[0].X, controls[1].Y);
-                }
-                else
-                {
-                    // Update 1 & 2
-                    controls[0] = new Tool.Point(controls[3].X, controls[2].Y);
-                    controls[1] = new Tool.Point(controls[2].X, controls[3].Y);
-                }
-
-                Tool.Size size = (controls[1] - controls[0]);
-
-                boundaries[0] = controls[0] + defBoundaries[0] * size;
-                boundaries[1] = controls[0] + defBoundaries[1] * size;
-            }
-
-            private class PathDef
-            {
-                private static Pen defPen = new Pen(Color.Black, 2);
-
-                public PathDef(Pen pen = null)
-                {
-                    if(pen == null)
-                        pen = defPen;
-
-                    this.pen = pen;
-                }
-                public Pen pen;
-                public GraphicsPath path = new GraphicsPath();
-                public List<Tool.Point> points = new List<Tool.Point>();
-            }
-            private SolidBrush brushUnselected = new SolidBrush(Color.Red);
-            private SolidBrush brushSelected = new SolidBrush(Color.Green);
-            private List<PathDef> paths = new List<PathDef>();
-            private VirtualMap map;
-        }
-        private void comboBoxGameType_SelectedValueChanged(object sender, EventArgs e)
-        {
-            ComboBox cb = sender as ComboBox;
-
-            mycfg.game_type = cb.Items[cb.SelectedIndex] as string;
-            textBoxInstanceId.Enabled = (!bConnected && (cb.SelectedIndex == 0));
-        }
-        private void checkBoxMapHelper_CheckedChanged(object sender, EventArgs e)
-        {
-            CheckBox cb = sender as CheckBox;
-
-            if (mapHelper == null)
+            if (!bConnected)
                 return;
 
-            mapHelper.enabled = cb.Checked;
+            this.Cursor = Cursors.WaitCursor;
+            mtxUpdateDB.WaitOne();
 
-            if (!cb.Checked)
+            try
             {
-                // Apply map helper's new size
-                DataRow row = mycfg.worlds_def.Tables[0].Rows.Find(mycfg.world_id);
+                FileInfo fi = new FileInfo(filename);
+                StreamWriter sw = fi.CreateText();
 
-                Tool.Size refSize = new Tool.Size(row.Field<UInt32>("DB_refWidth"),
-                                                    row.Field<UInt32>("DB_refHeight"));
+                MySqlCommand cmd = sqlCnx.CreateCommand();
+                MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
+                MySqlDataReader reader;
 
-                Tool.Point offUnit = mapHelper.boundaries[0];
-                Tool.Size sizeUnit = mapHelper.boundaries[1] - mapHelper.boundaries[0];
-                Tool.Point offset = offUnit * refSize;
-                Tool.Size size = sizeUnit * refSize;
+                cmd.CommandText = "SHOW TABLES";
+                reader = cmd.ExecuteReader();
 
-                virtualMap.nfo.dbMapOffsetUnit = offset / refSize;
-                virtualMap.nfo.dbMapSize = size;
-                virtualMap.nfo.dbRefMapSize = refSize;
-
-                row.SetField<int>("DB_X", (int)offset.X);
-                row.SetField<int>("DB_Y", (int)offset.Y);
-                row.SetField<UInt32>("DB_Width", (UInt32)size.Width);
-                row.SetField<UInt32>("DB_Height", (UInt32)size.Height);
-            }
-
-            splitContainer1.Panel1.Invalidate();
-        }
-        private void bgWorkerFast_DoWork(object sender, DoWorkEventArgs e)
-        {
-            BackgroundWorker bw = sender as BackgroundWorker;
-
-            while (!bw.CancellationPending)
-            {
-                eventFastBgWorker.WaitOne();
-
-                if (virtualMap.Enabled)
+                List<string> tables = new List<string>();
+                while (reader.Read())
                 {
-                    if (System.Threading.Interlocked.CompareExchange(ref bUserAction, 1, 0) == 0)
-                    {
-                        while (mapZoom.Update(virtualMap))
-                        {
-                            dlgRefreshMap = this.ApplyMapChanges;
-                            this.Invoke(dlgRefreshMap);
+                    string name = reader.GetString(0);
+                    tables.Add(name);
+                }
 
-                            Thread.Sleep(20);
+                reader.Close();
+
+                List<string> queries_tables = new List<string>();
+                foreach (string table in tables)
+                {
+                    textBoxCmdStatus.Text += "\r\nReading table `" + table + "`...";
+
+                    bool bSerializeTable = true;
+
+                    cmd.CommandText = "SHOW CREATE TABLE " + table;
+                    reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        string str = reader.GetString(1);
+
+                        if (!(str.Contains("VIEW") && str.Contains("ALGORITHM")))
+                        {
+                            queries_tables.Add("\r\nDROP TABLE IF EXISTS `" + table + "`");
+                            queries_tables.Add(str);
+                        }
+                        else
+                        {
+                            queries_tables.Add("\r\n-- View `" + table + "` has been ignored. --");
+                            bSerializeTable = false;
+                        }
+                    }
+                    reader.Close();
+
+                    if (bSerializeTable)
+                    {
+                        cmd.CommandText = "SELECT * FROM " + table;
+                        reader = cmd.ExecuteReader();
+                        List<string> list_values = new List<string>();
+                        while (reader.Read())
+                        {
+                            string values = "";
+                            for (int i = 0; i < reader.FieldCount; i++)
+                            {
+                                Type type = reader.GetFieldType(i);
+
+                                if (reader.IsDBNull(i))
+                                {
+                                    values += "NULL,";
+                                }
+                                else if (type == typeof(string))
+                                {
+                                    string res = "";
+                                    string s = reader.GetString(i);
+                                    foreach (char c in s)
+                                    {
+                                        if (c == '\'' || c == '\"')
+                                            res += "\\";
+                                        res += c;
+                                    }
+                                    values += "'" + res + "',";
+                                }
+                                else if (type == typeof(DateTime))
+                                {
+                                    //  'YYYY-MM-DD h24:mm:ss'
+                                    DateTime dt = reader.GetDateTime(i).ToUniversalTime();
+                                    values += "'" + dt.ToString("yyyy-MM-dd HH:mm:ss") + "',";
+                                }
+                                else
+                                {
+                                    values += reader.GetString(i) + ",";
+                                }
+                            }
+                            values = values.TrimEnd(',');
+                            list_values.Add("(" + values + ")");
+                        }
+                        reader.Close();
+
+                        string all_values = "";
+                        foreach (string values in list_values)
+                            all_values += values + ",";
+                        all_values = all_values.TrimEnd(',');
+
+                        if (list_values.Count > 0)
+                        {
+                            queries_tables.Add("LOCK TABLES `" + table + "` WRITE");
+                            queries_tables.Add("REPLACE INTO `" + table + "` VALUES " + all_values);
+                            queries_tables.Add("UNLOCK TABLES");
                         }
 
-                        dlgRefreshMap = this.ApplyMapChanges;
-                        this.Invoke(dlgRefreshMap);
+                        textBoxCmdStatus.Text += " done.";
                     }
-
-                    System.Threading.Interlocked.CompareExchange(ref bUserAction, 0, 1);
+                    else
+                    {
+                        textBoxCmdStatus.Text += " ignored.";
+                    }
                 }
 
-                eventFastBgWorker.Reset();
-            }
-        }
-        private void cbCartographer_CheckedChanged(object sender, EventArgs e)
-        {
-            if ((sender as CheckBox).Checked == true)
-                cartographer.positions.Clear();
-        }
-    }
-    public class Tool
-    {
-        public struct Point
-        {
-            public static Point Empty = new Point(0, 0);
-
-            public Point(float x, float y) { X = x; Y = y; }
-            public Point(System.Drawing.PointF p) { X = p.X; Y = p.Y; }
-
-            public static implicit operator System.Drawing.Point(Point p) { return new System.Drawing.Point((int)p.X, (int)p.Y); }
-            public static implicit operator System.Drawing.PointF(Point p) { return new System.Drawing.PointF(p.X, p.Y); }
-            public static explicit operator Size(Point p) { return new Size(p.X, p.Y); }
-            public static implicit operator Point(System.Drawing.Point p) { return new Point(p.X, p.Y); }
-
-            public static Point operator +(Point p1, Point p2) { return new Point(p1.X + p2.X, p1.Y + p2.Y); }
-            public static Point operator +(Point pt, Size sz) { return new Point(pt.X + sz.Width, pt.Y + sz.Height); }
-            public static Point operator -(Point pt, Size sz) { return new Point(pt.X - sz.Width, pt.Y - sz.Height); }
-            public static Size operator -(Point p1, Point p2) { return new Size(p1.X - p2.X, p1.Y - p2.Y); }
-            public static Point operator *(Point pt, float f) { return new Point(pt.X * f, pt.Y * f); }
-            public static Point operator *(Point pt, Size sz) { return new Point(pt.X * sz.Width, pt.Y * sz.Height); }
-            public static Point operator /(Point pt, float f) { return new Point(pt.X / f, pt.Y / f); }
-            public static Point operator /(Point pt, Size sz) { return new Point(pt.X / sz.Width, pt.Y / sz.Height); }
-            public static bool operator !=(Point left, Point right) { return !(left == right); }
-            public static bool operator ==(Point left, Point right) { return (left.X == right.X) && (left.Y == right.Y); }
-
-            public static Point Min(Point p1, Point p2) { return new Point(Math.Min(p1.X, p2.X), Math.Min(p1.Y, p2.Y)); }
-            public static Point Max(Point p1, Point p2) { return new Point(Math.Max(p1.X, p2.X), Math.Max(p1.Y, p2.Y)); }
-
-            public Point Floor { get { return new Point((float)Math.Floor(X), (float)Math.Floor(Y)); } }
-            public Point Ceiling { get { return new Point((float)Math.Ceiling(X), (float)Math.Ceiling(Y)); } }
-            public Point Truncate { get { return new Point((float)Math.Truncate(X), (float)Math.Truncate(Y)); } }
-
-            public bool IsNaN { get { return float.IsNaN(X) || float.IsNaN(Y); } }
-
-            public override bool Equals(object obj)
-            {
-                if (obj is Point)
-                    return ((Point)obj == this);
-
-                return false;
-            }
-            public override int GetHashCode() { return ((int)(X * 16777216) ^ ((int)(Y * 16777216)) << 8); }
-            public override string ToString() { return "(" + X + "," + Y + ")"; }
-            public string ToStringInt() { return "(" + (int)X + "," + (int)Y + ")"; }
-
-            public float X;
-            public float Y;
-        }
-        public struct Size
-        {
-            public static Size Empty = new Size(0, 0);
-
-            public Size(float w, float h) { Width = w; Height = h; }
-            public Size(System.Drawing.SizeF sz) { Width = sz.Width; Height = sz.Height; }
-
-            public static implicit operator System.Drawing.Size(Size sz) { return new System.Drawing.Size((int)sz.Width, (int)sz.Height); }
-            public static implicit operator System.Drawing.SizeF(Size sz) { return new System.Drawing.SizeF(sz.Width, sz.Height); }
-            public static explicit operator Point(Size sz) { return new Point(sz.Width, sz.Height); }
-            public static implicit operator Size(System.Drawing.Size sz) { return new Size(sz.Width, sz.Height); }
-
-            public static Size operator +(Size s1, Size s2) { return new Size(s1.Width + s2.Width, s1.Height + s2.Height); }
-            public static Size operator -(Size s1, Size s2) { return new Size(s1.Width - s2.Width, s1.Height - s2.Height); }
-            public static Size operator *(Size sz, float f) { return new Size(sz.Width * f, sz.Height * f); }
-            public static Size operator *(Size s1, Size s2) { return new Size(s1.Width * s2.Width, s1.Height * s2.Height); }
-            public static Size operator /(Size sz, float f) { return new Size(sz.Width / f, sz.Height / f); }
-            public static Size operator /(Size s1, Size s2) { return new Size(s1.Width / s2.Width, s1.Height / s2.Height); }
-            public static bool operator !=(Size left, Size right) { return !(left == right); }
-            public static bool operator ==(Size left, Size right) { return (left.Width == right.Width) && (left.Height == right.Height); }
-
-            public static Size Min(Size p1, Size p2) { return new Size(Math.Min(p1.Width, p2.Width), Math.Min(p1.Height, p2.Height)); }
-            public static Size Max(Size p1, Size p2) { return new Size(Math.Max(p1.Width, p2.Width), Math.Max(p1.Height, p2.Height)); }
-
-            public Size Floor { get { return new Size((float)Math.Floor(Width), (float)Math.Floor(Height)); } }
-            public Size Ceiling { get { return new Size((float)Math.Ceiling(Width), (float)Math.Ceiling(Height)); } }
-            public Size BelowPowerOf2 { get { return new Size(BelowPowerOf2(Width), BelowPowerOf2(Height)); } }
-            public Size UpperPowerOf2 { get { return new Size(UpperPowerOf2(Width), UpperPowerOf2(Height)); } }
-            public float Lenght { get { return (float)Math.Sqrt(Width * Width + Height * Height); } }
-
-            public override bool Equals(object obj)
-            {
-                if (obj is Size)
-                    return ((Size)obj == this);
-
-                return false;
-            }
-            public override int GetHashCode() { return ((int)(Width * 16777216) ^ ((int)(Height * 16777216)) << 8); }
-            public override string ToString() { return "(" + Width + "," + Height + ")"; }
-
-            public float Width;
-            public float Height;
-        }
-        public static int BelowPowerOf2(int v)
-        {
-            int r = 30;
-            while (v < (1 << r))
-                r--;
-            return (1 << r);
-        }
-        public static int BelowPowerOf2(float v)
-        {
-            int r = 30;
-            while (v < (float)(1 << r))
-                r--;
-            return (1 << r);
-        }
-        public static int UpperPowerOf2(int v)
-        {
-            int r = 0;
-            while (v > (1 << r))
-                r++;
-            return (1 << r);
-        }
-        public static int UpperPowerOf2(float f)
-        {
-            int r = 0;
-            while (f > (float)(1 << r))
-                r++;
-            return (1 << r);
-        }
-        public static ArrayList ParseInventoryString(string str)
-        {
-            Stack<ArrayList> stack = new Stack<ArrayList>();
-            ArrayList main = null;
-            ArrayList curr = null;
-            string value = "";
-            bool bValue = false;
-
-            foreach (char c in str)
-            {
-                switch (c)
+                foreach (string query in queries_tables)
                 {
-                    case '[':
-                        if (curr != null) stack.Push(curr);
-                        curr = new ArrayList();
-                        if (stack.Count > 0) stack.Peek().Add(curr);
-                        if (main == null)
-                            main = curr;
-                        break;
-
-                    case ']':
-                        if (value != "") curr.Add(value);
-                        value = "";
-                        bValue = false;
-                        if (stack.Count > 0) curr = stack.Pop();
-                        else curr = null;
-                        break;
-
-                    case '"':
-                        bValue = true;
-                        break;
-
-                    case ',':
-                        if (bValue) curr.Add(value);
-                        value = "";
-                        bValue = false;
-                        break;
-
-                    default:
-                        bValue = true;
-                        value += c;
-                        break;
+                    sw.Write(query + ";\r\n");
                 }
+
+                sw.Close();
+
+                textBoxCmdStatus.Text += "\r\nBackup of " + tables.Count + " tables done.";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Exception found");
+                Enable(false);
             }
 
-            return main;
-        }
-        public static bool NullOrEmpty(string str)
-        {
-            return ((str == null) || (str == ""));
-        }
-        public static void SaveJpeg(string path, Bitmap img, long quality)
-        {
-            // Encoder parameter for image quality
-            EncoderParameter qualityParam = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, quality);
-
-            // Jpeg image codec
-            ImageCodecInfo jpegCodec = getEncoderInfo("image/jpeg");
-
-            if (jpegCodec == null)
-                return;
-
-            EncoderParameters encoderParams = new EncoderParameters(1);
-            encoderParams.Param[0] = qualityParam;
-
-            img.Save(path, jpegCodec, encoderParams);
-        }
-        public static Bitmap ResizeImage(Bitmap imgToResize, Size size)
-        {
-            Size sourceSize = imgToResize.Size;
-            Size nPercentSize = size / sourceSize;
-            float nPercent = Math.Min(nPercentSize.Width, nPercentSize.Height);
-
-            Size destSize = sourceSize * nPercent;
-
-            Bitmap b = new Bitmap((int)destSize.Width, (int)destSize.Height);
-            Graphics g = Graphics.FromImage((Image)b);
-            g.InterpolationMode = InterpolationMode.Bilinear/*NearestNeighbor*/;
-
-            g.DrawImage(imgToResize, 0, 0, (int)destSize.Width, (int)destSize.Height);
-            g.Dispose();
-
-            return b;
-        }
-        public static Bitmap CropImage(Bitmap img, Rectangle cropArea)
-        {
-            Bitmap bmpCrop = img.Clone(cropArea, img.PixelFormat);
-            return bmpCrop;
-        }
-        public static Bitmap IncreaseImageSize(Bitmap imgToResize, Size newSize)
-        {
-            Bitmap b = new Bitmap((int)newSize.Width, (int)newSize.Height);
-            Graphics g = Graphics.FromImage((Image)b);
-            g.InterpolationMode = InterpolationMode.NearestNeighbor;
-
-            g.Clear(Color.White);
-            g.DrawImage(imgToResize, 0, 0, imgToResize.Width, imgToResize.Height);
-            g.Dispose();
-
-            return b;
-        }
-        public static Tuple<Size, Size, Size> CreateTiles(string filepath, string basepath, int limit)
-        {
-            Bitmap input = new Bitmap(filepath);
-
-            Size inSize = input.Size;
-            Size sqSize = inSize.UpperPowerOf2;
-
-            Bitmap sqInput = IncreaseImageSize(input, sqSize);
-
-            input.Dispose();
-
-            double iMax = 1.0 / Math.Min(sqSize.Width, sqSize.Height);
-
-            Size limits = sqSize * (float)(limit * iMax);
-
-            RecursCreateTiles(Point.Empty, Size.Empty, basepath, "Tile", sqInput, limits, 0);
-            sqInput.Dispose();
-
-            return new Tuple<Size, Size, Size>(inSize, sqSize, limits);
-        }
-        private static void RecursCreateTiles(Point father, Size child, string basepath, string name, Bitmap input, Size limits, int recCnt)
-        {
-            Point pos = father + child;
-
-            if (Directory.Exists(basepath + recCnt) == false)
-                Directory.CreateDirectory(basepath + recCnt);
-
-            Bitmap resized = ResizeImage(input, limits);
-            //  TEST
-            bool bReject = true;
-            {
-                Bitmap b = new Bitmap(4, 4, PixelFormat.Format24bppRgb);
-                Graphics g = Graphics.FromImage((Image)b);
-                g.InterpolationMode = InterpolationMode.Bilinear;
-                g.DrawImage(resized, 0, 0, 4, 4);
-                g.Dispose();
-                BitmapData data = b.LockBits(new Rectangle(0, 0, 4, 4), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb);
-                IntPtr ptr = data.Scan0;
-                int numBytes = (data.Stride * b.Height);
-                byte[] rgbValues = new byte[numBytes];
-                Marshal.Copy(ptr, rgbValues, 0, numBytes);
-
-                for (int i = 0; i < numBytes; i++)
-                    if (rgbValues[i] != 255)
-                        bReject = false;
-
-                // Unlock the bits.
-                b.UnlockBits(data);
-
-            }
-            if (!bReject)
-            {
-                SaveJpeg(basepath + recCnt + "\\" + name + pos.Y.ToString("000") + pos.X.ToString("000") + ".jpg", resized, 90);
-                resized.Dispose();
-
-                bool bSplitH = (input.Width > limits.Width);
-                bool bSplitV = (input.Height > limits.Height);
-
-                if (bSplitH || bSplitV)
-                {
-                    recCnt++;
-                    Size cropSize = Size.Max((Size)input.Size / 2, limits);
-
-                    father = pos * 2;
-
-                    RecursCreateTiles(father, new Size(0, 0), basepath, name, CropImage(input, new Rectangle(new Point(0, 0), cropSize)), limits, recCnt);
-
-                    if (bSplitH)
-                        RecursCreateTiles(father, new Size(1, 0), basepath, name, CropImage(input, new Rectangle(new Point(cropSize.Width, 0), cropSize)), limits, recCnt);
-
-                    if (bSplitV)
-                        RecursCreateTiles(father, new Size(0, 1), basepath, name, CropImage(input, new Rectangle(new Point(0, cropSize.Height), cropSize)), limits, recCnt);
-
-                    if (bSplitH && bSplitV)
-                        RecursCreateTiles(father, new Size(1, 1), basepath, name, CropImage(input, new Rectangle(new Point(cropSize.Width, cropSize.Height), cropSize)), limits, recCnt);
-                }
-            }
-            else
-            {
-                resized.Dispose();
-            }
-
-            input.Dispose();
-        }
-        private static ImageCodecInfo getEncoderInfo(string mimeType)
-        {
-            // Get image codecs for all image formats
-            ImageCodecInfo[] codecs = ImageCodecInfo.GetImageEncoders();
-
-            // Find the correct image codec
-            for (int i = 0; i < codecs.Length; i++)
-                if (codecs[i].MimeType == mimeType)
-                    return codecs[i];
-            return null;
-        }
-        //
-        //
-        //
-        private static Point[] ptsWorld1_ChernoDocks = new Point[]
-        {
-            new Point(6867,2241),
-            new Point(7009,2348),
-            new Point(7044,2298),
-            new Point(7067,2325),
-            new Point(7044,2363),
-            new Point(7056,2459),
-            new Point(7128,2509),
-            new Point(7225,2398),
-            new Point(7236,2306),
-            new Point(7136,2275),
-            new Point(7140,2218),
-            new Point(6956,2175),
-            new Point(6959,2145),
-            new Point(7251,2183),
-            new Point(7363,2260),
-            new Point(7209,2517)
-        };
-        private static Point[] ptsWorld1_ElectroDocks = new Point[]
-        {
-            new Point(9998,1758),
-            new Point(10148,1765),
-            new Point(10317,1765),
-            new Point(10348,1689),
-            new Point(10294,1627),
-            new Point(10014,1669),
-            new Point(9925,1662),
-            new Point(9933,1620),
-            new Point(10214,1573),
-            new Point(10337,1558),
-            new Point(10436,1681),
-            new Point(10383,1785),
-            new Point(10440,1812)
-        };
-        public static Point[] ptsWorld1_RoadBereElectro = new Point[]
-        {
-            new Point(10828,2583),
-            new Point(10936,2909),
-            new Point(11066,3090),
-            new Point(11270,3293),
-            new Point(11497,3374),
-            new Point(11838,3462),
-            new Point(12192,3516),
-            new Point(12484,3555),
-            new Point(12657,3597),
-            new Point(13168,3919),
-            new Point(13329,4085),
-            new Point(13441,4288),
-            new Point(13498,4484),
-            new Point(13498,4864),
-            new Point(13398,5160),
-            new Point(13383,5471),
-            new Point(13398,5774),
-            new Point(13456,6224),
-            new Point(13468,6424),
-            new Point(13398,6662),
-            new Point(13306,6954),
-            new Point(13060,7484),
-            new Point(13033,8136),
-            new Point(12987,8363),
-            new Point(12834,8785),
-            new Point(12822,9020),
-            new Point(13018,10118),
-            new Point(13118,10399)
-        };
-        private static Point[] ptsWorld1_Skalisty = new Point[]
-        {
-            new Point(13426, 3531),
-            new Point(13295, 3389),
-            new Point(13049, 3305),
-            new Point(12973, 3228),
-            new Point(12973, 3171),
-            new Point(13099, 3094),
-            new Point(13334, 3028),
-            new Point(13434, 3036),
-            new Point(13434, 2856),
-            new Point(13330, 2821),
-            new Point(13257, 2741),
-            new Point(13311, 2691),
-            new Point(13411, 2710),
-            new Point(13522, 2764),
-            new Point(13733, 2718),
-            new Point(13818, 2756),
-            new Point(14014, 2710),
-            new Point(14172, 2652),
-            new Point(14198, 2810),
-            new Point(14141, 2982),
-            new Point(13956, 3098),
-            new Point(13841, 3082),
-            new Point(13764, 3117),
-            new Point(13699, 3362),
-            new Point(13426, 3531)
-        };
-        private static Point[] ptsWorld1_NEAF = new Point[]
-        {
-           new Point(11777, 12848),
-           new Point(11767, 12823),
-           new Point(12470, 12566),
-           new Point(12480, 12593),
-           new Point(11777, 12848)
-        };
-        private static Point[] ptsWorld1_NWAF = new Point[]
-        {
-            new Point(5055, 9732),
-            new Point(4778, 9572),
-            new Point(4057, 10820),
-            new Point(4335, 10979),
-            new Point(5055, 9732)
-        };
-        private static Point[] ptsWorld1_BalotaAF = new Point[]
-        {
-           new Point(4617, 2583),
-           new Point(4605, 2565),
-           new Point(5230, 2203),
-           new Point(5241, 2222),
-           new Point(4617, 2583)
-        };
-        public static Point[] ptsWorld1_AxisNWSE = new Point[]
-        {
-            new Point(10530,2361),
-            new Point(10484,2434),
-            new Point(10464,2557),
-            new Point(10514,2668),
-            new Point(10368,2776),
-            new Point(10334,2868),
-            new Point(10272,2906),
-            new Point(10272,2991),
-            new Point(10210,3056),
-            new Point(10218,3141),
-            new Point(10395,3433),
-            new Point(10341,3740),
-            new Point(10337,3844),
-            new Point(10207,4059),
-            new Point(10441,4332),
-            new Point(10691,4559),
-            new Point(10672,4620),
-            new Point(10707,4755),
-            new Point(10588,4978),
-            new Point(10414,5104),
-            new Point(10153,5220),
-            new Point(10149,5469),
-            new Point(10106,5504),
-            new Point(10072,5627),
-            new Point(9983,5738),
-            new Point(9979,5877),
-            new Point(9941,6015),
-            new Point(9872,6007),
-            new Point(9775,6084),
-            new Point(9629,6080),
-            new Point(9541,6015),
-            new Point(9414,6000),
-            new Point(9306,6100),
-            new Point(8836,6419),
-            new Point(8656,6561),
-            new Point(8632,6611),
-            new Point(8509,6703),
-            new Point(8463,6780),
-            new Point(8328,6807),
-            new Point(7974,7202),
-            new Point(7736,7329),
-            new Point(7451,7610),
-            new Point(7305,7683),
-            new Point(7220,7679),
-            new Point(7155,7706),
-            new Point(6797,7594),
-            new Point(6612,7518),
-            new Point(6393,7521),
-            new Point(6062,7783),
-            new Point(5842,8144),
-            new Point(5488,8386),
-            new Point(5400,8567),
-            new Point(5280,8640),
-            new Point(5173,8609),
-            new Point(4730,8755),
-            new Point(4464,8851),
-            new Point(4372,8770),
-            new Point(4264,8747),
-            new Point(3941,8820),
-            new Point(3664,8951),
-            new Point(3575,9035),
-            new Point(3533,9139),
-            new Point(3441,9105),
-            new Point(3183,9258),
-            new Point(3083,9289),
-            new Point(2821,9412),
-            new Point(2644,9577),
-            new Point(2506,9623),
-            new Point(2532,9773),
-            new Point(2629,9869),
-            new Point(2690,10015),
-            new Point(2633,10146),
-            new Point(2417,10342),
-            new Point(2275,10865),
-            new Point(2259,10968),
-            new Point(2244,11187),
-            new Point(2205,11287),
-            new Point(2109,11364),
-            new Point(2009,11645),
-            new Point(2001,11760),
-            new Point(1844,12067),
-            new Point(1859,12394),
-            new Point(1805,12505),
-            new Point(1628,12824),
-            new Point(1593,13005),
-            new Point(1617,13093),
-            new Point(1432,13382),
-            new Point(1347,13435),
-            new Point(1386,13508),
-            new Point(1347,13566),
-            new Point(1058,13635),
-            new Point(1008,13612),
-            new Point(778,13678),
-            new Point(631,13777),
-            new Point(593,13850),
-            new Point(658,13970),
-            new Point(778,13993),
-            new Point(1224,14046),
-            new Point(1366,14154),
-            new Point(1513,14177),
-            new Point(1828,14362),
-            new Point(2194,14926),
-            new Point(2190,15030),
-            new Point(2225,15080),
-            new Point(2236,15215),
-            new Point(2282,15338)
-        };
-        private static Tool.Point[] ptsWorld9_HighwayWest = new Tool.Point[]
-        {
-            new Tool.Point(3595,51),
-            new Tool.Point(3351,624),
-            new Tool.Point(2893,1253),
-            new Tool.Point(2786,1392),
-            new Tool.Point(1781,3414),
-            new Tool.Point(1655,3800),
-            new Tool.Point(1530,4818),
-            new Tool.Point(1433,5369),
-            new Tool.Point(1215,6108),
-            new Tool.Point(1175,6482),
-            new Tool.Point(1212,6832),
-            new Tool.Point(1585,8978),
-            new Tool.Point(1725,9294),
-            new Tool.Point(1884,9430),
-            new Tool.Point(2306,9654),
-            new Tool.Point(2583,9886),
-            new Tool.Point(2960,10385),
-            new Tool.Point(3333,10764),
-            new Tool.Point(3725,11264),
-            new Tool.Point(3965,11473),
-            new Tool.Point(4785,11980),
-            new Tool.Point(5048,12216)
-        };
-        private static Point[] ptsWorld9_SouthAF = new Point[]
-        {
-            new Point(6982,1091),
-            new Point(8145,1289),
-            new Point(8089,1392),
-            new Point(7953,1392),
-            new Point(7853,1491),
-            new Point(7657,1451),
-            new Point(7591,1315),
-            new Point(7008,1201),
-            new Point(6974,1095)
-        };
-        private static Point[] ptsWorld9_NorthAF = new Point[]
-        {
-            new Point(10379,11317),
-            new Point(11889,11317),
-            new Point(11889,11281),
-            new Point(11841,11229),
-            new Point(11206,11222),
-            new Point(11202,11130),
-            new Point(11180,11090),
-            new Point(11054,11023),
-            new Point(11080,10961),
-            new Point(10859,10843),
-            new Point(10777,10976),
-            new Point(10796,10987),
-            new Point(10777,11042),
-            new Point(10984,11137),
-            new Point(11047,11053),
-            new Point(11165,11119),
-            new Point(11169,11226),
-            new Point(10471,11226),
-            new Point(10382,11281),
-            new Point(10379,11317)
-        };
-        //
-        public static List<List<Point[]>> MapHelperDefs = new List<List<Point[]>>
-        {
-            // Chernarus
-            new List<Point[]>
-            {
-                ptsWorld1_NEAF,
-                ptsWorld1_NWAF,
-                ptsWorld1_BalotaAF,
-                ptsWorld1_AxisNWSE,
-                ptsWorld1_RoadBereElectro,
-                ptsWorld1_Skalisty
-            },
-            new List<Point[]>
-            {
-            },
-            new List<Point[]>
-            {
-            },
-            new List<Point[]>
-            {
-            },
-            new List<Point[]>
-            {
-            },
-            new List<Point[]>
-            {
-            },
-            new List<Point[]>
-            {
-            },
-            new List<Point[]>
-            {
-            },
-            // Celle 2
-            new List<Point[]>
-            {
-                ptsWorld9_HighwayWest,
-                ptsWorld9_SouthAF,
-                ptsWorld9_NorthAF
-            },
-            // Taviana
-            new List<Point[]>
-            {
-            }
-        };
-    }
-    [Serializable]
-    public class ModuleVersion : ICloneable, IComparable
-    {
-        private int major;
-        private int minor;
-        public int Major
-        {
-            get
-            {
-                return major;
-            }
-            set
-            {
-                major = value;
-            }
-        }
-        public int Minor
-        {
-            get
-            {
-                return minor;
-            }
-            set
-            {
-                minor = value;
-            }
-        }
-        public ModuleVersion()
-        {
-            this.major = 0;
-            this.minor = 0;
-        }
-        public ModuleVersion(int major, int minor)
-        {
-            if (major < 0)
-            {
-                throw new ArgumentOutOfRangeException("major", "ArgumentOutOfRange_Version");
-            }
-            if (minor < 0)
-            {
-                throw new ArgumentOutOfRangeException("minor", "ArgumentOutOfRange_Version");
-            }
-            this.major = major;
-            this.minor = minor;
-        }
-        #region ICloneable Members
-        public object Clone()
-        {
-            ModuleVersion version1 = new ModuleVersion();
-            version1.major = this.major;
-            version1.minor = this.minor;
-            return version1;
-        }
-        #endregion
-        #region IComparable Members
-        public int CompareTo(object version)
-        {
-            if (version == null)
-            {
-                return 1;
-            }
-            if (!(version is ModuleVersion))
-            {
-                throw new ArgumentException("Arg_MustBeVersion");
-            }
-            ModuleVersion version1 = (ModuleVersion)version;
-            if (this.major != version1.Major)
-            {
-                if (this.major > version1.Major)
-                {
-                    return 1;
-                }
-                return -1;
-            }
-            if (this.minor != version1.Minor)
-            {
-                if (this.minor > version1.Minor)
-                {
-                    return 1;
-                }
-                return -1;
-            }
-            return 0;
-        }
-        #endregion
-        public override bool Equals(object obj)
-        {
-            if ((obj == null) || !(obj is ModuleVersion))
-            {
-                return false;
-            }
-            ModuleVersion version1 = (ModuleVersion)obj;
-            if ((this.major == version1.Major) && (this.minor == version1.Minor))
-            {
-                return true;
-            }
-            return false;
-        }
-        public override int GetHashCode()
-        {
-            int num1 = 0;
-            num1 |= ((this.major & 15) << 0x1c);
-            num1 |= ((this.minor & 0xff) << 20);
-            return num1;
-        }
-        public static bool operator ==(ModuleVersion v1, ModuleVersion v2)
-        {
-            return v1.Equals(v2);
-        }
-        public static bool operator >(ModuleVersion v1, ModuleVersion v2)
-        {
-            return (v2 < v1);
-        }
-        public static bool operator >=(ModuleVersion v1, ModuleVersion v2)
-        {
-            return (v2 <= v1);
-        }
-        public static bool operator !=(ModuleVersion v1, ModuleVersion v2)
-        {
-            return (v1 != v2);
-        }
-        public static bool operator <(ModuleVersion v1, ModuleVersion v2)
-        {
-            if (v1 == null)
-            {
-                throw new ArgumentNullException("v1");
-            }
-            return (v1.CompareTo(v2) < 0);
-        }
-        public static bool operator <=(ModuleVersion v1, ModuleVersion v2)
-        {
-            if (v1 == null)
-            {
-                throw new ArgumentNullException("v1");
-            }
-            return (v1.CompareTo(v2) <= 0);
+            mtxUpdateDB.ReleaseMutex();
+            this.Cursor = Cursors.Arrow;
         }
     }
 }
