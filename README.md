@@ -1,7 +1,7 @@
 DayZ DB Access
 ==============
 
-(WIP) Simple tool to show some data from a DayZ database.
+(WIP) Simple tool to show some data from a DayZ database. (Windows Only)
 
  - Supporting classic DayZ databases. (Basic access to the Epoch's specific DB)
  - Show on map:
