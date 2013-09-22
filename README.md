@@ -134,3 +134,5 @@ History
   		- Spawn vehicles
   		- Remove bodies older than X days
   		- Remove tents not updated since X days
+
+Icons used in this application have been borrowed from DayZDB and DayZST web sites, thanks to them even if I didn't asked permission for that... :S
