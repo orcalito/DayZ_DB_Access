@@ -5,10 +5,10 @@ DayZ DB Access
 
  - Supporting classic DayZ databases. (Basic access to the Epoch's specific DB)
  - Show on map:
-	- players online *
+	- players online (1)
 	- players alive
 	- vehicles - can be filtered by types
-	- vehicle spawn points - can be filtered by types **
+	- vehicle spawn points - can be filtered by types (2)
 	- deployables - can be filtered by types
  - Show players/vehicles/deployables inventory.
  - Bitmap selection for each World's type.
@@ -17,19 +17,39 @@ DayZ DB Access
  - Deployables Tab: associate an icon to each deployable's class.
  - Scripts Tab:
 	- backup database
-	- remove destroyed vehicles **
-	- spawn new vehicles **
-	- remove old bodies **
-	- remove old tents **
+	- remove destroyed vehicles (2)
+	- spawn new vehicles (2)
+	- remove old bodies (2)
+	- remove old tents (2)
 	- 3 custom SQL or BAT scripts can be set & called.
 
- *  : not yet available with Epoch's DB.
- ** : disabled with Epoch's DB because useless.
+[1] : not yet available with Epoch's DB.
+
+[2] : disabled with Epoch's DB because useless.
 
 
 Executable (ClickOnce) can be found here:
 
 http://82.67.37.43/publish
+
+
+Configuration
+=============
+
+- Select the connection settings for your database.
+- Select the bitmap you want to be used, try to use a big one. (no bitmap included)
+- Set icons for each type of vehicles and deployables.
+
+Help
+====
+
+- Click on icons on the map to see details in the Display Tab.
+- Clicking on an icon will select its type in the corresponding vehicle/deploayble's Tab.
+- Contextual menu on vehicle and spawn icons to remove them from the database.
+- Scripts Tab: 3 buttons can be set up to call custom SQL and BAT files.
+
+If something goes wrong, all files created by this application are stored in your %appdata%\DayZDBAccess directory,
+You can edit the config file, or delete all files to restore an empty configuration file.
 
 
 History
