@@ -48,7 +48,8 @@ Help
 - Contextual menu on vehicle and spawn icons to remove them from the database.
 - Scripts Tab: 3 buttons can be set up to call custom SQL and BAT files.
 
-If something goes wrong, all files created by this application are stored in your %appdata%\DayZDBAccess directory,
+If something goes wrong, all files created by this application are stored in your %appdata%\DayZDBAccess directory.
+
 You can edit the config file, or delete all files to restore an empty configuration file.
 
 
