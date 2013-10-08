@@ -551,13 +551,13 @@ namespace DBAccess
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Exception found");
+                //MessageBox.Show(ex.Message, "Exception found");
                 Enable(false);
             }
 
             if (mycfg.cfgVersion == null) mycfg.cfgVersion = new ModuleVersion();
             if (Tool.NullOrEmpty(mycfg.game_type)) mycfg.game_type = comboBoxGameType.Items[0] as string;
-            if (Tool.NullOrEmpty(mycfg.url)) mycfg.url = "";
+            if (Tool.NullOrEmpty(mycfg.url)) mycfg.url = "my.database.url";
             if (Tool.NullOrEmpty(mycfg.port)) mycfg.port = "3306";
             if (Tool.NullOrEmpty(mycfg.basename)) mycfg.basename = "basename";
             if (Tool.NullOrEmpty(mycfg.username)) mycfg.username = "username";
@@ -603,6 +603,8 @@ namespace DBAccess
                 table.Columns.Add(new DataColumn("DB_Y", typeof(int), "", MappingType.Hidden));
                 table.Columns.Add(new DataColumn("DB_Width", typeof(UInt32), "", MappingType.Hidden));
                 table.Columns.Add(new DataColumn("DB_Height", typeof(UInt32), "", MappingType.Hidden));
+                table.Columns.Add(new DataColumn("DB_refWidth", typeof(UInt32), "", MappingType.Hidden));
+                table.Columns.Add(new DataColumn("DB_refHeight", typeof(UInt32), "", MappingType.Hidden));
 
                 DataColumn[] keys = new DataColumn[1];
                 keys[0] = mycfg.worlds_def.Tables[0].Columns[0];
@@ -610,16 +612,16 @@ namespace DBAccess
 
                 System.Data.DataColumn col = new DataColumn();
 
-                table.Rows.Add(1, "Chernarus", "", 0, 0, 0, 0, 0, 0, 14700, 15360);
-                table.Rows.Add(2, "Lingor", "", 0, 0, 0, 0, 0, 0, 10000, 10000);
-                table.Rows.Add(3, "Utes", "", 0, 0, 0, 0, 0, 0, 5100, 5100);
-                table.Rows.Add(4, "Takistan", "", 0, 0, 0, 0, 0, 0, 14000, 14000);
-                table.Rows.Add(5, "Panthera2", "", 0, 0, 0, 0, 0, 0, 10200, 10200);
-                table.Rows.Add(6, "Fallujah", "", 0, 0, 0, 0, 0, 0, 10200, 10200);
-                table.Rows.Add(7, "Zargabad", "", 0, 0, 0, 0, 0, 0, 8000, 8000);
-                table.Rows.Add(8, "Namalsk", "", 0, 0, 0, 0, 0, 0, 12000, 12000);
-                table.Rows.Add(9, "Celle2", "", 0, 0, 0, 0, 0, 0, 13000, 13000);
-                table.Rows.Add(10, "Taviana", "", 0, 0, 0, 0, 0, 0, 25600, 25600);
+                table.Rows.Add(1, "Chernarus", "",  0, 0, 0, 0, 0, 0, 0, 14700, 15360, 14700, 15360);
+                table.Rows.Add(2, "Lingor", "", 0, 0, 0, 0, 0, 0, 0, 10000, 10000, 10000, 10000);
+                table.Rows.Add(3, "Utes", "", 0, 0, 0, 0, 0, 0, 0, 5100, 5100, 5100, 5100);
+                table.Rows.Add(4, "Takistan", "", 0, 0, 0, 0, 0, 0, 0, 14000, 14000, 14000, 14000);
+                table.Rows.Add(5, "Panthera2", "", 0, 0, 0, 0, 0, 0, 0, 10200, 10200, 10200, 10200);
+                table.Rows.Add(6, "Fallujah", "", 0, 0, 0, 0, 0, 0, 0, 10200, 10200, 10200, 10200);
+                table.Rows.Add(7, "Zargabad", "", 0, 0, 0, 0, 0, 0, 0, 8000, 8000, 8000, 8000);
+                table.Rows.Add(8, "Namalsk", "", 0, 0, 0, 0, 0, 0, 0, 12000, 12000, 12000, 12000);
+                table.Rows.Add(9, "Celle2", "", 0, 0, 0, 0, 0, 0, 0, 13000, 13000, 13000, 13000);
+                table.Rows.Add(10, "Taviana", "", 0, 0, 0, 0, 0, 0, 0, 25600, 25600, 25600, 25600);
             }
 
             // -> v3.0
@@ -643,9 +645,9 @@ namespace DBAccess
             if (mycfg.vehicle_types.Tables.Count == 0)
             {
                 DataTable table = mycfg.vehicle_types.Tables.Add();
-                table.Columns.Add(new DataColumn("Show", typeof(bool)));
                 table.Columns.Add(new DataColumn("ClassName", typeof(string)));
                 table.Columns.Add(new DataColumn("Type", typeof(string)));
+                table.Columns.Add(new DataColumn("Show", typeof(bool)));
                 DataColumn[] keys = new DataColumn[1];
                 keys[0] = mycfg.vehicle_types.Tables[0].Columns[0];
                 mycfg.vehicle_types.Tables[0].PrimaryKey = keys;
@@ -654,9 +656,9 @@ namespace DBAccess
             if (mycfg.deployable_types.Tables.Count == 0)
             {
                 DataTable table = mycfg.deployable_types.Tables.Add();
-                table.Columns.Add(new DataColumn("Show", typeof(bool)));
                 table.Columns.Add(new DataColumn("ClassName", typeof(string)));
                 table.Columns.Add(new DataColumn("Type", typeof(string)));
+                table.Columns.Add(new DataColumn("Show", typeof(bool)));
                 DataColumn[] keys = new DataColumn[1];
                 keys[0] = mycfg.deployable_types.Tables[0].Columns[0];
                 mycfg.deployable_types.Tables[0].PrimaryKey = keys;
