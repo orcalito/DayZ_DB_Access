@@ -113,18 +113,20 @@
             this.ColGVVTShow = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.ColGVVTClassName = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColGVVTType = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            this.contextMenuStripResetTypes = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.toolStripMenuItemResetTypes = new System.Windows.Forms.ToolStripMenuItem();
             this.tabPage6 = new System.Windows.Forms.TabPage();
             this.dataGridViewDeployableTypes = new System.Windows.Forms.DataGridView();
             this.ColGVDTShow = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.ColGVDTClassName = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColGVDTType = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            this.contextMenuStripSpawn = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.toolStripMenuItemDeleteSpawn = new System.Windows.Forms.ToolStripMenuItem();
             this.bgWorkerDatabase = new System.ComponentModel.BackgroundWorker();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.contextMenuStripVehicle = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.toolStripMenuItemDeleteVehicle = new System.Windows.Forms.ToolStripMenuItem();
-            this.contextMenuStripSpawn = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.toolStripMenuItemDeleteSpawn = new System.Windows.Forms.ToolStripMenuItem();
             this.bgWorkerFast = new System.ComponentModel.BackgroundWorker();
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -142,10 +144,11 @@
             ((System.ComponentModel.ISupportInitialize)(this.dataSetBindingSource)).BeginInit();
             this.tabPage5.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewVehicleTypes)).BeginInit();
+            this.contextMenuStripResetTypes.SuspendLayout();
             this.tabPage6.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewDeployableTypes)).BeginInit();
-            this.contextMenuStripVehicle.SuspendLayout();
             this.contextMenuStripSpawn.SuspendLayout();
+            this.contextMenuStripVehicle.SuspendLayout();
             this.SuspendLayout();
             // 
             // BottomToolStripPanel
@@ -998,6 +1001,7 @@
             this.ColGVVTShow,
             this.ColGVVTClassName,
             this.ColGVVTType});
+            this.dataGridViewVehicleTypes.ContextMenuStrip = this.contextMenuStripResetTypes;
             this.dataGridViewVehicleTypes.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dataGridViewVehicleTypes.Location = new System.Drawing.Point(3, 3);
             this.dataGridViewVehicleTypes.MultiSelect = false;
@@ -1031,15 +1035,32 @@
             this.ColGVVTType.HeaderText = "Type";
             this.ColGVVTType.Items.AddRange(new object[] {
             "Air",
+            "Atv",
             "Bicycle",
             "Boat",
             "Bus",
             "Car",
             "Helicopter",
             "Motorcycle",
-            "Truck"});
+            "Tractor",
+            "Truck",
+            "UAZ"});
             this.ColGVVTType.Name = "ColGVVTType";
             this.ColGVVTType.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
+            // 
+            // contextMenuStripResetTypes
+            // 
+            this.contextMenuStripResetTypes.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripMenuItemResetTypes});
+            this.contextMenuStripResetTypes.Name = "contextMenuStripVehicle";
+            this.contextMenuStripResetTypes.Size = new System.Drawing.Size(153, 48);
+            // 
+            // toolStripMenuItemResetTypes
+            // 
+            this.toolStripMenuItemResetTypes.Name = "toolStripMenuItemResetTypes";
+            this.toolStripMenuItemResetTypes.Size = new System.Drawing.Size(152, 22);
+            this.toolStripMenuItemResetTypes.Text = "Reset list";
+            this.toolStripMenuItemResetTypes.Click += new System.EventHandler(this.toolStripMenuItemResetTypes_Click);
             // 
             // tabPage6
             // 
@@ -1063,6 +1084,7 @@
             this.ColGVDTShow,
             this.ColGVDTClassName,
             this.ColGVDTType});
+            this.dataGridViewDeployableTypes.ContextMenuStrip = this.contextMenuStripResetTypes;
             this.dataGridViewDeployableTypes.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dataGridViewDeployableTypes.Location = new System.Drawing.Point(3, 3);
             this.dataGridViewDeployableTypes.MultiSelect = false;
@@ -1099,10 +1121,24 @@
             "Unknown",
             "Tent",
             "Stach",
-            "Small Build",
-            "Large Build"});
+            "SmallBuild",
+            "LargeBuild"});
             this.ColGVDTType.Name = "ColGVDTType";
             this.ColGVDTType.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
+            // 
+            // contextMenuStripSpawn
+            // 
+            this.contextMenuStripSpawn.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripMenuItemDeleteSpawn});
+            this.contextMenuStripSpawn.Name = "contextMenuStripSpawn";
+            this.contextMenuStripSpawn.Size = new System.Drawing.Size(174, 26);
+            // 
+            // toolStripMenuItemDeleteSpawn
+            // 
+            this.toolStripMenuItemDeleteSpawn.Name = "toolStripMenuItemDeleteSpawn";
+            this.toolStripMenuItemDeleteSpawn.Size = new System.Drawing.Size(173, 22);
+            this.toolStripMenuItemDeleteSpawn.Text = "Delete Spawnpoint";
+            this.toolStripMenuItemDeleteSpawn.Click += new System.EventHandler(this.toolStripMenuItemDeleteSpawn_Click);
             // 
             // bgWorkerDatabase
             // 
@@ -1130,20 +1166,6 @@
             this.toolStripMenuItemDeleteVehicle.Size = new System.Drawing.Size(147, 22);
             this.toolStripMenuItemDeleteVehicle.Text = "Delete vehicle";
             this.toolStripMenuItemDeleteVehicle.Click += new System.EventHandler(this.toolStripMenuItemDelete_Click);
-            // 
-            // contextMenuStripSpawn
-            // 
-            this.contextMenuStripSpawn.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripMenuItemDeleteSpawn});
-            this.contextMenuStripSpawn.Name = "contextMenuStripSpawn";
-            this.contextMenuStripSpawn.Size = new System.Drawing.Size(174, 26);
-            // 
-            // toolStripMenuItemDeleteSpawn
-            // 
-            this.toolStripMenuItemDeleteSpawn.Name = "toolStripMenuItemDeleteSpawn";
-            this.toolStripMenuItemDeleteSpawn.Size = new System.Drawing.Size(173, 22);
-            this.toolStripMenuItemDeleteSpawn.Text = "Delete Spawnpoint";
-            this.toolStripMenuItemDeleteSpawn.Click += new System.EventHandler(this.toolStripMenuItemDeleteSpawn_Click);
             // 
             // bgWorkerFast
             // 
@@ -1184,10 +1206,11 @@
             ((System.ComponentModel.ISupportInitialize)(this.dataSetBindingSource)).EndInit();
             this.tabPage5.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewVehicleTypes)).EndInit();
+            this.contextMenuStripResetTypes.ResumeLayout(false);
             this.tabPage6.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewDeployableTypes)).EndInit();
-            this.contextMenuStripVehicle.ResumeLayout(false);
             this.contextMenuStripSpawn.ResumeLayout(false);
+            this.contextMenuStripVehicle.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -1294,7 +1317,8 @@
         private System.Windows.Forms.DataGridViewCheckBoxColumn ColGVDTShow;
         private System.Windows.Forms.DataGridViewTextBoxColumn ColGVDTClassName;
         private System.Windows.Forms.DataGridViewComboBoxColumn ColGVDTType;
-
+        private System.Windows.Forms.ContextMenuStrip contextMenuStripResetTypes;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemResetTypes;
     }
 }
 

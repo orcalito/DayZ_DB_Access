@@ -74,9 +74,7 @@ namespace DBAccess
                             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
                             foreach (iconDB idb in listIcons)
                             {
-                                UIDType type = GetUIDType(idb.uid);
-
-                                if ((type == UIDType.TypePlayer) || (type == UIDType.TypeVehicle))
+                                if ((idb.type == UIDType.TypePlayer) || (idb.type == UIDType.TypeVehicle))
                                     GetUIDGraph(idb.uid).DisplayInMap(e.Graphics, virtualMap);
                             }
                         }
@@ -281,7 +279,7 @@ namespace DBAccess
         {
             myIcon pb = sender as myIcon;
 
-            if (GetUIDType(pb.iconDB.uid) == UIDType.TypeVehicle)
+            if (pb.iconDB.type == UIDType.TypeVehicle)
             {
                 Vehicle vehicle = new Vehicle(pb.iconDB);
                 vehicle.Rebuild();
@@ -334,10 +332,9 @@ namespace DBAccess
 
                     iconDB idb = sourceControl.Tag as iconDB;
 
-                    UInt64 id = GetUIDData(idb.uid);
-                    int res = ExecuteSqlNonQuery("DELETE FROM instance_vehicle WHERE id=" + id + " AND instance_id=" + mycfg.instance_id);
+                    int res = ExecuteSqlNonQuery("DELETE FROM instance_vehicle WHERE id=" + idb.uid + " AND instance_id=" + mycfg.instance_id);
                     if (res == 1)
-                        textBoxCmdStatus.Text = "removed vehicle id " + id;
+                        textBoxCmdStatus.Text = "removed vehicle id " + idb.uid;
                 }
             }
         }
@@ -353,10 +350,9 @@ namespace DBAccess
 
                     iconDB idb = sourceControl.Tag as iconDB;
 
-                    UInt64 id = GetUIDData(idb.uid);
-                    int res = ExecuteSqlNonQuery("DELETE FROM world_vehicle WHERE id=" + id + " AND world_id=" + mycfg.world_id);
+                    int res = ExecuteSqlNonQuery("DELETE FROM world_vehicle WHERE id=" + idb.uid + " AND world_id=" + mycfg.world_id);
                     if (res == 1)
-                        textBoxCmdStatus.Text = "removed vehicle spawnpoint id " + id;
+                        textBoxCmdStatus.Text = "removed vehicle spawnpoint id " + idb.uid;
                 }
             }
         }
@@ -447,7 +443,7 @@ namespace DBAccess
         {
             if ((sender as CheckBox).Checked == false)
             {
-                foreach (KeyValuePair<UInt64, UIDGraph> pair in dicUIDGraph)
+                foreach (KeyValuePair<string, UIDGraph> pair in dicUIDGraph)
                     pair.Value.path.Reset();
             }
         }
@@ -781,6 +777,7 @@ namespace DBAccess
                 {
                     FileInfo fi = new FileInfo(openFileDialog1.FileName);
                     btExe.Text = fi.Name;
+                    btExe.Enabled = true;
                 }
             }
         }
@@ -796,7 +793,7 @@ namespace DBAccess
                 case "buttonCustom3": fullpath = mycfg.customscript3; break;
             }
 
-            if (fullpath == null)
+            if (Tool.NullOrEmpty(fullpath))
                 return;
 
             mtxUpdateDB.WaitOne();
@@ -911,5 +908,23 @@ namespace DBAccess
             new Pen(Color.Orange, 2),
             new Pen(Color.Violet, 2)
         };
+
+        private void toolStripMenuItemResetTypes_Click(object sender, EventArgs e)
+        {
+            var item = sender as ToolStripMenuItem;
+            var menu = item.Owner as ContextMenuStrip;
+
+            switch (menu.SourceControl.Name)
+            {
+                case "dataGridViewVehicleTypes":
+                    mycfg.vehicle_types.Tables[0].Rows.Clear();
+                    break;
+                case "dataGridViewDeployableTypes":
+                    mycfg.deployable_types.Tables[0].Rows.Clear();
+                    break;
+            }
+
+            DB_OnConnection();
+        }
     }
 }

@@ -41,7 +41,7 @@ namespace DBAccess
         private DataSet dsVehicles = new DataSet();
         private DataSet dsVehicleSpawnPoints = new DataSet();
 
-        private Dictionary<UInt64, UIDGraph> dicUIDGraph = new Dictionary<UInt64, UIDGraph>();
+        private Dictionary<string, UIDGraph> dicUIDGraph = new Dictionary<string, UIDGraph>();
         private List<iconDB> listIcons = new List<iconDB>();
         private List<iconDB> iconsDB = new List<iconDB>();
         private List<myIcon> iconPlayers = new List<myIcon>();
@@ -52,6 +52,9 @@ namespace DBAccess
 
         private MapHelper mapHelper;
         private UIDGraph cartographer = new UIDGraph(new Pen(Color.Black, 2));
+
+        private List<tileReq> tileRequests = new List<tileReq>();
+        private List<tileNfo> tileCache = new List<tileNfo>();
 
         public Form1()
         {
@@ -120,7 +123,7 @@ namespace DBAccess
 
             try
             {
-                foreach (KeyValuePair<UInt64, UIDGraph> pair in dicUIDGraph)
+                foreach (KeyValuePair<string, UIDGraph> pair in dicUIDGraph)
                     pair.Value.path.Reset();
 
                 listIcons.Clear();
@@ -259,7 +262,8 @@ namespace DBAccess
 
                 iconDB idb = iconsDB[idx];
 
-                idb.uid = UInt64.Parse(row.Field<string>("unique_id")) | (UInt64)UIDType.TypePlayer;
+                idb.uid = row.Field<string>("unique_id");
+                idb.type = UIDType.TypePlayer;
                 idb.row = row;
                 idb.pos = GetUnitPosFromString(row.Field<string>("worldspace"));
 
@@ -295,7 +299,8 @@ namespace DBAccess
 
                 iconDB idb = iconsDB[idx];
 
-                idb.uid = UInt64.Parse(row.Field<string>("unique_id")) | (UInt64)UIDType.TypePlayer;
+                idb.uid = row.Field<string>("unique_id");
+                idb.type = UIDType.TypePlayer;
                 idb.row = row;
                 idb.pos = GetUnitPosFromString(row.Field<string>("worldspace"));
 
@@ -336,7 +341,8 @@ namespace DBAccess
 
                     iconDB idb = iconsDB[idx];
 
-                    idb.uid = row.Field<UInt64>("id") | (UInt64)UIDType.TypeVehicle;
+                    idb.uid = row.Field<UInt64>("id").ToString();
+                    idb.type = UIDType.TypeVehicle;
                     idb.row = row;
                     idb.pos = GetUnitPosFromString(row.Field<string>("worldspace"));
 
@@ -355,19 +361,37 @@ namespace DBAccess
                         switch (classname)
                         {
                             case "Air": idb.icon.image = global::DBAccess.Properties.Resources.air; break;
+                            case "Atv": idb.icon.image = global::DBAccess.Properties.Resources.atv; break;
                             case "Bicycle": idb.icon.image = global::DBAccess.Properties.Resources.bike; break;
                             case "Boat": idb.icon.image = global::DBAccess.Properties.Resources.boat; break;
                             case "Bus": idb.icon.image = global::DBAccess.Properties.Resources.bus; break;
                             case "Car": idb.icon.image = global::DBAccess.Properties.Resources.car; break;
                             case "Helicopter": idb.icon.image = global::DBAccess.Properties.Resources.helicopter; break;
                             case "Motorcycle": idb.icon.image = global::DBAccess.Properties.Resources.motorcycle; break;
+                            case "Tractor": idb.icon.image = global::DBAccess.Properties.Resources.tractor; break;
                             case "Truck": idb.icon.image = global::DBAccess.Properties.Resources.truck; break;
+                            case "UAZ": idb.icon.image = global::DBAccess.Properties.Resources.uaz; break;
                             default: idb.icon.image = global::DBAccess.Properties.Resources.car; break;
                         }
                     }
                     else
                     {
-                        idb.icon.image = global::DBAccess.Properties.Resources.iconDestroyed;
+                        string classname = (rowT != null) ? rowT.Field<string>("Type") : "";
+                        switch (classname)
+                        {
+                            case "Air": idb.icon.image = global::DBAccess.Properties.Resources.helicopter_crashed; break;
+                            case "Atv": idb.icon.image = global::DBAccess.Properties.Resources.atv_crashed; break;
+                            case "Bicycle": idb.icon.image = global::DBAccess.Properties.Resources.bike_crashed; break;
+                            case "Boat": idb.icon.image = global::DBAccess.Properties.Resources.boat_crashed; break;
+                            case "Bus": idb.icon.image = global::DBAccess.Properties.Resources.bus_crashed; break;
+                            case "Car": idb.icon.image = global::DBAccess.Properties.Resources.car_crashed; break;
+                            case "Helicopter": idb.icon.image = global::DBAccess.Properties.Resources.helicopter_crashed; break;
+                            case "Motorcycle": idb.icon.image = global::DBAccess.Properties.Resources.motorcycle_crashed; break;
+                            case "Tractor": idb.icon.image = global::DBAccess.Properties.Resources.tractor_crashed; break;
+                            case "Truck": idb.icon.image = global::DBAccess.Properties.Resources.truck_crashed; break;
+                            case "UAZ": idb.icon.image = global::DBAccess.Properties.Resources.uaz_crashed; break;
+                            default: idb.icon.image = global::DBAccess.Properties.Resources.car_crashed; break;
+                        }
                     }
 
                     Control tr = new Control();
@@ -403,7 +427,8 @@ namespace DBAccess
 
                     iconDB idb = iconsDB[idx];
 
-                    idb.uid = row.Field<UInt64>("id") | (UInt64)UIDType.TypeSpawn;
+                    idb.uid = row.Field<UInt64>("id").ToString();
+                    idb.type = UIDType.TypeSpawn;
                     idb.row = row;
                     idb.pos = GetUnitPosFromString(row.Field<string>("worldspace"));
 
@@ -456,7 +481,8 @@ namespace DBAccess
 
                     iconDB idb = iconsDB[idx];
 
-                    idb.uid = row.Field<UInt64>("id") | (UInt64)UIDType.TypeDeployable;
+                    idb.uid = row.Field<UInt64>("id").ToString();
+                    idb.type = UIDType.TypeDeployable;
                     idb.row = row;
                     idb.pos = GetUnitPosFromString(row.Field<string>("worldspace"));
 
@@ -475,8 +501,8 @@ namespace DBAccess
                     {
                         case "Tent": idb.icon.image = global::DBAccess.Properties.Resources.tent; break;
                         case "Stach": idb.icon.image = global::DBAccess.Properties.Resources.stach; break;
-                        case "Small Build": idb.icon.image = global::DBAccess.Properties.Resources.small_build; break;
-                        case "Large Build": idb.icon.image = global::DBAccess.Properties.Resources.large_build; break;
+                        case "SmallBuild": idb.icon.image = global::DBAccess.Properties.Resources.small_build; break;
+                        case "LargeBuild": idb.icon.image = global::DBAccess.Properties.Resources.large_build; break;
                         default: idb.icon.image = global::DBAccess.Properties.Resources.unknown; break;
                     }
 
@@ -510,9 +536,12 @@ namespace DBAccess
 
             // Script buttons
             buttonBackup.Enabled = bState;
-            buttonCustom1.Enabled = bState;
-            buttonCustom2.Enabled = bState;
-            buttonCustom3.Enabled = bState;
+            buttonSelectCustom1.Enabled = bState;
+            buttonSelectCustom2.Enabled = bState;
+            buttonSelectCustom3.Enabled = bState;
+            buttonCustom1.Enabled = (bState) ? !Tool.NullOrEmpty(mycfg.customscript1) : false;
+            buttonCustom2.Enabled = (bState) ? !Tool.NullOrEmpty(mycfg.customscript2) : false;
+            buttonCustom3.Enabled = (bState) ? !Tool.NullOrEmpty(mycfg.customscript3) : false;
 
             // Epoch disabled controls...
             textBoxInstanceId.Enabled = !(bState || bEpochGameType);
@@ -603,6 +632,8 @@ namespace DBAccess
                 table.Columns.Add(new DataColumn("DB_Y", typeof(int), "", MappingType.Hidden));
                 table.Columns.Add(new DataColumn("DB_Width", typeof(UInt32), "", MappingType.Hidden));
                 table.Columns.Add(new DataColumn("DB_Height", typeof(UInt32), "", MappingType.Hidden));
+                table.Columns.Add(new DataColumn("DB_refWidth", typeof(UInt32), "", MappingType.Hidden));
+                table.Columns.Add(new DataColumn("DB_refHeight", typeof(UInt32), "", MappingType.Hidden));
 
                 DataColumn[] keys = new DataColumn[1];
                 keys[0] = mycfg.worlds_def.Tables[0].Columns[0];
@@ -610,19 +641,19 @@ namespace DBAccess
 
                 System.Data.DataColumn col = new DataColumn();
 
-                table.Rows.Add(1, "Chernarus", "", 0, 0, 0, 0, 0, 0, 14700, 15360);
-                table.Rows.Add(2, "Lingor", "", 0, 0, 0, 0, 0, 0, 10000, 10000);
-                table.Rows.Add(3, "Utes", "", 0, 0, 0, 0, 0, 0, 5100, 5100);
-                table.Rows.Add(4, "Takistan", "", 0, 0, 0, 0, 0, 0, 14000, 14000);
-                table.Rows.Add(5, "Panthera2", "", 0, 0, 0, 0, 0, 0, 10200, 10200);
-                table.Rows.Add(6, "Fallujah", "", 0, 0, 0, 0, 0, 0, 10200, 10200);
-                table.Rows.Add(7, "Zargabad", "", 0, 0, 0, 0, 0, 0, 8000, 8000);
-                table.Rows.Add(8, "Namalsk", "", 0, 0, 0, 0, 0, 0, 12000, 12000);
-                table.Rows.Add(9, "Celle2", "", 0, 0, 0, 0, 0, 0, 13000, 13000);
-                table.Rows.Add(10, "Taviana", "", 0, 0, 0, 0, 0, 0, 25600, 25600);
+                table.Rows.Add(1, "Chernarus", "", 0, 0, 0, 0, 0, 0, 0, 14700, 15360, 14700, 15360);
+                table.Rows.Add(2, "Lingor", "", 0, 0, 0, 0, 0, 0, 0, 10000, 10000, 10000, 10000);
+                table.Rows.Add(3, "Utes", "", 0, 0, 0, 0, 0, 0, 0, 5100, 5100, 5100, 5100);
+                table.Rows.Add(4, "Takistan", "", 0, 0, 0, 0, 0, 0, 0, 14000, 14000, 14000, 14000);
+                table.Rows.Add(5, "Panthera2", "", 0, 0, 0, 0, 0, 0, 0, 10200, 10200, 10200, 10200);
+                table.Rows.Add(6, "Fallujah", "", 0, 0, 0, 0, 0, 0, 0, 10200, 10200, 10200, 10200);
+                table.Rows.Add(7, "Zargabad", "", 0, 0, 0, 0, 0, 0, 0, 8000, 8000, 8000, 8000);
+                table.Rows.Add(8, "Namalsk", "", 0, 0, 0, 0, 0, 0, 0, 12000, 12000, 12000, 12000);
+                table.Rows.Add(9, "Celle2", "", 0, 0, 0, 0, 0, 0, 0, 13000, 13000, 13000, 13000);
+                table.Rows.Add(10, "Taviana", "", 0, 0, 0, 0, 0, 0, 0, 25600, 25600, 25600, 25600);
             }
 
-            // -> v3.0
+            // -> v4.0
             if (mycfg.cfgVersion < curCfgVersion)
             {
                 DataColumnCollection cols;
@@ -643,9 +674,9 @@ namespace DBAccess
             if (mycfg.vehicle_types.Tables.Count == 0)
             {
                 DataTable table = mycfg.vehicle_types.Tables.Add();
-                table.Columns.Add(new DataColumn("Show", typeof(bool)));
                 table.Columns.Add(new DataColumn("ClassName", typeof(string)));
                 table.Columns.Add(new DataColumn("Type", typeof(string)));
+                table.Columns.Add(new DataColumn("Show", typeof(bool)));
                 DataColumn[] keys = new DataColumn[1];
                 keys[0] = mycfg.vehicle_types.Tables[0].Columns[0];
                 mycfg.vehicle_types.Tables[0].PrimaryKey = keys;
@@ -654,9 +685,9 @@ namespace DBAccess
             if (mycfg.deployable_types.Tables.Count == 0)
             {
                 DataTable table = mycfg.deployable_types.Tables.Add();
-                table.Columns.Add(new DataColumn("Show", typeof(bool)));
                 table.Columns.Add(new DataColumn("ClassName", typeof(string)));
                 table.Columns.Add(new DataColumn("Type", typeof(string)));
+                table.Columns.Add(new DataColumn("Show", typeof(bool)));
                 DataColumn[] keys = new DataColumn[1];
                 keys[0] = mycfg.deployable_types.Tables[0].Columns[0];
                 mycfg.deployable_types.Tables[0].PrimaryKey = keys;
@@ -1107,41 +1138,6 @@ namespace DBAccess
             }
         }
 
-        class tileReq
-        {
-            public string path;
-            public Rectangle rec;
-        }
-        class tileNfo
-        {
-            public tileNfo(string path)
-            {
-                bFileExists = File.Exists(path);
-                if (bFileExists)
-                {
-                    this.path = path;
-                    //this.bitmap = new Bitmap(path);
-                    using (var bmpTemp = new Bitmap(path))
-                    {
-                        this.bitmap = new Bitmap(bmpTemp);
-                    }
-                }
-                ticks = DateTime.Now.Ticks;
-            }
-            ~tileNfo()
-            {
-                if (bitmap != null)
-                    bitmap.Dispose();
-            }
-
-            public bool bFileExists = false;
-            public string path;
-            public Bitmap bitmap;
-            public long ticks;
-        }
-        List<tileReq> tileRequests = new List<tileReq>();
-        List<tileNfo> tileCache = new List<tileNfo>();
-
         private int ExecuteSqlNonQuery(string query)
         {
             if (!bConnected)
@@ -1172,7 +1168,7 @@ namespace DBAccess
             return res;
         }
 
-        internal UIDGraph GetUIDGraph(UInt64 uid)
+        internal UIDGraph GetUIDGraph(string uid)
         {
             UIDGraph uidgraph = null;
 
@@ -1180,23 +1176,6 @@ namespace DBAccess
                 dicUIDGraph[uid] = uidgraph = new UIDGraph(pens[(penCount++) % 6]);
 
             return uidgraph;
-        }
-
-        public enum UIDType : ulong
-        {
-            TypePlayer = 0x100000000,
-            TypeVehicle = 0x200000000,
-            TypeSpawn = 0x400000000,
-            TypeDeployable = 0x800000000,
-            TypeMask = 0xffff00000000
-        };
-        internal UInt64 GetUIDData(UInt64 uid)
-        {
-            return (UInt64)(uid & ~(UInt64)UIDType.TypeMask);
-        }
-        internal UIDType GetUIDType(UInt64 uid)
-        {
-            return (UIDType)(uid & (UInt64)UIDType.TypeMask);
         }
 
         public delegate void DlgUpdateIcons();
