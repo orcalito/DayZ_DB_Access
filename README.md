@@ -56,6 +56,12 @@ You can edit the config file, or delete all files to restore an empty configurat
 History
 =======
 
+ - v2.6.0
+	- added support for alphanumeric guids.
+	- added context menu to reset list of vehicle & deployable types.
+	- added destroyed icon for each vehicle types.
+	- fixed some bugs.
+
  - v2.5.0
 	- added checkboxes to filter displayed deployables/vehicles types.
 

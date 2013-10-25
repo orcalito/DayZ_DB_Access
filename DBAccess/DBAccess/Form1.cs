@@ -580,13 +580,13 @@ namespace DBAccess
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Exception found");
+                //MessageBox.Show(ex.Message, "Exception found");
                 Enable(false);
             }
 
             if (mycfg.cfgVersion == null) mycfg.cfgVersion = new ModuleVersion();
             if (Tool.NullOrEmpty(mycfg.game_type)) mycfg.game_type = comboBoxGameType.Items[0] as string;
-            if (Tool.NullOrEmpty(mycfg.url)) mycfg.url = "";
+            if (Tool.NullOrEmpty(mycfg.url)) mycfg.url = "my.database.url";
             if (Tool.NullOrEmpty(mycfg.port)) mycfg.port = "3306";
             if (Tool.NullOrEmpty(mycfg.basename)) mycfg.basename = "basename";
             if (Tool.NullOrEmpty(mycfg.username)) mycfg.username = "username";
