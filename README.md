@@ -56,6 +56,11 @@ You can edit the config file, or delete all files to restore an empty configurat
 History
 =======
 
+ - v2.7.0
+	- refactored database connection
+	- refactored global info
+	- added vehicle parts in propertygrid
+
  - v2.6.0
 	- added support for alphanumeric guids.
 	- added context menu to reset list of vehicle & deployable types.

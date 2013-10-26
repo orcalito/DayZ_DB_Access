@@ -16,6 +16,7 @@ namespace DBAccess
 {
     public partial class Form1 : Form
     {
+        #region Fields
         static ModuleVersion curCfgVersion = new ModuleVersion(3, 0);
 
         private static int bUserAction = 0;
@@ -55,6 +56,7 @@ namespace DBAccess
 
         private List<tileReq> tileRequests = new List<tileReq>();
         private List<tileNfo> tileCache = new List<tileNfo>();
+        #endregion
 
         public Form1()
         {
@@ -129,7 +131,7 @@ namespace DBAccess
                 listIcons.Clear();
 
                 Enable(false);
-                textBoxStatus.Text = "disconnected";
+                toolStripStatusCnx.Text = "disconnected";
             }
             catch (Exception ex)
             {
@@ -153,11 +155,11 @@ namespace DBAccess
             {
                 if (bConnected)
                 {
-                    tbOnlinePlayers.Text = (dsOnlinePlayers.Tables.Count > 0) ? dsOnlinePlayers.Tables[0].Rows.Count.ToString() : "-";
-                    tbAlivePlayers.Text = (dsAlivePlayers.Tables.Count > 0) ? dsAlivePlayers.Tables[0].Rows.Count.ToString() : "-";
-                    tbVehicles.Text = (dsVehicles.Tables.Count > 0) ? dsVehicles.Tables[0].Rows.Count.ToString() : "-";
-                    tbVehicleSpawn.Text = (dsVehicleSpawnPoints.Tables.Count > 0) ? dsVehicleSpawnPoints.Tables[0].Rows.Count.ToString() : "-";
-                    tbDeployables.Text = (dsDeployables.Tables.Count > 0) ? dsDeployables.Tables[0].Rows.Count.ToString() : "-";
+                    toolStripStatusOnline.Text = (dsOnlinePlayers.Tables.Count > 0) ? dsOnlinePlayers.Tables[0].Rows.Count.ToString() : "-";
+                    toolStripStatusAlive.Text = (dsAlivePlayers.Tables.Count > 0) ? dsAlivePlayers.Tables[0].Rows.Count.ToString() : "-";
+                    toolStripStatusVehicle.Text = (dsVehicles.Tables.Count > 0) ? dsVehicles.Tables[0].Rows.Count.ToString() : "-";
+                    toolStripStatusSpawn.Text = (dsVehicleSpawnPoints.Tables.Count > 0) ? dsVehicleSpawnPoints.Tables[0].Rows.Count.ToString() : "-";
+                    toolStripStatusDeployable.Text = (dsDeployables.Tables.Count > 0) ? dsDeployables.Tables[0].Rows.Count.ToString() : "-";
 
                     if ((propertyGrid1.SelectedObject != null) && (propertyGrid1.SelectedObject is PropObjectBase))
                     {
@@ -544,7 +546,7 @@ namespace DBAccess
             buttonCustom3.Enabled = (bState) ? !Tool.NullOrEmpty(mycfg.customscript3) : false;
 
             // Epoch disabled controls...
-            textBoxInstanceId.Enabled = !(bState || bEpochGameType);
+            numericUpDownInstanceId.Enabled = !(bState || bEpochGameType);
             buttonRemoveDestroyed.Enabled = bState && !bEpochGameType;
             buttonSpawnNew.Enabled = bState && !bEpochGameType;
             buttonRemoveBodies.Enabled = bState && !bEpochGameType;
@@ -558,11 +560,11 @@ namespace DBAccess
                 radioButtonSpawn.Checked = false;
                 radioButtonDeployables.Checked = false;
 
-                tbAlivePlayers.Text = "";
-                tbOnlinePlayers.Text = "";
-                tbVehicles.Text = "";
-                tbVehicleSpawn.Text = "";
-                tbDeployables.Text = "";
+                toolStripStatusAlive.Text = "-";
+                toolStripStatusOnline.Text = "-";
+                toolStripStatusVehicle.Text = "-";
+                toolStripStatusSpawn.Text = "-";
+                toolStripStatusDeployable.Text = "-";
             }
         }
         private void LoadConfigFile()
@@ -706,7 +708,7 @@ namespace DBAccess
                 textBoxBaseName.Text = mycfg.basename;
                 textBoxUser.Text = mycfg.username;
                 textBoxPassword.Text = mycfg.password;
-                textBoxInstanceId.Text = mycfg.instance_id;
+                numericUpDownInstanceId.Value = Decimal.Parse(mycfg.instance_id);
                 comboBoxGameType.SelectedItem = mycfg.game_type;
                 textBoxVehicleMax.Text = mycfg.vehicle_limit;
                 textBoxOldBodyLimit.Text = mycfg.body_time_limit;
@@ -744,7 +746,7 @@ namespace DBAccess
                 mycfg.basename = textBoxBaseName.Text;
                 mycfg.username = textBoxUser.Text;
                 mycfg.password = textBoxPassword.Text;
-                mycfg.instance_id = textBoxInstanceId.Text;
+                mycfg.instance_id = numericUpDownInstanceId.Value.ToString();
                 mycfg.cfgVersion = curCfgVersion;
                 mycfg.game_type = comboBoxGameType.SelectedItem as string;
                 mycfg.vehicle_limit = textBoxVehicleMax.Text;
@@ -792,13 +794,18 @@ namespace DBAccess
                 DataRow rowW = mycfg.worlds_def.Tables[0].Rows.Find(mycfg.world_id);
                 if (rowW != null)
                 {
-                    textBoxWorld.Text = rowW.Field<string>("World Name");
+                    toolStripStatusWorld.Text = rowW.Field<string>("World Name");
 
                     string filepath = rowW.Field<string>("Filepath");
 
                     if (File.Exists(filepath))
                     {
                         virtualMap.nfo.tileBasePath = configPath + "\\World" + mycfg.world_id + "\\LOD"; ;
+                    }
+                    else
+                    {
+                        MessageBox.Show("Please select a bitmap for your world, and don't forget to adjust the map to your bitmap with the map helper...", "No bitmap selected");
+                        tabControl1.SelectedTab = tabPageMaps;
                     }
 
                     virtualMap.nfo.defTileSize = new Tool.Size(rowW.Field<int>("TileSizeX"), rowW.Field<int>("TileSizeY"));
@@ -909,7 +916,7 @@ namespace DBAccess
 
                     DataRow rowW = mycfg.worlds_def.Tables[0].Rows.Find(mycfg.world_id);
                     if (rowW != null)
-                        textBoxWorld.Text = rowW.Field<string>("World Name");
+                        toolStripStatusWorld.Text = rowW.Field<string>("World Name");
                 }
             }
             catch (Exception ex)
@@ -962,7 +969,7 @@ namespace DBAccess
                     //  Vehicles
                     //
                     cmd.CommandText = "SELECT iv.id id, wv.id spawn_id, v.class_name class_name, iv.worldspace worldspace, iv.inventory inventory,"
-                                    + " iv.fuel fuel, iv.damage damage, iv.last_updated last_updated"
+                                    + " iv.fuel fuel, iv.damage damage, iv.last_updated last_updated, iv.parts parts"
                                     + " FROM vehicle as v, world_vehicle as wv, instance_vehicle as iv"
                                     + " WHERE iv.instance_id=" + mycfg.instance_id
                                     + " AND iv.world_vehicle_id=wv.id AND wv.vehicle_id=v.id";
@@ -1137,7 +1144,6 @@ namespace DBAccess
                 mtxUseDS.ReleaseMutex();
             }
         }
-
         private int ExecuteSqlNonQuery(string query)
         {
             if (!bConnected)
@@ -1167,7 +1173,6 @@ namespace DBAccess
 
             return res;
         }
-
         internal UIDGraph GetUIDGraph(string uid)
         {
             UIDGraph uidgraph = null;
@@ -1177,9 +1182,7 @@ namespace DBAccess
 
             return uidgraph;
         }
-
         public delegate void DlgUpdateIcons();
-
         private void BackupDatabase(string filename)
         {
             if (!bConnected)
@@ -1317,5 +1320,132 @@ namespace DBAccess
             mtxUpdateDB.ReleaseMutex();
             this.Cursor = Cursors.Arrow;
         }
+
+        #region Callbacks
+        private void comboBoxGameType_SelectedValueChanged(object sender, EventArgs e)
+        {
+            _comboBoxGameType_SelectedValueChanged(sender, e);
+        }
+
+        private void buttonConnect_Click(object sender, EventArgs e)
+        {
+            _buttonConnect_Click(sender, e);
+        }
+
+        private void Panel1_Paint(object sender, PaintEventArgs e)
+        {
+            _Panel1_Paint(sender, e);
+        }
+
+        private void Panel1_MouseClick(object sender, MouseEventArgs e)
+        {
+            _Panel1_MouseClick(sender, e);
+        }
+
+        private void Panel1_MouseDown(object sender, MouseEventArgs e)
+        {
+            _Panel1_MouseDown(sender, e);
+        }
+
+        private void Panel1_MouseMove(object sender, MouseEventArgs e)
+        {
+            _Panel1_MouseMove(sender, e);
+        }
+
+        private void Panel1_MouseUp(object sender, MouseEventArgs e)
+        {
+            _Panel1_MouseUp(sender, e);
+        }
+
+        private void cbCartographer_CheckedChanged(object sender, EventArgs e)
+        {
+            _cbCartographer_CheckedChanged(sender, e);
+        }
+
+        private void checkBoxMapHelper_CheckedChanged(object sender, EventArgs e)
+        {
+            _checkBoxMapHelper_CheckedChanged(sender, e);
+        }
+
+        private void checkBoxShowTrail_CheckedChanged(object sender, EventArgs e)
+        {
+            _checkBoxShowTrail_CheckedChanged(sender, e);
+        }
+
+        private void radioButton_CheckedChanged(object sender, EventArgs e)
+        {
+            _radioButton_CheckedChanged(sender, e);
+        }
+
+        private void buttonSelectCustom_Click(object sender, EventArgs e)
+        {
+            _buttonSelectCustom_Click(sender, e);
+        }
+
+        private void buttonCustom_Click(object sender, EventArgs e)
+        {
+            _buttonCustom_Click(sender, e);
+        }
+
+        private void buttonRemoveTents_Click(object sender, EventArgs e)
+        {
+            _buttonRemoveTents_Click(sender, e);
+        }
+
+        private void buttonRemoveBodies_Click(object sender, EventArgs e)
+        {
+            _buttonRemoveBodies_Click(sender, e);
+        }
+
+        private void buttonSpawnNew_Click(object sender, EventArgs e)
+        {
+            _buttonSpawnNew_Click(sender, e);
+        }
+
+        private void buttonBackup_Click(object sender, EventArgs e)
+        {
+            _buttonBackup_Click(sender, e);
+        }
+
+        private void buttonRemoveDestroyed_Click(object sender, EventArgs e)
+        {
+            _buttonRemoveDestroyed_Click(sender, e);
+        }
+
+        private void dataGridViewMaps_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            _dataGridViewMaps_CellClick(sender, e);
+        }
+
+        private void dataGridViewVehicleTypes_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            _dataGridViewVehicleTypes_CellContentClick(sender, e);
+        }
+
+        private void dataGridViewVehicleTypes_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+            _dataGridViewVehicleTypes_CellValueChanged(sender, e);
+        }
+
+        private void dataGridViewVehicleTypes_ColumnHeaderMouseDoubleClick(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            _dataGridViewVehicleTypes_ColumnHeaderMouseDoubleClick(sender, e);
+        }
+
+        private void dataGridViewDeployableTypes_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            _dataGridViewDeployableTypes_CellContentClick(sender, e);
+        }
+
+        private void dataGridViewDeployableTypes_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+            _dataGridViewDeployableTypes_CellValueChanged(sender, e);
+        }
+
+        private void dataGridViewDeployableTypes_ColumnHeaderMouseDoubleClick(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            _dataGridViewDeployableTypes_ColumnHeaderMouseDoubleClick(sender, e);
+        }
+        #endregion
     }
 }

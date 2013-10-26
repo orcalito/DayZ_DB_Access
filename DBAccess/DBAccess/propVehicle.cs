@@ -16,27 +16,31 @@ namespace DBAccess
             : base(idb)
         {
             this.inventory = new Storage();
+            this.parts = new VParts();
         }
 
-        [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
+        [ReadOnlyAttribute(true)]
         public string classname { get; set; }
-        [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
+        [ReadOnlyAttribute(true)]
         public UInt64 uid { get; set; }
-        [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
+        [ReadOnlyAttribute(true)]
         public UInt64 spawn_id { get; set; }
-        [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
+        [ReadOnlyAttribute(true)]
         public Tool.Point position { get; set; }
-        [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
+        [ReadOnlyAttribute(true)]
         public double fuel { get; set; }
-        [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
+        [ReadOnlyAttribute(true)]
         public double damage { get; set; }
-        [CategoryAttribute("Inventory"), ReadOnlyAttribute(true)]
+        [ReadOnlyAttribute(true)]
         public Storage inventory { get; set; }
+        [ReadOnlyAttribute(true)]
+        public VParts parts { get; set; }
         public override void Rebuild()
         {
             this.inventory.weapons.Clear();
             this.inventory.items.Clear();
             this.inventory.bags.Clear();
+            this.parts.Clear();
 
             this.uid = idb.row.Field<UInt64>("id");
             this.spawn_id = idb.row.Field<UInt64>("spawn_id");
@@ -79,6 +83,19 @@ namespace DBAccess
                 aCount = aItems[1] as ArrayList;
                 for (int i = 0; i < aTypes.Count; i++)
                     this.inventory.bags.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
+            }
+
+
+            arr = Tool.ParseInventoryString(idb.row.Field<string>("parts"));
+            if (arr.Count > 0)
+            {
+                for (int i = 0; i < arr.Count; i++)
+                {
+                    var items = arr[i] as ArrayList;
+                    var aPart = items[0] as string;
+                    var aDamage = items[1] as string;
+                    this.parts.Add(new VEntry(aPart, float.Parse(aDamage)));
+                }
             }
         }
     }

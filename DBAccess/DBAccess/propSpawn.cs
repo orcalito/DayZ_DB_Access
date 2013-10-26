@@ -18,15 +18,15 @@ namespace DBAccess
             this.inventory = new Storage();
         }
 
-        [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
+        [ReadOnlyAttribute(true)]
         public string classname { get; set; }
-        [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
+        [ReadOnlyAttribute(true)]
         public UInt64 uid { get; set; }
-        [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
+        [ReadOnlyAttribute(true)]
         public Tool.Point position { get; set; }
-        [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
+        [ReadOnlyAttribute(true)]
         public Decimal chance { get; set; }
-        [CategoryAttribute("Inventory"), ReadOnlyAttribute(true)]
+        [ReadOnlyAttribute(true)]
         public Storage inventory { get; set; }
         public override void Rebuild()
         {

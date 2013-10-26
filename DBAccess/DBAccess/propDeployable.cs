@@ -17,9 +17,9 @@ namespace DBAccess
             this.inventory = new Storage();
         }
 
-        [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
+        [ReadOnlyAttribute(true)]
         public string name { get; set; }
-        [CategoryAttribute("Inventory"), ReadOnlyAttribute(true)]
+        [ReadOnlyAttribute(true)]
         public Storage inventory { get; set; }
         public override void Rebuild()
         {

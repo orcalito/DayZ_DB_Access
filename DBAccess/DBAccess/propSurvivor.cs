@@ -20,29 +20,29 @@ namespace DBAccess
             this.tools = new Cargo();
         }
 
-        [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
+        [ReadOnlyAttribute(true)]
         public string name { get; set; }
-        [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
+        [ReadOnlyAttribute(true)]
         public string uid { get; set; }
-        [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
+        [ReadOnlyAttribute(true)]
         public int humanity { get; set; }
-        [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
+        [ReadOnlyAttribute(true)]
         public int blood { get; set; }
-        [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
+        [ReadOnlyAttribute(true)]
         public string hunger { get; set; }
-        [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
+        [ReadOnlyAttribute(true)]
         public string thirst { get; set; }
-        [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
+        [ReadOnlyAttribute(true)]
         public string medical { get; set; }
-        [CategoryAttribute("Info"), ReadOnlyAttribute(true)]
+        [ReadOnlyAttribute(true)]
         public string weapon { get; set; }
-        [CategoryAttribute("Inventory"), ReadOnlyAttribute(true)]
+        [ReadOnlyAttribute(true)]
         public Cargo inventory { get; set; }
-        [CategoryAttribute("Inventory"), ReadOnlyAttribute(true)]
+        [ReadOnlyAttribute(true)]
         public string backpackclass { get; set; }
-        [CategoryAttribute("Inventory"), ReadOnlyAttribute(true)]
+        [ReadOnlyAttribute(true)]
         public Cargo backpack { get; set; }
-        [CategoryAttribute("Inventory"), ReadOnlyAttribute(true)]
+        [ReadOnlyAttribute(true)]
         public Cargo tools { get; set; }
         public override void Rebuild()
         {

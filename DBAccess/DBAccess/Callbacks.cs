@@ -42,7 +42,7 @@ namespace DBAccess
         //
         //  Panel
         //
-        private void Panel1_Paint(object sender, PaintEventArgs e)
+        private void _Panel1_Paint(object sender, PaintEventArgs e)
         {
             try
             {
@@ -105,7 +105,7 @@ namespace DBAccess
                 MessageBox.Show(ex.Message, "Exception found");
             }
         }
-        private void Panel1_MouseClick(object sender, MouseEventArgs e)
+        private void _Panel1_MouseClick(object sender, MouseEventArgs e)
         {
             System.Threading.Interlocked.CompareExchange(ref bUserAction, 1, 0);
 
@@ -141,7 +141,7 @@ namespace DBAccess
                 }
             }
         }
-        private void Panel1_MouseDown(object sender, MouseEventArgs e)
+        private void _Panel1_MouseDown(object sender, MouseEventArgs e)
         {
             System.Threading.Interlocked.CompareExchange(ref bUserAction, 1, 0);
 
@@ -176,7 +176,7 @@ namespace DBAccess
                 dragndrop.Start(virtualMap.Position);
             }
         }
-        private void Panel1_MouseMove(object sender, MouseEventArgs e)
+        private void _Panel1_MouseMove(object sender, MouseEventArgs e)
         {
             Rectangle recPanel = new Rectangle(Point.Empty, splitContainer1.Panel1.Size);
             Rectangle recMouse = new Rectangle(e.Location, Size.Empty);
@@ -248,15 +248,16 @@ namespace DBAccess
 
             // Database coordinates
             Tool.Point dbp = virtualMap.UnitToDB(virtualMap.PanelToUnit(e.Location));
-            tbDBPosX.Text = ((int)dbp.X).ToString();
-            tbDBPosY.Text = ((int)dbp.Y).ToString();
-
             // Map coordinates
             Tool.Point mp = virtualMap.UnitToMap(virtualMap.PanelToUnit(e.Location));
-            tbMapPosX.Text = ((int)mp.X).ToString();
-            tbMapPosY.Text = ((int)mp.Y).ToString();
+
+            if ((mp.X > -100000) && (mp.X < 100000))
+            {
+                toolStripStatusCoordDB.Text = ((int)dbp.X).ToString() + " : " + ((int)dbp.Y).ToString();
+                toolStripStatusCoordMap.Text = ((int)mp.X).ToString() + " : " + ((int)mp.Y).ToString();
+            }
         }
-        private void Panel1_MouseUp(object sender, MouseEventArgs e)
+        private void _Panel1_MouseUp(object sender, MouseEventArgs e)
         {
             if (mapHelper != null)
                 mapHelper.isDraggingCtrlPoint = -1;
@@ -359,7 +360,7 @@ namespace DBAccess
         //
         //  Database's Tab
         //
-        private void buttonConnect_Click(object sender, EventArgs e)
+        private void _buttonConnect_Click(object sender, EventArgs e)
         {
             mtxUpdateDB.WaitOne();
 
@@ -373,7 +374,7 @@ namespace DBAccess
             strCnx += ";Uid=" + textBoxUser.Text;
             strCnx += ";Pwd=" + textBoxPassword.Text + ";";
 
-            mycfg.instance_id = textBoxInstanceId.Text;
+            mycfg.instance_id = numericUpDownInstanceId.Text;
 
             sqlCnx = new MySqlConnection(strCnx);
 
@@ -396,6 +397,9 @@ namespace DBAccess
                 }
 
                 SetCurrentMap();
+
+                groupBoxCnx.Enabled = false;
+                groupBoxCnx.Visible = false;
             }
             catch (Exception ex)
             {
@@ -403,26 +407,23 @@ namespace DBAccess
                 Enable(false);
             }
 
-            if (bConnected)
-                textBoxStatus.Text = "connected";
-            else
-                textBoxStatus.Text = "Error !";
+            toolStripStatusCnx.Text = (bConnected) ? "connected" : "disconnected";
 
             this.Cursor = Cursors.Arrow;
 
             mtxUpdateDB.ReleaseMutex();
         }
-        private void comboBoxGameType_SelectedValueChanged(object sender, EventArgs e)
+        private void _comboBoxGameType_SelectedValueChanged(object sender, EventArgs e)
         {
             ComboBox cb = sender as ComboBox;
 
             mycfg.game_type = cb.Items[cb.SelectedIndex] as string;
-            textBoxInstanceId.Enabled = (!bConnected && (cb.SelectedIndex == 0));
+            numericUpDownInstanceId.Enabled = (!bConnected && (cb.SelectedIndex == 0));
         }
         //
         //  Display's Tab
         //
-        private void radioButton_CheckedChanged(object sender, EventArgs e)
+        private void _radioButton_CheckedChanged(object sender, EventArgs e)
         {
             if (!bConnected)
                 return;
@@ -439,7 +440,7 @@ namespace DBAccess
             }
             this.Cursor = Cursors.Arrow;
         }
-        private void checkBoxShowTrail_CheckedChanged(object sender, EventArgs e)
+        private void _checkBoxShowTrail_CheckedChanged(object sender, EventArgs e)
         {
             if ((sender as CheckBox).Checked == false)
             {
@@ -447,12 +448,12 @@ namespace DBAccess
                     pair.Value.path.Reset();
             }
         }
-        private void cbCartographer_CheckedChanged(object sender, EventArgs e)
+        private void _cbCartographer_CheckedChanged(object sender, EventArgs e)
         {
             if ((sender as CheckBox).Checked == true)
                 cartographer.positions.Clear();
         }
-        private void checkBoxMapHelper_CheckedChanged(object sender, EventArgs e)
+        private void _checkBoxMapHelper_CheckedChanged(object sender, EventArgs e)
         {
             CheckBox cb = sender as CheckBox;
 
@@ -489,7 +490,7 @@ namespace DBAccess
         //
         //  Data grids
         //
-        private void dataGridViewMaps_CellClick(object sender, DataGridViewCellEventArgs e)
+        private void _dataGridViewMaps_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             if ((e.RowIndex < 0) || (e.RowIndex >= dataGridViewMaps.Rows.Count))
                 return;
@@ -556,7 +557,7 @@ namespace DBAccess
                 }
             }
         }
-        private void dataGridViewVehicleTypes_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        private void _dataGridViewVehicleTypes_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             if ((e.RowIndex < 0) || (e.RowIndex >= dataGridViewVehicleTypes.Rows.Count))
                 return;
@@ -567,7 +568,7 @@ namespace DBAccess
                 dataGridViewVehicleTypes.CommitEdit(DataGridViewDataErrorContexts.Commit);
             }
         }
-        private void dataGridViewVehicleTypes_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        private void _dataGridViewVehicleTypes_CellValueChanged(object sender, DataGridViewCellEventArgs e)
         {
             if ((e.RowIndex < 0) || (e.RowIndex >= dataGridViewVehicleTypes.Rows.Count))
                 return;
@@ -579,7 +580,7 @@ namespace DBAccess
             row.SetField<bool>("Show", bState);
         }
         private static bool GVVT_bCurrentState = true;
-        private void dataGridViewVehicleTypes_ColumnHeaderMouseDoubleClick(object sender, DataGridViewCellMouseEventArgs e)
+        private void _dataGridViewVehicleTypes_ColumnHeaderMouseDoubleClick(object sender, DataGridViewCellMouseEventArgs e)
         {
             if (e.ColumnIndex == dataGridViewVehicleTypes.Columns["ColGVVTShow"].Index)
             {
@@ -589,7 +590,7 @@ namespace DBAccess
                     row.SetField<bool>("Show", GVVT_bCurrentState);
             }
         }
-        private void dataGridViewDeployableTypes_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        private void _dataGridViewDeployableTypes_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             if ((e.RowIndex < 0) || (e.RowIndex >= dataGridViewDeployableTypes.Rows.Count))
                 return;
@@ -600,7 +601,7 @@ namespace DBAccess
                 dataGridViewDeployableTypes.CommitEdit(DataGridViewDataErrorContexts.Commit);
             }
         }
-        private void dataGridViewDeployableTypes_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        private void _dataGridViewDeployableTypes_CellValueChanged(object sender, DataGridViewCellEventArgs e)
         {
             if ((e.RowIndex < 0) || (e.RowIndex >= dataGridViewDeployableTypes.Rows.Count))
                 return;
@@ -612,7 +613,7 @@ namespace DBAccess
             row.SetField<bool>("Show", bState);
         }
         private static bool GVDT_bCurrentState = true;
-        private void dataGridViewDeployableTypes_ColumnHeaderMouseDoubleClick(object sender, DataGridViewCellMouseEventArgs e)
+        private void _dataGridViewDeployableTypes_ColumnHeaderMouseDoubleClick(object sender, DataGridViewCellMouseEventArgs e)
         {
             if (e.ColumnIndex == dataGridViewDeployableTypes.Columns["ColGVDTShow"].Index)
             {
@@ -625,7 +626,7 @@ namespace DBAccess
         //
         // Scripts
         //
-        private void buttonBackup_Click(object sender, EventArgs e)
+        private void _buttonBackup_Click(object sender, EventArgs e)
         {
             string s_date = DateTime.Now.Year + "-"
                           + DateTime.Now.Month.ToString("00") + "-"
@@ -642,13 +643,13 @@ namespace DBAccess
                 BackupDatabase(saveFileDialog1.FileName);
             }
         }
-        private void buttonRemoveDestroyed_Click(object sender, EventArgs e)
+        private void _buttonRemoveDestroyed_Click(object sender, EventArgs e)
         {
             int res = ExecuteSqlNonQuery("DELETE FROM instance_vehicle WHERE instance_id=" + mycfg.instance_id + " AND damage=1");
 
             textBoxCmdStatus.Text = "removed " + res + " destroyed vehicles.";
         }
-        private void buttonSpawnNew_Click(object sender, EventArgs e)
+        private void _buttonSpawnNew_Click(object sender, EventArgs e)
         {
             if (bConnected)
             {
@@ -733,7 +734,7 @@ namespace DBAccess
                 this.Cursor = Cursors.Arrow;
             }
         }
-        private void buttonRemoveBodies_Click(object sender, EventArgs e)
+        private void _buttonRemoveBodies_Click(object sender, EventArgs e)
         {
             int limit = int.Parse(textBoxOldBodyLimit.Text);
 
@@ -742,7 +743,7 @@ namespace DBAccess
 
             textBoxCmdStatus.Text = "removed " + res + " bodies older than " + limit + " days.";
         }
-        private void buttonRemoveTents_Click(object sender, EventArgs e)
+        private void _buttonRemoveTents_Click(object sender, EventArgs e)
         {
             int limit = int.Parse(textBoxOldTentLimit.Text);
 
@@ -754,7 +755,7 @@ namespace DBAccess
         //
         //  Custom scripts
         //
-        private void buttonSelectCustom_Click(object sender, EventArgs e)
+        private void _buttonSelectCustom_Click(object sender, EventArgs e)
         {
             Button btSel = sender as Button;
 
@@ -781,7 +782,7 @@ namespace DBAccess
                 }
             }
         }
-        private void buttonCustom_Click(object sender, EventArgs e)
+        private void _buttonCustom_Click(object sender, EventArgs e)
         {
             Button bt = sender as Button;
 
