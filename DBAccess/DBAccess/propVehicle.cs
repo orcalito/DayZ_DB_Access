@@ -28,9 +28,11 @@ namespace DBAccess
         [ReadOnlyAttribute(true)]
         public Tool.Point position { get; set; }
         [ReadOnlyAttribute(true)]
-        public double fuel { get; set; }
+        public string fuel { get { return (int)(_fuel * 100.0f) + " %"; } }
+        private double _fuel;
         [ReadOnlyAttribute(true)]
-        public double damage { get; set; }
+        public string damage { get { return (int)(_damage * 100.0f) + " %"; } }
+        private double _damage;
         [ReadOnlyAttribute(true)]
         public Storage inventory { get; set; }
         [ReadOnlyAttribute(true)]
@@ -44,8 +46,8 @@ namespace DBAccess
 
             this.uid = idb.row.Field<UInt64>("id");
             this.spawn_id = idb.row.Field<UInt64>("spawn_id");
-            this.fuel = idb.row.Field<double>("fuel");
-            this.damage = idb.row.Field<double>("damage");
+            this._fuel = idb.row.Field<double>("fuel");
+            this._damage = idb.row.Field<double>("damage");
             this.classname = idb.row.Field<string>("class_name");
 
             ArrayList arr = Tool.ParseInventoryString(idb.row.Field<string>("worldspace"));
@@ -94,7 +96,8 @@ namespace DBAccess
                     var items = arr[i] as ArrayList;
                     var aPart = items[0] as string;
                     var aDamage = items[1] as string;
-                    this.parts.Add(new VEntry(aPart, float.Parse(aDamage)));
+                    float damage = (float)(double.Parse(aDamage, CultureInfo.InvariantCulture.NumberFormat));
+                    this.parts.Add(new VEntry(aPart, damage));
                 }
             }
         }

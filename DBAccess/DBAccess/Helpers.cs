@@ -815,7 +815,8 @@ namespace DBAccess
             if (destType == typeof(string) && value is VEntry)
             {
                 VEntry entry = (VEntry)value;
-                return entry.damage.ToString();
+                int damage = (int)((1.0f - entry.damage) * 100.0f);
+                return damage + " %";
             }
             return base.ConvertTo(context, culture, value, destType);
         }
