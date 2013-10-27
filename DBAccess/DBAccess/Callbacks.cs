@@ -96,7 +96,7 @@ namespace DBAccess
                         mapHelper.Display(e.Graphics);
                     }
 
-                    if (((mapHelper == null) || !mapHelper.enabled) && cbCartographer.Checked)
+                    if (!checkBoxMapHelper.Checked && cbCartographer.Checked)
                         cartographer.DisplayInMap(e.Graphics, virtualMap);
                 }
             }
@@ -109,7 +109,7 @@ namespace DBAccess
         {
             System.Threading.Interlocked.CompareExchange(ref bUserAction, 1, 0);
 
-            if ((mapHelper != null) && mapHelper.enabled)
+            if (checkBoxMapHelper.Checked)
                 return;
 
             if (cbCartographer.Checked)
@@ -124,6 +124,10 @@ namespace DBAccess
                 else if (e.Button.HasFlag(MouseButtons.Right))
                 {
                     cartographer.RemoveLastPoint();
+                }
+                else if(e.Button.HasFlag(MouseButtons.Middle))
+                {
+                    cartographer.AddPoint(new Tool.Point(0,1));
                 }
             }
             else
@@ -145,7 +149,7 @@ namespace DBAccess
         {
             System.Threading.Interlocked.CompareExchange(ref bUserAction, 1, 0);
 
-            if (e.Button.HasFlag(MouseButtons.Right) && (mapHelper != null) && mapHelper.enabled)
+            if (e.Button.HasFlag(MouseButtons.Right) && checkBoxMapHelper.Checked)
             {
                 Tool.Point mousePos = (Tool.Point)(e.Location - virtualMap.Position);
 
@@ -231,15 +235,18 @@ namespace DBAccess
                 dragndrop.Stop();
             }
 
-            if (((mapHelper == null) || !mapHelper.enabled) && cbCartographer.Checked)
+            if (!checkBoxMapHelper.Checked && cbCartographer.Checked)
             {
                 string pathstr = "public static Point[] ptsXXX = new Point[]\r\n{";
-                foreach (Tool.Point pt in cartographer.positions)
+                foreach (PathDef def in cartographer.paths)
                 {
-                    Tool.Point npt = pt;
-                    npt.Y = 1.0f - npt.Y;
-                    npt = npt * virtualMap.nfo.dbRefMapSize;
-                    pathstr += "\r\nnew Point" + npt.ToStringInt() + ",";
+                    foreach (Tool.Point pt in def.points)
+                    {
+                        Tool.Point npt = pt;
+                        npt.Y = 1.0f - npt.Y;
+                        npt = npt * virtualMap.nfo.dbRefMapSize;
+                        pathstr += "\r\nnew Point" + npt.ToStringInt() + ",";
+                    }
                 }
                 pathstr = pathstr.TrimEnd(',');
                 pathstr += "\r\n};";
@@ -247,13 +254,13 @@ namespace DBAccess
             }
 
             // Database coordinates
-            Tool.Point dbp = virtualMap.UnitToDB(virtualMap.PanelToUnit(e.Location));
+            positionInDB = virtualMap.UnitToDB(virtualMap.PanelToUnit(e.Location));
             // Map coordinates
             Tool.Point mp = virtualMap.UnitToMap(virtualMap.PanelToUnit(e.Location));
 
             if ((mp.X > -100000) && (mp.X < 100000))
             {
-                toolStripStatusCoordDB.Text = ((int)dbp.X).ToString() + " : " + ((int)dbp.Y).ToString();
+                toolStripStatusCoordDB.Text = ((int)positionInDB.X).ToString() + " : " + ((int)positionInDB.Y).ToString();
                 toolStripStatusCoordMap.Text = ((int)mp.X).ToString() + " : " + ((int)mp.Y).ToString();
             }
         }
@@ -445,13 +452,13 @@ namespace DBAccess
             if ((sender as CheckBox).Checked == false)
             {
                 foreach (KeyValuePair<string, UIDGraph> pair in dicUIDGraph)
-                    pair.Value.path.Reset();
+                    pair.Value.ResetPaths();
             }
         }
         private void _cbCartographer_CheckedChanged(object sender, EventArgs e)
         {
             if ((sender as CheckBox).Checked == true)
-                cartographer.positions.Clear();
+                cartographer.paths.Clear();
         }
         private void _checkBoxMapHelper_CheckedChanged(object sender, EventArgs e)
         {

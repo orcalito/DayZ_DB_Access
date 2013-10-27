@@ -39,7 +39,8 @@ namespace DBAccess
 
             public static Point Min(Point p1, Point p2) { return new Point(Math.Min(p1.X, p2.X), Math.Min(p1.Y, p2.Y)); }
             public static Point Max(Point p1, Point p2) { return new Point(Math.Max(p1.X, p2.X), Math.Max(p1.Y, p2.Y)); }
-
+            public static float Distance(Point p1, Point p2) { return (p1 - p2).Lenght; }
+           
             public Point Floor { get { return new Point((float)Math.Floor(X), (float)Math.Floor(Y)); } }
             public Point Ceiling { get { return new Point((float)Math.Ceiling(X), (float)Math.Ceiling(Y)); } }
             public Point Truncate { get { return new Point((float)Math.Truncate(X), (float)Math.Truncate(Y)); } }

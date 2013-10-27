@@ -17,7 +17,7 @@ namespace DBAccess
     public partial class Form1 : Form
     {
         #region Fields
-        static ModuleVersion curCfgVersion = new ModuleVersion(3, 0);
+        static ModuleVersion curCfgVersion = new ModuleVersion(4, 0);
 
         private static int bUserAction = 0;
         private static Mutex mtxUpdateDB = new Mutex();
@@ -50,9 +50,9 @@ namespace DBAccess
         private List<myIcon> iconDeployables = new List<myIcon>();
         private DragNDrop dragndrop = new DragNDrop();
         private MapZoom mapZoom = new MapZoom(eventFastBgWorker);
-
         private MapHelper mapHelper;
         private UIDGraph cartographer = new UIDGraph(new Pen(Color.Black, 2));
+        private Tool.Point positionInDB = new Tool.Point();
 
         private List<tileReq> tileRequests = new List<tileReq>();
         private List<tileNfo> tileCache = new List<tileNfo>();
@@ -126,7 +126,7 @@ namespace DBAccess
             try
             {
                 foreach (KeyValuePair<string, UIDGraph> pair in dicUIDGraph)
-                    pair.Value.path.Reset();
+                    pair.Value.ResetPaths();
 
                 listIcons.Clear();
 
@@ -580,7 +580,7 @@ namespace DBAccess
                     mycfg = xs.Deserialize(re) as myConfig;
                 }
             }
-            catch (Exception ex)
+            catch (Exception /*ex*/)
             {
                 //MessageBox.Show(ex.Message, "Exception found");
                 Enable(false);
@@ -655,8 +655,20 @@ namespace DBAccess
                 table.Rows.Add(10, "Taviana", "", 0, 0, 0, 0, 0, 0, 0, 25600, 25600, 25600, 25600);
             }
 
-            // -> v4.0
-            if (mycfg.cfgVersion < curCfgVersion)
+            if (mycfg.vehicle_types.Tables.Count == 0)
+            {
+                DataTable table = mycfg.vehicle_types.Tables.Add();
+                table.Columns.Add(new DataColumn("ClassName", typeof(string)));
+                table.Columns.Add(new DataColumn("Type", typeof(string)));
+                table.Columns.Add(new DataColumn("Show", typeof(bool)));
+                table.Columns.Add(new DataColumn("Id", typeof(UInt16), "", MappingType.Hidden));
+                DataColumn[] keys = new DataColumn[1];
+                keys[0] = mycfg.vehicle_types.Tables[0].Columns["ClassName"];
+                mycfg.vehicle_types.Tables[0].PrimaryKey = keys;
+            }
+
+            // -> v3.0
+            if (mycfg.vehicle_types.Tables[0].Columns.Contains("Show") == false)
             {
                 DataColumnCollection cols;
 
@@ -673,15 +685,13 @@ namespace DBAccess
                     row.SetField<bool>("Show", true);
             }
 
-            if (mycfg.vehicle_types.Tables.Count == 0)
+            // -> v4.0
+            if (mycfg.vehicle_types.Tables[0].Columns.Contains("Id") == false)
             {
-                DataTable table = mycfg.vehicle_types.Tables.Add();
-                table.Columns.Add(new DataColumn("ClassName", typeof(string)));
-                table.Columns.Add(new DataColumn("Type", typeof(string)));
-                table.Columns.Add(new DataColumn("Show", typeof(bool)));
-                DataColumn[] keys = new DataColumn[1];
-                keys[0] = mycfg.vehicle_types.Tables[0].Columns[0];
-                mycfg.vehicle_types.Tables[0].PrimaryKey = keys;
+                DataColumnCollection cols;
+                // Add Column 'Id' to vehicle_types
+                cols = mycfg.vehicle_types.Tables[0].Columns;
+                cols.Add(new DataColumn("Id", typeof(UInt16), "", MappingType.Hidden));
             }
 
             if (mycfg.deployable_types.Tables.Count == 0)
@@ -855,9 +865,9 @@ namespace DBAccess
                 cmd.CommandText = "SELECT * FROM instance";
                 this.dsInstances.Clear();
                 adapter.Fill(this.dsInstances);
-                DataColumn[] keys = new DataColumn[1];
-                keys[0] = dsInstances.Tables[0].Columns[0];
-                dsInstances.Tables[0].PrimaryKey = keys;
+                DataColumn[] keysI = new DataColumn[1];
+                keysI[0] = dsInstances.Tables[0].Columns[0];
+                dsInstances.Tables[0].PrimaryKey = keysI;
 
                 //
                 //  Worlds
@@ -869,9 +879,12 @@ namespace DBAccess
                 //
                 //  Vehicle types
                 //
-                cmd.CommandText = "SELECT class_name FROM vehicle";
+                cmd.CommandText = "SELECT id,class_name FROM vehicle";
                 _dsAllVehicleTypes.Clear();
                 adapter.Fill(_dsAllVehicleTypes);
+                DataColumn[] keysV = new DataColumn[1];
+                keysV[0] = _dsAllVehicleTypes.Tables[0].Columns[0];
+                _dsAllVehicleTypes.Tables[0].PrimaryKey = keysV;
             }
             catch (Exception ex)
             {
@@ -886,10 +899,15 @@ namespace DBAccess
             {
                 foreach (DataRow row in _dsAllVehicleTypes.Tables[0].Rows)
                 {
-                    string name = row.Field<string>("class_name");
+                    var id = row.Field<UInt16>("id");
+                    var name = row.Field<string>("class_name");
 
-                    if (mycfg.vehicle_types.Tables[0].Rows.Find(name) == null)
-                        mycfg.vehicle_types.Tables[0].Rows.Add(name, "Car", true);
+                    var rowT = mycfg.vehicle_types.Tables[0].Rows.Find(name);
+
+                    if(rowT == null)
+                        mycfg.vehicle_types.Tables[0].Rows.Add(name, "Car", true, id);
+                    else
+                        rowT.SetField<UInt16>("Id", id);
                 }
 
                 foreach (DataRow row in _dsWorlds.Tables[0].Rows)
@@ -1447,5 +1465,48 @@ namespace DBAccess
             _dataGridViewDeployableTypes_ColumnHeaderMouseDoubleClick(sender, e);
         }
         #endregion
+
+        private void toolStripMenuItemAddSpawn_Click(object sender, EventArgs e)
+        {
+            if (dataGridViewVehicleTypes.SelectedCells.Count == 1)
+            {
+                var row = dataGridViewVehicleTypes.Rows[dataGridViewVehicleTypes.SelectedCells[0].RowIndex];
+                string classname = row.Cells["ColGVVTClassName"].Value as string;
+
+                var rowT = mycfg.vehicle_types.Tables[0].Rows.Find(classname);
+                if (rowT != null)
+                {
+                    var vehicle_id = rowT.Field<UInt16>("Id");
+                    string worldspace = "[0,[" + positionInDB.X.ToString() + "," + positionInDB.Y.ToString() + ",0.0015]]";
+                    int res = ExecuteSqlNonQuery("INSERT INTO world_vehicle (`vehicle_id`, `world_id`, `worldspace`, `description`, `chance`) VALUES(" + vehicle_id + "," + mycfg.world_id + ",\"" + worldspace + "\",\"" + classname + "\", 0.7);");
+                    if (res == 0)
+                    {
+                        MessageBox.Show("Error while trying to insert spawnpoint for vehicle class '"+ classname + "' into database");
+                    }
+                }
+            }
+        }
+
+        private void contextMenuStripAddSpawn_Opening(object sender, CancelEventArgs e)
+        {
+            if (checkBoxMapHelper.Checked || cbCartographer.Checked || !radioButtonSpawn.Checked || (mycfg.game_type == "Epoch"))
+            {
+                e.Cancel = true;
+            }
+            else
+            {
+                if (dataGridViewVehicleTypes.SelectedCells.Count == 1)
+                {
+                    var row = dataGridViewVehicleTypes.Rows[dataGridViewVehicleTypes.SelectedCells[0].RowIndex];
+                    toolStripMenuItemAddSpawn.Text = "Add " + row.Cells["ColGVVTType"].Value + " '" + row.Cells["ColGVVTClassName"].Value + "' Spawnpoint";
+                    toolStripMenuItemAddSpawn.Enabled = true;
+                }
+                else
+                {
+                    toolStripMenuItemAddSpawn.Text = "Select a vehicle from tab 'Vehicles'";
+                    toolStripMenuItemAddSpawn.Enabled = false;
+                }
+            }
+        }
     }
 }

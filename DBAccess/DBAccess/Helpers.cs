@@ -156,6 +156,24 @@ namespace DBAccess
     //
     //
     //
+    public class PathDef
+    {
+        private static Pen defPen = new Pen(Color.Black, 1);
+
+        public PathDef(Pen pen = null)
+        {
+            if (pen == null)
+                pen = defPen;
+
+            this.pen = pen;
+        }
+        public Pen pen;
+        public GraphicsPath path = new GraphicsPath();
+        public List<Tool.Point> points = new List<Tool.Point>();
+    }
+    //
+    //
+    //
     public class MapHelper
     {
         public Tool.Point[] defBoundaries = new Tool.Point[2];
@@ -307,21 +325,6 @@ namespace DBAccess
             boundaries[1] = controls[0] + defBoundaries[1] * size;
         }
 
-        private class PathDef
-        {
-            private static Pen defPen = new Pen(Color.Black, 1);
-
-            public PathDef(Pen pen = null)
-            {
-                if (pen == null)
-                    pen = defPen;
-
-                this.pen = pen;
-            }
-            public Pen pen;
-            public GraphicsPath path = new GraphicsPath();
-            public List<Tool.Point> points = new List<Tool.Point>();
-        }
         private SolidBrush brushUnselected = new SolidBrush(Color.Red);
         private SolidBrush brushSelected = new SolidBrush(Color.Green);
         private List<PathDef> paths = new List<PathDef>();
@@ -495,7 +498,7 @@ namespace DBAccess
     //
     public class UIDGraph
     {
-        public static Tool.Point InvalidPos = new Tool.Point(float.NaN, float.NaN);
+        public static Tool.Point InvalidPos = new Tool.Point(0, 1);
 
         public UIDGraph(Pen pen)
         {
@@ -503,39 +506,56 @@ namespace DBAccess
         }
         public void AddPoint(Tool.Point pos)
         {
-            if ((positions.Count == 0) || (pos != positions.Last()))
-                positions.Add(pos);
+            if ((paths.Count == 0) || (pos == InvalidPos))
+            {
+                paths.Add(new PathDef(pen));
+            }
+            if (pos != InvalidPos)
+            {
+                if ((paths.Last().points.Count == 0) || (Tool.Point.Distance(pos, paths.Last().points.Last()) > 0.001f))
+                    paths.Last().points.Add(pos);
+            }
         }
         public void DisplayInMap(Graphics gfx, VirtualMap map)
         {
-            if (positions.Count > 1)
+            foreach(PathDef def in paths)
             {
-                path.Reset();
-
-                Tool.Point last = InvalidPos;
-                foreach (Tool.Point pt in positions)
+                if (def.points.Count > 1)
                 {
-                    Tool.Point newpt = map.UnitToPanel(pt);
+                    def.path.Reset();
 
-                    // if a point is invalid, break the continuity
-                    if (!(last.IsNaN || pt.IsNaN))
-                        path.AddLine((System.Drawing.Point)last, (System.Drawing.Point)newpt);
+                    var pts_u2p = new Point[def.points.Count];
+                    for (int i = 0; i < def.points.Count; i++ )
+                        pts_u2p[i] = map.UnitToPanel(def.points[i]);
 
-                    last = newpt;
+                    def.path.AddLines(pts_u2p);
+
+                    gfx.DrawPath(pen, def.path);
                 }
-
-                gfx.DrawPath(pen, path);
             }
         }
 
-        internal GraphicsPath path = new GraphicsPath();
+        internal List<PathDef> paths = new List<PathDef>();
         internal Pen pen;
-        internal List<Tool.Point> positions = new List<Tool.Point>();
 
         internal void RemoveLastPoint()
         {
-            if (positions.Count > 0)
-                positions.RemoveAt(positions.Count - 1);
+            if (paths.Count > 0)
+            {
+                PathDef def = paths.Last();
+                
+                if (def.points.Count > 0)
+                    def.points.Remove(def.points.Last());
+
+                if (def.points.Count == 0)
+                    paths.Remove(def);
+            }
+        }
+
+        internal void ResetPaths()
+        {
+            foreach (PathDef def in paths)
+                def.path.Reset();
         }
     }
     //

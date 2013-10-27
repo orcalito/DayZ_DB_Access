@@ -35,6 +35,47 @@
             this.RightToolStripPanel = new System.Windows.Forms.ToolStripPanel();
             this.LeftToolStripPanel = new System.Windows.Forms.ToolStripPanel();
             this.ContentPanel = new System.Windows.Forms.ToolStripContentPanel();
+            this.contextMenuStripAddSpawn = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.toolStripMenuItemAddSpawn = new System.Windows.Forms.ToolStripMenuItem();
+            this.dataSetBindingSource = new System.Windows.Forms.BindingSource(this.components);
+            this.contextMenuStripResetTypes = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.toolStripMenuItemResetTypes = new System.Windows.Forms.ToolStripMenuItem();
+            this.contextMenuStripSpawn = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.toolStripMenuItemDeleteSpawn = new System.Windows.Forms.ToolStripMenuItem();
+            this.bgWorkerDatabase = new System.ComponentModel.BackgroundWorker();
+            this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+            this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
+            this.contextMenuStripVehicle = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.toolStripMenuItemDeleteVehicle = new System.Windows.Forms.ToolStripMenuItem();
+            this.bgWorkerFast = new System.ComponentModel.BackgroundWorker();
+            this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
+            this.statusStrip1 = new System.Windows.Forms.StatusStrip();
+            this.toolStripStatusCnx = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabel7 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusWorldL = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusWorld = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabel6 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusOnlineL = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusOnline = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabel5 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusAliveL = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusAlive = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabel4 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusVehicleL = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusVehicle = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabel3 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusSpawnL = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusSpawn = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabel2 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusDeployableL = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusDeployable = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusCoordMapL = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusCoordMap = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabel8 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusCoordDBL = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusCoordDB = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripContainer1 = new System.Windows.Forms.ToolStripContainer();
             this.splitContainer1 = new DBAccess.MySplitContainer();
             this.groupBoxCnx = new System.Windows.Forms.GroupBox();
             this.numericUpDownInstanceId = new System.Windows.Forms.NumericUpDown();
@@ -85,55 +126,25 @@
             this.ColGVMName = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColGVMChoosePath = new System.Windows.Forms.DataGridViewButtonColumn();
             this.ColGVMPath = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dataSetBindingSource = new System.Windows.Forms.BindingSource(this.components);
             this.tabPageVehicles = new System.Windows.Forms.TabPage();
             this.dataGridViewVehicleTypes = new System.Windows.Forms.DataGridView();
             this.ColGVVTShow = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.ColGVVTClassName = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColGVVTType = new System.Windows.Forms.DataGridViewComboBoxColumn();
-            this.contextMenuStripResetTypes = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.toolStripMenuItemResetTypes = new System.Windows.Forms.ToolStripMenuItem();
             this.tabPageDeployables = new System.Windows.Forms.TabPage();
             this.dataGridViewDeployableTypes = new System.Windows.Forms.DataGridView();
             this.ColGVDTShow = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.ColGVDTClassName = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColGVDTType = new System.Windows.Forms.DataGridViewComboBoxColumn();
-            this.contextMenuStripSpawn = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.toolStripMenuItemDeleteSpawn = new System.Windows.Forms.ToolStripMenuItem();
-            this.bgWorkerDatabase = new System.ComponentModel.BackgroundWorker();
-            this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
-            this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
-            this.contextMenuStripVehicle = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.toolStripMenuItemDeleteVehicle = new System.Windows.Forms.ToolStripMenuItem();
-            this.bgWorkerFast = new System.ComponentModel.BackgroundWorker();
-            this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
-            this.statusStrip1 = new System.Windows.Forms.StatusStrip();
-            this.toolStripStatusWorldL = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusWorld = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusOnlineL = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusOnline = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusAliveL = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusAlive = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusVehicleL = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusVehicle = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusSpawnL = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusSpawn = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusDeployableL = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusDeployable = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusCoordMapL = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusCoordMap = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusCoordDBL = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusCoordDB = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusCnx = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripContainer1 = new System.Windows.Forms.ToolStripContainer();
-            this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusLabel2 = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusLabel3 = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusLabel4 = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusLabel5 = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusLabel6 = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusLabel7 = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusLabel8 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.contextMenuStripAddSpawn.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dataSetBindingSource)).BeginInit();
+            this.contextMenuStripResetTypes.SuspendLayout();
+            this.contextMenuStripSpawn.SuspendLayout();
+            this.contextMenuStripVehicle.SuspendLayout();
+            this.statusStrip1.SuspendLayout();
+            this.toolStripContainer1.BottomToolStripPanel.SuspendLayout();
+            this.toolStripContainer1.ContentPanel.SuspendLayout();
+            this.toolStripContainer1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -146,18 +157,10 @@
             this.tabPageScripts.SuspendLayout();
             this.tabPageMaps.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewMaps)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.dataSetBindingSource)).BeginInit();
             this.tabPageVehicles.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewVehicleTypes)).BeginInit();
-            this.contextMenuStripResetTypes.SuspendLayout();
             this.tabPageDeployables.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewDeployableTypes)).BeginInit();
-            this.contextMenuStripSpawn.SuspendLayout();
-            this.contextMenuStripVehicle.SuspendLayout();
-            this.statusStrip1.SuspendLayout();
-            this.toolStripContainer1.BottomToolStripPanel.SuspendLayout();
-            this.toolStripContainer1.ContentPanel.SuspendLayout();
-            this.toolStripContainer1.SuspendLayout();
             this.SuspendLayout();
             // 
             // BottomToolStripPanel
@@ -197,6 +200,299 @@
             this.ContentPanel.AutoScroll = true;
             this.ContentPanel.Size = new System.Drawing.Size(791, 553);
             // 
+            // contextMenuStripAddSpawn
+            // 
+            this.contextMenuStripAddSpawn.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripMenuItemAddSpawn});
+            this.contextMenuStripAddSpawn.Name = "contextMenuStripAddSpawn";
+            this.contextMenuStripAddSpawn.Size = new System.Drawing.Size(163, 48);
+            this.contextMenuStripAddSpawn.Opening += new System.ComponentModel.CancelEventHandler(this.contextMenuStripAddSpawn_Opening);
+            // 
+            // toolStripMenuItemAddSpawn
+            // 
+            this.toolStripMenuItemAddSpawn.Name = "toolStripMenuItemAddSpawn";
+            this.toolStripMenuItemAddSpawn.Size = new System.Drawing.Size(162, 22);
+            this.toolStripMenuItemAddSpawn.Text = "Add SpawnPoint";
+            this.toolStripMenuItemAddSpawn.Click += new System.EventHandler(this.toolStripMenuItemAddSpawn_Click);
+            // 
+            // dataSetBindingSource
+            // 
+            this.dataSetBindingSource.DataSource = typeof(System.Data.DataSet);
+            this.dataSetBindingSource.Position = 0;
+            // 
+            // contextMenuStripResetTypes
+            // 
+            this.contextMenuStripResetTypes.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripMenuItemResetTypes});
+            this.contextMenuStripResetTypes.Name = "contextMenuStripVehicle";
+            this.contextMenuStripResetTypes.Size = new System.Drawing.Size(121, 26);
+            // 
+            // toolStripMenuItemResetTypes
+            // 
+            this.toolStripMenuItemResetTypes.Name = "toolStripMenuItemResetTypes";
+            this.toolStripMenuItemResetTypes.Size = new System.Drawing.Size(120, 22);
+            this.toolStripMenuItemResetTypes.Text = "Reset list";
+            this.toolStripMenuItemResetTypes.Click += new System.EventHandler(this.toolStripMenuItemResetTypes_Click);
+            // 
+            // contextMenuStripSpawn
+            // 
+            this.contextMenuStripSpawn.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripMenuItemDeleteSpawn});
+            this.contextMenuStripSpawn.Name = "contextMenuStripSpawn";
+            this.contextMenuStripSpawn.Size = new System.Drawing.Size(174, 26);
+            // 
+            // toolStripMenuItemDeleteSpawn
+            // 
+            this.toolStripMenuItemDeleteSpawn.Name = "toolStripMenuItemDeleteSpawn";
+            this.toolStripMenuItemDeleteSpawn.Size = new System.Drawing.Size(173, 22);
+            this.toolStripMenuItemDeleteSpawn.Text = "Delete Spawnpoint";
+            this.toolStripMenuItemDeleteSpawn.Click += new System.EventHandler(this.toolStripMenuItemDeleteSpawn_Click);
+            // 
+            // bgWorkerDatabase
+            // 
+            this.bgWorkerDatabase.WorkerSupportsCancellation = true;
+            this.bgWorkerDatabase.DoWork += new System.ComponentModel.DoWorkEventHandler(this.bgWorkerRefreshDatabase_DoWork);
+            // 
+            // toolTip1
+            // 
+            this.toolTip1.AutomaticDelay = 250;
+            // 
+            // openFileDialog1
+            // 
+            this.openFileDialog1.FileName = "openFileDialog1";
+            // 
+            // contextMenuStripVehicle
+            // 
+            this.contextMenuStripVehicle.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripMenuItemDeleteVehicle});
+            this.contextMenuStripVehicle.Name = "contextMenuStripVehicle";
+            this.contextMenuStripVehicle.Size = new System.Drawing.Size(148, 26);
+            // 
+            // toolStripMenuItemDeleteVehicle
+            // 
+            this.toolStripMenuItemDeleteVehicle.Name = "toolStripMenuItemDeleteVehicle";
+            this.toolStripMenuItemDeleteVehicle.Size = new System.Drawing.Size(147, 22);
+            this.toolStripMenuItemDeleteVehicle.Text = "Delete vehicle";
+            this.toolStripMenuItemDeleteVehicle.Click += new System.EventHandler(this.toolStripMenuItemDelete_Click);
+            // 
+            // bgWorkerFast
+            // 
+            this.bgWorkerFast.DoWork += new System.ComponentModel.DoWorkEventHandler(this.bgWorkerFast_DoWork);
+            // 
+            // saveFileDialog1
+            // 
+            this.saveFileDialog1.DefaultExt = "sql";
+            this.saveFileDialog1.Filter = "SQL Files|*.sql";
+            // 
+            // statusStrip1
+            // 
+            this.statusStrip1.Dock = System.Windows.Forms.DockStyle.None;
+            this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripStatusCnx,
+            this.toolStripStatusLabel7,
+            this.toolStripStatusWorldL,
+            this.toolStripStatusWorld,
+            this.toolStripStatusLabel6,
+            this.toolStripStatusOnlineL,
+            this.toolStripStatusOnline,
+            this.toolStripStatusLabel5,
+            this.toolStripStatusAliveL,
+            this.toolStripStatusAlive,
+            this.toolStripStatusLabel4,
+            this.toolStripStatusVehicleL,
+            this.toolStripStatusVehicle,
+            this.toolStripStatusLabel3,
+            this.toolStripStatusSpawnL,
+            this.toolStripStatusSpawn,
+            this.toolStripStatusLabel2,
+            this.toolStripStatusDeployableL,
+            this.toolStripStatusDeployable,
+            this.toolStripStatusLabel1,
+            this.toolStripStatusCoordMapL,
+            this.toolStripStatusCoordMap,
+            this.toolStripStatusLabel8,
+            this.toolStripStatusCoordDBL,
+            this.toolStripStatusCoordDB});
+            this.statusStrip1.Location = new System.Drawing.Point(0, 0);
+            this.statusStrip1.Name = "statusStrip1";
+            this.statusStrip1.Size = new System.Drawing.Size(800, 22);
+            this.statusStrip1.TabIndex = 1;
+            this.statusStrip1.Text = "statusStrip1";
+            // 
+            // toolStripStatusCnx
+            // 
+            this.toolStripStatusCnx.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripStatusCnx.Name = "toolStripStatusCnx";
+            this.toolStripStatusCnx.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.toolStripStatusCnx.Size = new System.Drawing.Size(78, 17);
+            this.toolStripStatusCnx.Text = "disconnected";
+            // 
+            // toolStripStatusLabel7
+            // 
+            this.toolStripStatusLabel7.Name = "toolStripStatusLabel7";
+            this.toolStripStatusLabel7.Size = new System.Drawing.Size(36, 17);
+            this.toolStripStatusLabel7.Spring = true;
+            // 
+            // toolStripStatusWorldL
+            // 
+            this.toolStripStatusWorldL.Name = "toolStripStatusWorldL";
+            this.toolStripStatusWorldL.Size = new System.Drawing.Size(39, 17);
+            this.toolStripStatusWorldL.Text = "World";
+            // 
+            // toolStripStatusWorld
+            // 
+            this.toolStripStatusWorld.Name = "toolStripStatusWorld";
+            this.toolStripStatusWorld.Size = new System.Drawing.Size(12, 17);
+            this.toolStripStatusWorld.Text = "-";
+            // 
+            // toolStripStatusLabel6
+            // 
+            this.toolStripStatusLabel6.Name = "toolStripStatusLabel6";
+            this.toolStripStatusLabel6.Size = new System.Drawing.Size(36, 17);
+            this.toolStripStatusLabel6.Spring = true;
+            // 
+            // toolStripStatusOnlineL
+            // 
+            this.toolStripStatusOnlineL.Name = "toolStripStatusOnlineL";
+            this.toolStripStatusOnlineL.Size = new System.Drawing.Size(42, 17);
+            this.toolStripStatusOnlineL.Text = "Online";
+            // 
+            // toolStripStatusOnline
+            // 
+            this.toolStripStatusOnline.Name = "toolStripStatusOnline";
+            this.toolStripStatusOnline.Size = new System.Drawing.Size(12, 17);
+            this.toolStripStatusOnline.Text = "-";
+            // 
+            // toolStripStatusLabel5
+            // 
+            this.toolStripStatusLabel5.Name = "toolStripStatusLabel5";
+            this.toolStripStatusLabel5.Size = new System.Drawing.Size(36, 17);
+            this.toolStripStatusLabel5.Spring = true;
+            // 
+            // toolStripStatusAliveL
+            // 
+            this.toolStripStatusAliveL.Name = "toolStripStatusAliveL";
+            this.toolStripStatusAliveL.Size = new System.Drawing.Size(33, 17);
+            this.toolStripStatusAliveL.Text = "Alive";
+            // 
+            // toolStripStatusAlive
+            // 
+            this.toolStripStatusAlive.Name = "toolStripStatusAlive";
+            this.toolStripStatusAlive.Size = new System.Drawing.Size(12, 17);
+            this.toolStripStatusAlive.Text = "-";
+            // 
+            // toolStripStatusLabel4
+            // 
+            this.toolStripStatusLabel4.Name = "toolStripStatusLabel4";
+            this.toolStripStatusLabel4.Size = new System.Drawing.Size(36, 17);
+            this.toolStripStatusLabel4.Spring = true;
+            // 
+            // toolStripStatusVehicleL
+            // 
+            this.toolStripStatusVehicleL.Name = "toolStripStatusVehicleL";
+            this.toolStripStatusVehicleL.Size = new System.Drawing.Size(45, 17);
+            this.toolStripStatusVehicleL.Text = "Vehicle";
+            // 
+            // toolStripStatusVehicle
+            // 
+            this.toolStripStatusVehicle.Name = "toolStripStatusVehicle";
+            this.toolStripStatusVehicle.Size = new System.Drawing.Size(12, 17);
+            this.toolStripStatusVehicle.Text = "-";
+            // 
+            // toolStripStatusLabel3
+            // 
+            this.toolStripStatusLabel3.Name = "toolStripStatusLabel3";
+            this.toolStripStatusLabel3.Size = new System.Drawing.Size(36, 17);
+            this.toolStripStatusLabel3.Spring = true;
+            // 
+            // toolStripStatusSpawnL
+            // 
+            this.toolStripStatusSpawnL.Name = "toolStripStatusSpawnL";
+            this.toolStripStatusSpawnL.Size = new System.Drawing.Size(42, 17);
+            this.toolStripStatusSpawnL.Text = "Spawn";
+            // 
+            // toolStripStatusSpawn
+            // 
+            this.toolStripStatusSpawn.Name = "toolStripStatusSpawn";
+            this.toolStripStatusSpawn.Size = new System.Drawing.Size(12, 17);
+            this.toolStripStatusSpawn.Text = "-";
+            // 
+            // toolStripStatusLabel2
+            // 
+            this.toolStripStatusLabel2.Name = "toolStripStatusLabel2";
+            this.toolStripStatusLabel2.Size = new System.Drawing.Size(36, 17);
+            this.toolStripStatusLabel2.Spring = true;
+            // 
+            // toolStripStatusDeployableL
+            // 
+            this.toolStripStatusDeployableL.Name = "toolStripStatusDeployableL";
+            this.toolStripStatusDeployableL.Size = new System.Drawing.Size(66, 17);
+            this.toolStripStatusDeployableL.Text = "Deployable";
+            // 
+            // toolStripStatusDeployable
+            // 
+            this.toolStripStatusDeployable.Name = "toolStripStatusDeployable";
+            this.toolStripStatusDeployable.Size = new System.Drawing.Size(12, 17);
+            this.toolStripStatusDeployable.Text = "-";
+            // 
+            // toolStripStatusLabel1
+            // 
+            this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
+            this.toolStripStatusLabel1.Size = new System.Drawing.Size(36, 17);
+            this.toolStripStatusLabel1.Spring = true;
+            // 
+            // toolStripStatusCoordMapL
+            // 
+            this.toolStripStatusCoordMapL.Name = "toolStripStatusCoordMapL";
+            this.toolStripStatusCoordMapL.Size = new System.Drawing.Size(31, 17);
+            this.toolStripStatusCoordMapL.Text = "Map";
+            // 
+            // toolStripStatusCoordMap
+            // 
+            this.toolStripStatusCoordMap.Name = "toolStripStatusCoordMap";
+            this.toolStripStatusCoordMap.Size = new System.Drawing.Size(12, 17);
+            this.toolStripStatusCoordMap.Text = "-";
+            // 
+            // toolStripStatusLabel8
+            // 
+            this.toolStripStatusLabel8.Name = "toolStripStatusLabel8";
+            this.toolStripStatusLabel8.Size = new System.Drawing.Size(36, 17);
+            this.toolStripStatusLabel8.Spring = true;
+            // 
+            // toolStripStatusCoordDBL
+            // 
+            this.toolStripStatusCoordDBL.Name = "toolStripStatusCoordDBL";
+            this.toolStripStatusCoordDBL.Size = new System.Drawing.Size(22, 17);
+            this.toolStripStatusCoordDBL.Text = "DB";
+            // 
+            // toolStripStatusCoordDB
+            // 
+            this.toolStripStatusCoordDB.Name = "toolStripStatusCoordDB";
+            this.toolStripStatusCoordDB.Size = new System.Drawing.Size(12, 17);
+            this.toolStripStatusCoordDB.Text = "-";
+            // 
+            // toolStripContainer1
+            // 
+            // 
+            // toolStripContainer1.BottomToolStripPanel
+            // 
+            this.toolStripContainer1.BottomToolStripPanel.Controls.Add(this.statusStrip1);
+            // 
+            // toolStripContainer1.ContentPanel
+            // 
+            this.toolStripContainer1.ContentPanel.AutoScroll = true;
+            this.toolStripContainer1.ContentPanel.Controls.Add(this.splitContainer1);
+            this.toolStripContainer1.ContentPanel.Size = new System.Drawing.Size(800, 500);
+            this.toolStripContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.toolStripContainer1.LeftToolStripPanelVisible = false;
+            this.toolStripContainer1.Location = new System.Drawing.Point(0, 0);
+            this.toolStripContainer1.Name = "toolStripContainer1";
+            this.toolStripContainer1.RightToolStripPanelVisible = false;
+            this.toolStripContainer1.Size = new System.Drawing.Size(800, 522);
+            this.toolStripContainer1.TabIndex = 3;
+            this.toolStripContainer1.Text = "toolStripContainer1";
+            this.toolStripContainer1.TopToolStripPanelVisible = false;
+            // 
             // splitContainer1
             // 
             this.splitContainer1.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
@@ -207,6 +503,7 @@
             // splitContainer1.Panel1
             // 
             this.splitContainer1.Panel1.BackColor = System.Drawing.Color.White;
+            this.splitContainer1.Panel1.ContextMenuStrip = this.contextMenuStripAddSpawn;
             this.splitContainer1.Panel1.Controls.Add(this.groupBoxCnx);
             this.splitContainer1.Panel1.Paint += new System.Windows.Forms.PaintEventHandler(this.Panel1_Paint);
             this.splitContainer1.Panel1.MouseClick += new System.Windows.Forms.MouseEventHandler(this.Panel1_MouseClick);
@@ -787,11 +1084,6 @@
             this.ColGVMPath.HeaderText = "Path";
             this.ColGVMPath.Name = "ColGVMPath";
             // 
-            // dataSetBindingSource
-            // 
-            this.dataSetBindingSource.DataSource = typeof(System.Data.DataSet);
-            this.dataSetBindingSource.Position = 0;
-            // 
             // tabPageVehicles
             // 
             this.tabPageVehicles.BackColor = System.Drawing.Color.Transparent;
@@ -860,20 +1152,6 @@
             this.ColGVVTType.Name = "ColGVVTType";
             this.ColGVVTType.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
             // 
-            // contextMenuStripResetTypes
-            // 
-            this.contextMenuStripResetTypes.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripMenuItemResetTypes});
-            this.contextMenuStripResetTypes.Name = "contextMenuStripVehicle";
-            this.contextMenuStripResetTypes.Size = new System.Drawing.Size(121, 26);
-            // 
-            // toolStripMenuItemResetTypes
-            // 
-            this.toolStripMenuItemResetTypes.Name = "toolStripMenuItemResetTypes";
-            this.toolStripMenuItemResetTypes.Size = new System.Drawing.Size(120, 22);
-            this.toolStripMenuItemResetTypes.Text = "Reset list";
-            this.toolStripMenuItemResetTypes.Click += new System.EventHandler(this.toolStripMenuItemResetTypes_Click);
-            // 
             // tabPageDeployables
             // 
             this.tabPageDeployables.BackColor = System.Drawing.Color.Transparent;
@@ -938,265 +1216,6 @@
             this.ColGVDTType.Name = "ColGVDTType";
             this.ColGVDTType.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
             // 
-            // contextMenuStripSpawn
-            // 
-            this.contextMenuStripSpawn.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripMenuItemDeleteSpawn});
-            this.contextMenuStripSpawn.Name = "contextMenuStripSpawn";
-            this.contextMenuStripSpawn.Size = new System.Drawing.Size(174, 26);
-            // 
-            // toolStripMenuItemDeleteSpawn
-            // 
-            this.toolStripMenuItemDeleteSpawn.Name = "toolStripMenuItemDeleteSpawn";
-            this.toolStripMenuItemDeleteSpawn.Size = new System.Drawing.Size(173, 22);
-            this.toolStripMenuItemDeleteSpawn.Text = "Delete Spawnpoint";
-            this.toolStripMenuItemDeleteSpawn.Click += new System.EventHandler(this.toolStripMenuItemDeleteSpawn_Click);
-            // 
-            // bgWorkerDatabase
-            // 
-            this.bgWorkerDatabase.WorkerSupportsCancellation = true;
-            this.bgWorkerDatabase.DoWork += new System.ComponentModel.DoWorkEventHandler(this.bgWorkerRefreshDatabase_DoWork);
-            // 
-            // toolTip1
-            // 
-            this.toolTip1.AutomaticDelay = 250;
-            // 
-            // openFileDialog1
-            // 
-            this.openFileDialog1.FileName = "openFileDialog1";
-            // 
-            // contextMenuStripVehicle
-            // 
-            this.contextMenuStripVehicle.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripMenuItemDeleteVehicle});
-            this.contextMenuStripVehicle.Name = "contextMenuStripVehicle";
-            this.contextMenuStripVehicle.Size = new System.Drawing.Size(148, 26);
-            // 
-            // toolStripMenuItemDeleteVehicle
-            // 
-            this.toolStripMenuItemDeleteVehicle.Name = "toolStripMenuItemDeleteVehicle";
-            this.toolStripMenuItemDeleteVehicle.Size = new System.Drawing.Size(147, 22);
-            this.toolStripMenuItemDeleteVehicle.Text = "Delete vehicle";
-            this.toolStripMenuItemDeleteVehicle.Click += new System.EventHandler(this.toolStripMenuItemDelete_Click);
-            // 
-            // bgWorkerFast
-            // 
-            this.bgWorkerFast.DoWork += new System.ComponentModel.DoWorkEventHandler(this.bgWorkerFast_DoWork);
-            // 
-            // saveFileDialog1
-            // 
-            this.saveFileDialog1.DefaultExt = "sql";
-            this.saveFileDialog1.Filter = "SQL Files|*.sql";
-            // 
-            // statusStrip1
-            // 
-            this.statusStrip1.Dock = System.Windows.Forms.DockStyle.None;
-            this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripStatusCnx,
-            this.toolStripStatusLabel7,
-            this.toolStripStatusWorldL,
-            this.toolStripStatusWorld,
-            this.toolStripStatusLabel6,
-            this.toolStripStatusOnlineL,
-            this.toolStripStatusOnline,
-            this.toolStripStatusLabel5,
-            this.toolStripStatusAliveL,
-            this.toolStripStatusAlive,
-            this.toolStripStatusLabel4,
-            this.toolStripStatusVehicleL,
-            this.toolStripStatusVehicle,
-            this.toolStripStatusLabel3,
-            this.toolStripStatusSpawnL,
-            this.toolStripStatusSpawn,
-            this.toolStripStatusLabel2,
-            this.toolStripStatusDeployableL,
-            this.toolStripStatusDeployable,
-            this.toolStripStatusLabel1,
-            this.toolStripStatusCoordMapL,
-            this.toolStripStatusCoordMap,
-            this.toolStripStatusLabel8,
-            this.toolStripStatusCoordDBL,
-            this.toolStripStatusCoordDB});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 0);
-            this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(800, 22);
-            this.statusStrip1.TabIndex = 1;
-            this.statusStrip1.Text = "statusStrip1";
-            // 
-            // toolStripStatusWorldL
-            // 
-            this.toolStripStatusWorldL.Name = "toolStripStatusWorldL";
-            this.toolStripStatusWorldL.Size = new System.Drawing.Size(39, 17);
-            this.toolStripStatusWorldL.Text = "World";
-            // 
-            // toolStripStatusWorld
-            // 
-            this.toolStripStatusWorld.Name = "toolStripStatusWorld";
-            this.toolStripStatusWorld.Size = new System.Drawing.Size(12, 17);
-            this.toolStripStatusWorld.Text = "-";
-            // 
-            // toolStripStatusOnlineL
-            // 
-            this.toolStripStatusOnlineL.Name = "toolStripStatusOnlineL";
-            this.toolStripStatusOnlineL.Size = new System.Drawing.Size(42, 17);
-            this.toolStripStatusOnlineL.Text = "Online";
-            // 
-            // toolStripStatusOnline
-            // 
-            this.toolStripStatusOnline.Name = "toolStripStatusOnline";
-            this.toolStripStatusOnline.Size = new System.Drawing.Size(12, 17);
-            this.toolStripStatusOnline.Text = "-";
-            // 
-            // toolStripStatusAliveL
-            // 
-            this.toolStripStatusAliveL.Name = "toolStripStatusAliveL";
-            this.toolStripStatusAliveL.Size = new System.Drawing.Size(33, 17);
-            this.toolStripStatusAliveL.Text = "Alive";
-            // 
-            // toolStripStatusAlive
-            // 
-            this.toolStripStatusAlive.Name = "toolStripStatusAlive";
-            this.toolStripStatusAlive.Size = new System.Drawing.Size(12, 17);
-            this.toolStripStatusAlive.Text = "-";
-            // 
-            // toolStripStatusVehicleL
-            // 
-            this.toolStripStatusVehicleL.Name = "toolStripStatusVehicleL";
-            this.toolStripStatusVehicleL.Size = new System.Drawing.Size(45, 17);
-            this.toolStripStatusVehicleL.Text = "Vehicle";
-            // 
-            // toolStripStatusVehicle
-            // 
-            this.toolStripStatusVehicle.Name = "toolStripStatusVehicle";
-            this.toolStripStatusVehicle.Size = new System.Drawing.Size(12, 17);
-            this.toolStripStatusVehicle.Text = "-";
-            // 
-            // toolStripStatusSpawnL
-            // 
-            this.toolStripStatusSpawnL.Name = "toolStripStatusSpawnL";
-            this.toolStripStatusSpawnL.Size = new System.Drawing.Size(42, 17);
-            this.toolStripStatusSpawnL.Text = "Spawn";
-            // 
-            // toolStripStatusSpawn
-            // 
-            this.toolStripStatusSpawn.Name = "toolStripStatusSpawn";
-            this.toolStripStatusSpawn.Size = new System.Drawing.Size(12, 17);
-            this.toolStripStatusSpawn.Text = "-";
-            // 
-            // toolStripStatusDeployableL
-            // 
-            this.toolStripStatusDeployableL.Name = "toolStripStatusDeployableL";
-            this.toolStripStatusDeployableL.Size = new System.Drawing.Size(66, 17);
-            this.toolStripStatusDeployableL.Text = "Deployable";
-            // 
-            // toolStripStatusDeployable
-            // 
-            this.toolStripStatusDeployable.Name = "toolStripStatusDeployable";
-            this.toolStripStatusDeployable.Size = new System.Drawing.Size(12, 17);
-            this.toolStripStatusDeployable.Text = "-";
-            // 
-            // toolStripStatusCoordMapL
-            // 
-            this.toolStripStatusCoordMapL.Name = "toolStripStatusCoordMapL";
-            this.toolStripStatusCoordMapL.Size = new System.Drawing.Size(31, 17);
-            this.toolStripStatusCoordMapL.Text = "Map";
-            // 
-            // toolStripStatusCoordMap
-            // 
-            this.toolStripStatusCoordMap.Name = "toolStripStatusCoordMap";
-            this.toolStripStatusCoordMap.Size = new System.Drawing.Size(12, 17);
-            this.toolStripStatusCoordMap.Text = "-";
-            // 
-            // toolStripStatusCoordDBL
-            // 
-            this.toolStripStatusCoordDBL.Name = "toolStripStatusCoordDBL";
-            this.toolStripStatusCoordDBL.Size = new System.Drawing.Size(22, 17);
-            this.toolStripStatusCoordDBL.Text = "DB";
-            // 
-            // toolStripStatusCoordDB
-            // 
-            this.toolStripStatusCoordDB.Name = "toolStripStatusCoordDB";
-            this.toolStripStatusCoordDB.Size = new System.Drawing.Size(12, 17);
-            this.toolStripStatusCoordDB.Text = "-";
-            // 
-            // toolStripStatusCnx
-            // 
-            this.toolStripStatusCnx.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.toolStripStatusCnx.Name = "toolStripStatusCnx";
-            this.toolStripStatusCnx.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.toolStripStatusCnx.Size = new System.Drawing.Size(78, 17);
-            this.toolStripStatusCnx.Text = "disconnected";
-            // 
-            // toolStripContainer1
-            // 
-            // 
-            // toolStripContainer1.BottomToolStripPanel
-            // 
-            this.toolStripContainer1.BottomToolStripPanel.Controls.Add(this.statusStrip1);
-            // 
-            // toolStripContainer1.ContentPanel
-            // 
-            this.toolStripContainer1.ContentPanel.AutoScroll = true;
-            this.toolStripContainer1.ContentPanel.Controls.Add(this.splitContainer1);
-            this.toolStripContainer1.ContentPanel.Size = new System.Drawing.Size(800, 500);
-            this.toolStripContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.toolStripContainer1.LeftToolStripPanelVisible = false;
-            this.toolStripContainer1.Location = new System.Drawing.Point(0, 0);
-            this.toolStripContainer1.Name = "toolStripContainer1";
-            this.toolStripContainer1.RightToolStripPanelVisible = false;
-            this.toolStripContainer1.Size = new System.Drawing.Size(800, 522);
-            this.toolStripContainer1.TabIndex = 3;
-            this.toolStripContainer1.Text = "toolStripContainer1";
-            this.toolStripContainer1.TopToolStripPanelVisible = false;
-            // 
-            // toolStripStatusLabel1
-            // 
-            this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
-            this.toolStripStatusLabel1.Size = new System.Drawing.Size(36, 17);
-            this.toolStripStatusLabel1.Spring = true;
-            // 
-            // toolStripStatusLabel2
-            // 
-            this.toolStripStatusLabel2.Name = "toolStripStatusLabel2";
-            this.toolStripStatusLabel2.Size = new System.Drawing.Size(36, 17);
-            this.toolStripStatusLabel2.Spring = true;
-            // 
-            // toolStripStatusLabel3
-            // 
-            this.toolStripStatusLabel3.Name = "toolStripStatusLabel3";
-            this.toolStripStatusLabel3.Size = new System.Drawing.Size(36, 17);
-            this.toolStripStatusLabel3.Spring = true;
-            // 
-            // toolStripStatusLabel4
-            // 
-            this.toolStripStatusLabel4.Name = "toolStripStatusLabel4";
-            this.toolStripStatusLabel4.Size = new System.Drawing.Size(36, 17);
-            this.toolStripStatusLabel4.Spring = true;
-            // 
-            // toolStripStatusLabel5
-            // 
-            this.toolStripStatusLabel5.Name = "toolStripStatusLabel5";
-            this.toolStripStatusLabel5.Size = new System.Drawing.Size(36, 17);
-            this.toolStripStatusLabel5.Spring = true;
-            // 
-            // toolStripStatusLabel6
-            // 
-            this.toolStripStatusLabel6.Name = "toolStripStatusLabel6";
-            this.toolStripStatusLabel6.Size = new System.Drawing.Size(36, 17);
-            this.toolStripStatusLabel6.Spring = true;
-            // 
-            // toolStripStatusLabel7
-            // 
-            this.toolStripStatusLabel7.Name = "toolStripStatusLabel7";
-            this.toolStripStatusLabel7.Size = new System.Drawing.Size(36, 17);
-            this.toolStripStatusLabel7.Spring = true;
-            // 
-            // toolStripStatusLabel8
-            // 
-            this.toolStripStatusLabel8.Name = "toolStripStatusLabel8";
-            this.toolStripStatusLabel8.Size = new System.Drawing.Size(36, 17);
-            this.toolStripStatusLabel8.Spring = true;
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1208,6 +1227,18 @@
             this.Name = "Form1";
             this.Text = "Form1";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
+            this.contextMenuStripAddSpawn.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.dataSetBindingSource)).EndInit();
+            this.contextMenuStripResetTypes.ResumeLayout(false);
+            this.contextMenuStripSpawn.ResumeLayout(false);
+            this.contextMenuStripVehicle.ResumeLayout(false);
+            this.statusStrip1.ResumeLayout(false);
+            this.statusStrip1.PerformLayout();
+            this.toolStripContainer1.BottomToolStripPanel.ResumeLayout(false);
+            this.toolStripContainer1.BottomToolStripPanel.PerformLayout();
+            this.toolStripContainer1.ContentPanel.ResumeLayout(false);
+            this.toolStripContainer1.ResumeLayout(false);
+            this.toolStripContainer1.PerformLayout();
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
@@ -1223,21 +1254,10 @@
             this.tabPageScripts.PerformLayout();
             this.tabPageMaps.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewMaps)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.dataSetBindingSource)).EndInit();
             this.tabPageVehicles.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewVehicleTypes)).EndInit();
-            this.contextMenuStripResetTypes.ResumeLayout(false);
             this.tabPageDeployables.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewDeployableTypes)).EndInit();
-            this.contextMenuStripSpawn.ResumeLayout(false);
-            this.contextMenuStripVehicle.ResumeLayout(false);
-            this.statusStrip1.ResumeLayout(false);
-            this.statusStrip1.PerformLayout();
-            this.toolStripContainer1.BottomToolStripPanel.ResumeLayout(false);
-            this.toolStripContainer1.BottomToolStripPanel.PerformLayout();
-            this.toolStripContainer1.ContentPanel.ResumeLayout(false);
-            this.toolStripContainer1.ResumeLayout(false);
-            this.toolStripContainer1.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -1351,6 +1371,8 @@
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel2;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel8;
+        private System.Windows.Forms.ContextMenuStrip contextMenuStripAddSpawn;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemAddSpawn;
     }
 }
 

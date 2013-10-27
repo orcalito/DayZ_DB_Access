@@ -23,10 +23,8 @@ DayZ DB Access
 	- remove old tents (2)
 	- 3 custom SQL or BAT scripts can be set & called.
 
-[1] : not yet available with Epoch's DB.
-
+[1] : not available with Epoch's DB, due to lack of useable data.
 [2] : disabled with Epoch's DB because useless.
-
 
 Executable (ClickOnce) can be found here:
 
@@ -37,7 +35,7 @@ Configuration
 =============
 
  - Select the connection settings for your database.
- - Select the bitmap you want to be used, try to use a big one. (no bitmap included)
+ - Select the bitmap you want to use, try to use a big one. (no bitmap included)
  - Set icons for each type of vehicles and deployables.
 
 Help
@@ -46,6 +44,7 @@ Help
  - Click on icons on the map to see details in the Display Tab.
  - Clicking on an icon will select its type in the corresponding vehicle/deploayble's Tab.
  - Contextual menu on vehicle and spawn icons to remove them from the database.
+ - Contextual menu on spawn icons to add a new one into the database.
  - Scripts Tab: 3 buttons can be set up to call custom SQL and BAT files.
 
 If something goes wrong, all files created by this application are stored in your %appdata%\DayZDBAccess directory.
@@ -55,6 +54,13 @@ You can edit the config file, or delete all files to restore an empty configurat
 
 History
 =======
+
+ - v2.8.0
+	- added command to add a vehicle's spawn point
+	- refactored trails, handling player's death
+
+ - v2.7.1
+	- show data in percentage instead of floating point raw values
 
  - v2.7.0
 	- refactored database connection
