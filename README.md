@@ -55,6 +55,10 @@ You can edit the config file, or delete all files to restore an empty configurat
 History
 =======
 
+ - v2.8.1
+	- refactored some display elements
+	- added a trackbar to filter old items
+
  - v2.8.0
 	- added command to add a vehicle's spawn point
 	- refactored trails, handling player's death

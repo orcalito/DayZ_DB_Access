@@ -183,6 +183,36 @@ namespace DBAccess.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap DB {
+            get {
+                object obj = ResourceManager.GetObject("DB", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap deployable {
+            get {
+                object obj = ResourceManager.GetObject("deployable", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Flag {
+            get {
+                object obj = ResourceManager.GetObject("Flag", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap helicopter {
             get {
                 object obj = ResourceManager.GetObject("helicopter", resourceCulture);
@@ -196,6 +226,16 @@ namespace DBAccess.Properties {
         internal static System.Drawing.Bitmap helicopter_crashed {
             get {
                 object obj = ResourceManager.GetObject("helicopter_crashed", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap help {
+            get {
+                object obj = ResourceManager.GetObject("help", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -226,6 +266,26 @@ namespace DBAccess.Properties {
         internal static System.Drawing.Bitmap large_build {
             get {
                 object obj = ResourceManager.GetObject("large_build", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Mag {
+            get {
+                object obj = ResourceManager.GetObject("Mag", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Map {
+            get {
+                object obj = ResourceManager.GetObject("Map", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -283,6 +343,16 @@ namespace DBAccess.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Tool {
+            get {
+                object obj = ResourceManager.GetObject("Tool", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap tractor {
             get {
                 object obj = ResourceManager.GetObject("tractor", resourceCulture);
@@ -296,6 +366,16 @@ namespace DBAccess.Properties {
         internal static System.Drawing.Bitmap tractor_crashed {
             get {
                 object obj = ResourceManager.GetObject("tractor_crashed", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Trail {
+            get {
+                object obj = ResourceManager.GetObject("Trail", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -346,6 +426,26 @@ namespace DBAccess.Properties {
         internal static System.Drawing.Bitmap unknown {
             get {
                 object obj = ResourceManager.GetObject("unknown", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Vehicle {
+            get {
+                object obj = ResourceManager.GetObject("Vehicle", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap World {
+            get {
+                object obj = ResourceManager.GetObject("World", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

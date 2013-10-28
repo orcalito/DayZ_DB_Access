@@ -28,8 +28,8 @@
     <CreateWebPageOnPublish>true</CreateWebPageOnPublish>
     <WebPage>publish.htm</WebPage>
     <OpenBrowserOnPublish>false</OpenBrowserOnPublish>
-    <ApplicationRevision>2</ApplicationRevision>
-    <ApplicationVersion>2.8.0.%2a</ApplicationVersion>
+    <ApplicationRevision>4</ApplicationRevision>
+    <ApplicationVersion>2.8.1.%2a</ApplicationVersion>
     <UseApplicationTrust>true</UseApplicationTrust>
     <CreateDesktopShortcut>true</CreateDesktopShortcut>
     <PublishWizardCompleted>true</PublishWizardCompleted>
@@ -182,9 +182,6 @@
     <None Include="Properties\iconAlive.png" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Properties\iconDestroyed.png" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Properties\iconOnline.png" />
   </ItemGroup>
   <ItemGroup>
@@ -201,6 +198,17 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Application.ico" />
+    <None Include="Properties\Trail.png" />
+    <None Include="Properties\help.png" />
+    <None Include="Properties\Vehicle.png" />
+    <None Include="Properties\DB.png" />
+    <None Include="Properties\World.png" />
+    <None Include="Properties\Map.png" />
+    <None Include="Properties\Flag.png" />
+    <None Include="Properties\Tool.png" />
+    <None Include="Properties\Flag.jpg" />
+    <None Include="Properties\Mag.png" />
+    <None Include="Properties\deployable.png" />
     <None Include="Properties\uaz.png" />
     <None Include="Properties\tractor.png" />
     <None Include="Properties\close.png" />

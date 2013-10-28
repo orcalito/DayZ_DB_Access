@@ -453,6 +453,7 @@ namespace DBAccess
         public string customscript1;
         public string customscript2;
         public string customscript3;
+        public int filter_last_updated;
         public ModuleVersion cfgVersion { get; set; }
         public DataSet worlds_def { get; set; }
         public DataSet vehicle_types { get; set; }

@@ -67,9 +67,9 @@ namespace DBAccess
 
                     e.Graphics.CompositingMode = CompositingMode.SourceOver;
 
-                    if (!mapHelper.enabled)
+                    if (!IsMapHelperEnabled)
                     {
-                        if (checkBoxShowTrail.Checked)
+                        if (bShowTrails == true)
                         {
                             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
                             foreach (iconDB idb in listIcons)
@@ -96,7 +96,7 @@ namespace DBAccess
                         mapHelper.Display(e.Graphics);
                     }
 
-                    if (!checkBoxMapHelper.Checked && cbCartographer.Checked)
+                    if (!IsMapHelperEnabled && bCartographer)
                         cartographer.DisplayInMap(e.Graphics, virtualMap);
                 }
             }
@@ -109,10 +109,10 @@ namespace DBAccess
         {
             System.Threading.Interlocked.CompareExchange(ref bUserAction, 1, 0);
 
-            if (checkBoxMapHelper.Checked)
+            if (IsMapHelperEnabled)
                 return;
 
-            if (cbCartographer.Checked)
+            if (bCartographer)
             {
                 if (e.Button.HasFlag(MouseButtons.Left))
                 {
@@ -132,16 +132,21 @@ namespace DBAccess
             }
             else
             {
+                selectedIcon = null;
                 Rectangle mouseRec = new Rectangle(e.Location, Size.Empty);
                 foreach (iconDB idb in listIcons)
                 {
                     if (mouseRec.IntersectsWith(idb.icon.rectangle))
                     {
                         // Call Click event from icon
+                        selectedIcon = idb;
                         idb.icon.OnClick(this, e);
-
                         break;
                     }
+                }
+                if ((selectedIcon==null) && e.Button.HasFlag(MouseButtons.Right))
+                {
+                    contextMenuStripAddVehicle.Show(this, e.Location);
                 }
             }
         }
@@ -149,7 +154,7 @@ namespace DBAccess
         {
             System.Threading.Interlocked.CompareExchange(ref bUserAction, 1, 0);
 
-            if (e.Button.HasFlag(MouseButtons.Right) && checkBoxMapHelper.Checked)
+            if (e.Button.HasFlag(MouseButtons.Right) && IsMapHelperEnabled)
             {
                 Tool.Point mousePos = (Tool.Point)(e.Location - virtualMap.Position);
 
@@ -235,7 +240,7 @@ namespace DBAccess
                 dragndrop.Stop();
             }
 
-            if (!checkBoxMapHelper.Checked && cbCartographer.Checked)
+            if (!IsMapHelperEnabled && bCartographer)
             {
                 string pathstr = "public static Point[] ptsXXX = new Point[]\r\n{";
                 foreach (PathDef def in cartographer.paths)
@@ -330,39 +335,23 @@ namespace DBAccess
         //
         private void toolStripMenuItemDelete_Click(object sender, EventArgs e)
         {
-            ToolStripItem menuItem = sender as ToolStripItem;
-            if (menuItem != null)
+            if(selectedIcon != null)
             {
-                ContextMenuStrip owner = menuItem.Owner as ContextMenuStrip;
-                if (owner != null)
-                {
-                    Control sourceControl = owner.SourceControl;
-
-                    iconDB idb = sourceControl.Tag as iconDB;
-
-                    int res = ExecuteSqlNonQuery("DELETE FROM instance_vehicle WHERE id=" + idb.uid + " AND instance_id=" + mycfg.instance_id);
-                    if (res == 1)
-                        textBoxCmdStatus.Text = "removed vehicle id " + idb.uid;
-                }
+                int res = ExecuteSqlNonQuery("DELETE FROM instance_vehicle WHERE id=" + selectedIcon.uid + " AND instance_id=" + mycfg.instance_id);
+                if (res == 1)
+                    textBoxCmdStatus.Text = "removed vehicle id " + selectedIcon.uid;
             }
+            selectedIcon = null;
         }
         private void toolStripMenuItemDeleteSpawn_Click(object sender, EventArgs e)
         {
-            ToolStripItem menuItem = sender as ToolStripItem;
-            if (menuItem != null)
+            if(selectedIcon != null)
             {
-                ContextMenuStrip owner = menuItem.Owner as ContextMenuStrip;
-                if (owner != null)
-                {
-                    Control sourceControl = owner.SourceControl;
-
-                    iconDB idb = sourceControl.Tag as iconDB;
-
-                    int res = ExecuteSqlNonQuery("DELETE FROM world_vehicle WHERE id=" + idb.uid + " AND world_id=" + mycfg.world_id);
-                    if (res == 1)
-                        textBoxCmdStatus.Text = "removed vehicle spawnpoint id " + idb.uid;
-                }
+                int res = ExecuteSqlNonQuery("DELETE FROM world_vehicle WHERE id=" + selectedIcon.uid + " AND world_id=" + mycfg.world_id);
+                if (res == 1)
+                    textBoxCmdStatus.Text = "removed vehicle spawnpoint id " + selectedIcon.uid;
             }
+            selectedIcon = null;
         }
         //
         //  Database's Tab
@@ -414,8 +403,6 @@ namespace DBAccess
                 Enable(false);
             }
 
-            toolStripStatusCnx.Text = (bConnected) ? "connected" : "disconnected";
-
             this.Cursor = Cursors.Arrow;
 
             mtxUpdateDB.ReleaseMutex();
@@ -427,55 +414,23 @@ namespace DBAccess
             mycfg.game_type = cb.Items[cb.SelectedIndex] as string;
             numericUpDownInstanceId.Enabled = (!bConnected && (cb.SelectedIndex == 0));
         }
-        //
-        //  Display's Tab
-        //
-        private void _radioButton_CheckedChanged(object sender, EventArgs e)
-        {
-            if (!bConnected)
-                return;
-
-            this.Cursor = Cursors.WaitCursor;
-            RadioButton senderRB = sender as RadioButton;
-            if (senderRB.Checked)
-            {
-                propertyGrid1.SelectedObject = null;
-
-                currDisplayedItems = senderRB;
-
-                BuildIcons();
-            }
-            this.Cursor = Cursors.Arrow;
-        }
-        private void _checkBoxShowTrail_CheckedChanged(object sender, EventArgs e)
-        {
-            if ((sender as CheckBox).Checked == false)
-            {
-                foreach (KeyValuePair<string, UIDGraph> pair in dicUIDGraph)
-                    pair.Value.ResetPaths();
-            }
-        }
         private void _cbCartographer_CheckedChanged(object sender, EventArgs e)
         {
             if ((sender as CheckBox).Checked == true)
                 cartographer.paths.Clear();
         }
-        private void _checkBoxMapHelper_CheckedChanged(object sender, EventArgs e)
+        private void _MapHelperStateChanged()
         {
-            CheckBox cb = sender as CheckBox;
-
             if (mapHelper == null)
                 return;
 
-            mapHelper.enabled = cb.Checked;
-
-            if (!cb.Checked)
+            if (!mapHelper.enabled)
             {
                 // Apply map helper's new size
                 DataRow row = mycfg.worlds_def.Tables[0].Rows.Find(mycfg.world_id);
 
                 Tool.Size refSize = new Tool.Size(row.Field<UInt32>("DB_refWidth"),
-                                                    row.Field<UInt32>("DB_refHeight"));
+                                                  row.Field<UInt32>("DB_refHeight"));
 
                 Tool.Point offUnit = mapHelper.boundaries[0];
                 Tool.Size sizeUnit = mapHelper.boundaries[1] - mapHelper.boundaries[0];
@@ -490,9 +445,9 @@ namespace DBAccess
                 row.SetField<int>("DB_Y", (int)offset.Y);
                 row.SetField<UInt32>("DB_Width", (UInt32)size.Width);
                 row.SetField<UInt32>("DB_Height", (UInt32)size.Height);
-            }
 
-            splitContainer1.Panel1.Invalidate();
+                splitContainer1.Panel1.Invalidate();
+            }
         }
         //
         //  Data grids
@@ -934,5 +889,7 @@ namespace DBAccess
 
             DB_OnConnection();
         }
+
+        public iconDB selectedIcon { get; set; }
     }
 }
