@@ -38,7 +38,7 @@ namespace DBAccess
         private List<myIcon> iconPlayers = new List<myIcon>();
         private List<myIcon> iconVehicles = new List<myIcon>();
         private List<myIcon> iconDeployables = new List<myIcon>();
-        private MapPan dragndrop = new MapPan();
+        private MapPan mapPan = new MapPan();
         private MapZoom mapZoom = new MapZoom(eventFastBgWorker);
         private MapHelper mapHelper;
         private UIDGraph cartographer = new UIDGraph(new Pen(Color.Black, 2));
@@ -1279,7 +1279,7 @@ namespace DBAccess
                 {
                     // Will drag selected Control point
                     Tool.Point pt = mapHelper.controls[mapHelper.isDraggingCtrlPoint] * virtualMap.SizeCorrected + virtualMap.Position;
-                    dragndrop.Start(pt);
+                    mapPan.Start(pt);
                 }
                 else
                 {
@@ -1290,14 +1290,14 @@ namespace DBAccess
                         Tool.Point pt = mapHelper.controls[i] * virtualMap.SizeCorrected + virtualMap.Position;
                         points.Add(pt);
                     }
-                    dragndrop.Start(points);
+                    mapPan.Start(points);
                 }
 
                 splitContainer1.Panel1.Invalidate();
             }
             else
             {
-                dragndrop.Start(virtualMap.Position);
+                mapPan.Start(virtualMap.Position);
             }
         }
         private void _Panel1_MouseMove(object sender, MouseEventArgs e)
@@ -1312,11 +1312,11 @@ namespace DBAccess
             {
                 if (mapHelper.enabled)
                 {
-                    dragndrop.Update();
+                    mapPan.Update();
 
                     if (mapHelper.isDraggingCtrlPoint >= 0)
                     {
-                        Tool.Point newPos = dragndrop.Position(0);
+                        Tool.Point newPos = mapPan.Position(0);
                         Tool.Point pt = (Tool.Point)((newPos - virtualMap.Position) / virtualMap.SizeCorrected);
 
                         mapHelper.controls[mapHelper.isDraggingCtrlPoint] = pt;
@@ -1326,7 +1326,7 @@ namespace DBAccess
                     {
                         for (int i = 0; i < 2; i++)
                         {
-                            Tool.Point newPos = dragndrop.Position(i);
+                            Tool.Point newPos = mapPan.Position(i);
                             Tool.Point pt = (Tool.Point)((newPos - virtualMap.Position) / virtualMap.SizeCorrected);
 
                             mapHelper.controls[i] = pt;
@@ -1339,8 +1339,8 @@ namespace DBAccess
             }
             else if (e.Button.HasFlag(MouseButtons.Left))
             {
-                dragndrop.Update();
-                virtualMap.Position = dragndrop.Position(0);
+                mapPan.Update();
+                virtualMap.Position = mapPan.Position(0);
                 ApplyMapChanges();
             }
             else
@@ -1352,7 +1352,7 @@ namespace DBAccess
                     splitContainer1.Panel1.Invalidate();
                 }
 
-                dragndrop.Stop();
+                mapPan.Stop();
             }
 
             if (!IsMapHelperEnabled && bCartographer)
@@ -1448,6 +1448,16 @@ namespace DBAccess
         //
         //  Contextual menu
         //
+        private void repairRefuelVehicleToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (selectedIcon != null)
+            {
+                int res = myDB.ExecuteSqlNonQuery("UPDATE instance_vehicle SET parts='[]',fuel='1',damage='0' WHERE (id=" + selectedIcon.uid + ")");
+                if (res == 1)
+                    textBoxCmdStatus.Text = "repaired & refueled vehicle id " + selectedIcon.uid;
+            }
+            selectedIcon = null;
+        }
         private void toolStripMenuItemDelete_Click(object sender, EventArgs e)
         {
             if (selectedIcon != null)

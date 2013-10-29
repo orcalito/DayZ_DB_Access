@@ -148,6 +148,7 @@
             this.toolStripStatusLabelCnx = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripContainer2 = new System.Windows.Forms.ToolStripContainer();
             this.toolStripContainer3 = new System.Windows.Forms.ToolStripContainer();
+            this.repairRefuelVehicleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStripAddVehicle.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataSetBindingSource)).BeginInit();
             this.contextMenuStripResetTypes.SuspendLayout();
@@ -429,14 +430,15 @@
             // contextMenuStripVehicle
             // 
             this.contextMenuStripVehicle.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.repairRefuelVehicleToolStripMenuItem,
             this.toolStripMenuItemDeleteVehicle});
             this.contextMenuStripVehicle.Name = "contextMenuStripVehicle";
-            this.contextMenuStripVehicle.Size = new System.Drawing.Size(148, 26);
+            this.contextMenuStripVehicle.Size = new System.Drawing.Size(207, 70);
             // 
             // toolStripMenuItemDeleteVehicle
             // 
             this.toolStripMenuItemDeleteVehicle.Name = "toolStripMenuItemDeleteVehicle";
-            this.toolStripMenuItemDeleteVehicle.Size = new System.Drawing.Size(147, 22);
+            this.toolStripMenuItemDeleteVehicle.Size = new System.Drawing.Size(206, 22);
             this.toolStripMenuItemDeleteVehicle.Text = "Delete vehicle";
             this.toolStripMenuItemDeleteVehicle.Click += new System.EventHandler(this.toolStripMenuItemDelete_Click);
             // 
@@ -1363,6 +1365,13 @@
             this.toolStripContainer3.Text = "toolStripContainer3";
             this.toolStripContainer3.TopToolStripPanelVisible = false;
             // 
+            // repairRefuelVehicleToolStripMenuItem
+            // 
+            this.repairRefuelVehicleToolStripMenuItem.Name = "repairRefuelVehicleToolStripMenuItem";
+            this.repairRefuelVehicleToolStripMenuItem.Size = new System.Drawing.Size(206, 22);
+            this.repairRefuelVehicleToolStripMenuItem.Text = "Repair and Refuel vehicle";
+            this.repairRefuelVehicleToolStripMenuItem.Click += new System.EventHandler(this.repairRefuelVehicleToolStripMenuItem_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1539,6 +1548,7 @@
         private System.Windows.Forms.ToolStripContainer toolStripContainer2;
         private System.Windows.Forms.ToolStripContainer toolStripContainer3;
         private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.ToolStripMenuItem repairRefuelVehicleToolStripMenuItem;
     }
 }
 
