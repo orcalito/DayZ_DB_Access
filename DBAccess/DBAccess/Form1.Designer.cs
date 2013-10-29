@@ -69,8 +69,8 @@
             this.toolStripStatusVehicle = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusSpawn = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusDeployable = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusTrail = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusMapHelper = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusTrail = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusHelp = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusCoordMap = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusCoordDB = new System.Windows.Forms.ToolStripStatusLabel();
@@ -552,18 +552,6 @@
             this.toolStripStatusDeployable.ToolTipText = "Show deployables";
             this.toolStripStatusDeployable.Click += new System.EventHandler(this.toolStripStatusDeployable_Click);
             // 
-            // toolStripStatusTrail
-            // 
-            this.toolStripStatusTrail.AutoSize = false;
-            this.toolStripStatusTrail.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
-            this.toolStripStatusTrail.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
-            this.toolStripStatusTrail.Image = global::DBAccess.Properties.Resources.Trail;
-            this.toolStripStatusTrail.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
-            this.toolStripStatusTrail.Name = "toolStripStatusTrail";
-            this.toolStripStatusTrail.Size = new System.Drawing.Size(32, 22);
-            this.toolStripStatusTrail.ToolTipText = "Display moves for players/vehicles";
-            this.toolStripStatusTrail.Click += new System.EventHandler(this.toolStripStatusTrail_Click);
-            // 
             // toolStripStatusMapHelper
             // 
             this.toolStripStatusMapHelper.AutoSize = false;
@@ -575,6 +563,18 @@
             this.toolStripStatusMapHelper.Size = new System.Drawing.Size(32, 22);
             this.toolStripStatusMapHelper.ToolTipText = "Set link between bitmap and the database coordinates";
             this.toolStripStatusMapHelper.Click += new System.EventHandler(this.toolStripStatusMapHelper_Click);
+            // 
+            // toolStripStatusTrail
+            // 
+            this.toolStripStatusTrail.AutoSize = false;
+            this.toolStripStatusTrail.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
+            this.toolStripStatusTrail.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
+            this.toolStripStatusTrail.Image = global::DBAccess.Properties.Resources.Trail;
+            this.toolStripStatusTrail.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            this.toolStripStatusTrail.Name = "toolStripStatusTrail";
+            this.toolStripStatusTrail.Size = new System.Drawing.Size(32, 22);
+            this.toolStripStatusTrail.ToolTipText = "Display moves for players/vehicles";
+            this.toolStripStatusTrail.Click += new System.EventHandler(this.toolStripStatusTrail_Click);
             // 
             // toolStripStatusHelp
             // 
@@ -1374,6 +1374,7 @@
             this.Name = "Form1";
             this.Text = "Form1";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
+            this.Resize += new System.EventHandler(this.Form1Resize);
             this.contextMenuStripAddVehicle.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dataSetBindingSource)).EndInit();
             this.contextMenuStripResetTypes.ResumeLayout(false);

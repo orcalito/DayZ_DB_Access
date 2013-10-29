@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
@@ -20,34 +21,24 @@ namespace DBAccess
         static ModuleVersion curCfgVersion = new ModuleVersion(4, 1);
 
         private static int bUserAction = 0;
-        private static Mutex mtxUpdateDB = new Mutex();
-        private static Mutex mtxUseDS = new Mutex();
         private static EventWaitHandle eventFastBgWorker = new EventWaitHandle(false, EventResetMode.AutoReset);
-        public DlgUpdateIcons dlgUpdateIcons;
-        public DlgUpdateIcons dlgRefreshMap;
+        private DlgUpdateIcons dlgUpdateIcons;
+        private DlgUpdateIcons dlgRefreshMap;
         //
-        private MySqlConnection sqlCnx;
-        private bool bConnected = false;
-        //
-        public myConfig mycfg = new myConfig(curCfgVersion);
+        private myConfig mycfg = new myConfig(curCfgVersion);
         private string configPath;
         private string configFilePath;
         private VirtualMap virtualMap = new VirtualMap();
         //
-        private DataSet dsInstances = new DataSet();
-        private DataSet dsDeployables = new DataSet();
-        private DataSet dsAlivePlayers = new DataSet();
-        private DataSet dsOnlinePlayers = new DataSet();
-        private DataSet dsVehicles = new DataSet();
-        private DataSet dsVehicleSpawnPoints = new DataSet();
-
+        private myDatabase myDB = new myDatabase();
+        //
         private Dictionary<string, UIDGraph> dicUIDGraph = new Dictionary<string, UIDGraph>();
         private List<iconDB> listIcons = new List<iconDB>();
         private List<iconDB> iconsDB = new List<iconDB>();
         private List<myIcon> iconPlayers = new List<myIcon>();
         private List<myIcon> iconVehicles = new List<myIcon>();
         private List<myIcon> iconDeployables = new List<myIcon>();
-        private DragNDrop dragndrop = new DragNDrop();
+        private MapPan dragndrop = new MapPan();
         private MapZoom mapZoom = new MapZoom(eventFastBgWorker);
         private MapHelper mapHelper;
         private UIDGraph cartographer = new UIDGraph(new Pen(Color.Black, 2));
@@ -58,16 +49,9 @@ namespace DBAccess
         private bool bShowTrails = false;
         private bool bCartographer = false;
 
-        private bool IsMapHelperEnabled
-        {
-            get
-            {
-                return (mapHelper != null) && mapHelper.enabled;
-            }
-        }
+        private bool IsMapHelperEnabled { get { return (mapHelper != null) && mapHelper.enabled; } }
 
-        Dictionary<displayMode, ToolStripStatusLabel> ModeButtons = new Dictionary<displayMode, ToolStripStatusLabel>();
-
+        private Dictionary<displayMode, ToolStripStatusLabel> ModeButtons = new Dictionary<displayMode, ToolStripStatusLabel>();
         private displayMode _lastMode = displayMode.InTheVoid;
         private displayMode lastMode { get { return _lastMode;  } }
         private displayMode _currentMode = displayMode.InTheVoid;
@@ -172,7 +156,6 @@ namespace DBAccess
                 this.Text = "DayZ DB Access unknown version";
             }
 
-            this.Resize += Form1Resize;
             this.MouseWheel += Form1_MouseWheel;
 
             //
@@ -199,16 +182,10 @@ namespace DBAccess
         }
         private void CloseConnection()
         {
-            mtxUseDS.WaitOne();
+            myDB.CloseConnection();
 
             propertyGrid1.SelectedObject = null;
             currentMode = displayMode.InTheVoid;
-
-            dsDeployables.Clear();
-            dsAlivePlayers.Clear();
-            dsOnlinePlayers.Clear();
-            dsVehicleSpawnPoints.Clear();
-            dsVehicles.Clear();
 
             try
             {
@@ -216,36 +193,27 @@ namespace DBAccess
                     pair.Value.ResetPaths();
 
                 listIcons.Clear();
-
-                Enable(false);
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "Exception found");
-                Enable(false);
             }
 
-            mtxUseDS.ReleaseMutex();
-
-            mtxUpdateDB.WaitOne();
-
-            if (sqlCnx != null)
-                sqlCnx.Close();
-
-            mtxUpdateDB.ReleaseMutex();
+            Enable(false);
         }
         private void BuildIcons()
         {
-            mtxUseDS.WaitOne();
-            try
+            if (myDB.Connected)
             {
-                if (bConnected)
+                myDB.UseDS(true);
+
+                try
                 {
-                    toolStripStatusOnline.Text = (dsOnlinePlayers.Tables.Count > 0) ? dsOnlinePlayers.Tables[0].Rows.Count.ToString() : "-";
-                    toolStripStatusAlive.Text = (dsAlivePlayers.Tables.Count > 0) ? dsAlivePlayers.Tables[0].Rows.Count.ToString() : "-";
-                    toolStripStatusVehicle.Text = (dsVehicles.Tables.Count > 0) ? dsVehicles.Tables[0].Rows.Count.ToString() : "-";
-                    toolStripStatusSpawn.Text = (dsVehicleSpawnPoints.Tables.Count > 0) ? dsVehicleSpawnPoints.Tables[0].Rows.Count.ToString() : "-";
-                    toolStripStatusDeployable.Text = (dsDeployables.Tables.Count > 0) ? dsDeployables.Tables[0].Rows.Count.ToString() : "-";
+                    toolStripStatusOnline.Text = (myDB.OnlinePlayers.Tables.Count > 0) ? myDB.OnlinePlayers.Tables[0].Rows.Count.ToString() : "-";
+                    toolStripStatusAlive.Text = (myDB.AlivePlayers.Tables.Count > 0) ? myDB.AlivePlayers.Tables[0].Rows.Count.ToString() : "-";
+                    toolStripStatusVehicle.Text = (myDB.Vehicles.Tables.Count > 0) ? myDB.Vehicles.Tables[0].Rows.Count.ToString() : "-";
+                    toolStripStatusSpawn.Text = (myDB.SpawnPoints.Tables.Count > 0) ? myDB.SpawnPoints.Tables[0].Rows.Count.ToString() : "-";
+                    toolStripStatusDeployable.Text = (myDB.Deployables.Tables.Count > 0) ? myDB.Deployables.Tables[0].Rows.Count.ToString() : "-";
 
                     if ((propertyGrid1.SelectedObject != null) && (propertyGrid1.SelectedObject is PropObjectBase))
                     {
@@ -256,16 +224,10 @@ namespace DBAccess
                         propertyGrid1.Refresh();
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "Exception found");
-            }
-            mtxUseDS.ReleaseMutex();
-
-            if (bConnected)
-            {
-                mtxUseDS.WaitOne();
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Exception found");
+                }
 
                 try
                 {
@@ -287,12 +249,12 @@ namespace DBAccess
                     MessageBox.Show(ex.Message, "Exception found");
                 }
 
-                mtxUseDS.ReleaseMutex();
+                myDB.UseDS(false);
             }
         }
         private void RefreshIcons()
         {
-            mtxUseDS.WaitOne();
+            myDB.UseDS(true);
 
             if (virtualMap.Enabled)
             {
@@ -337,12 +299,12 @@ namespace DBAccess
 
             splitContainer1.Panel1.Invalidate();
 
-            mtxUseDS.ReleaseMutex();
+            myDB.UseDS(false);
         }
         private void BuildOnlineIcons()
         {
             int idx = 0;
-            foreach (DataRow row in dsOnlinePlayers.Tables[0].Rows)
+            foreach (DataRow row in myDB.OnlinePlayers.Tables[0].Rows)
             {
                 if (idx >= iconsDB.Count)
                     iconsDB.Add(new iconDB());
@@ -379,7 +341,7 @@ namespace DBAccess
         private void BuildAliveIcons()
         {
             int idx = 0;
-            foreach (DataRow row in dsAlivePlayers.Tables[0].Rows)
+            foreach (DataRow row in myDB.AlivePlayers.Tables[0].Rows)
             {
                 if (idx >= iconsDB.Count)
                     iconsDB.Add(new iconDB());
@@ -416,7 +378,7 @@ namespace DBAccess
         private void BuildVehicleIcons()
         {
             int idx = 0;
-            foreach (DataRow row in dsVehicles.Tables[0].Rows)
+            foreach (DataRow row in myDB.Vehicles.Tables[0].Rows)
             {
                 DataRow rowT = mycfg.vehicle_types.Tables[0].Rows.Find(row.Field<string>("class_name"));
                 if (rowT.Field<bool>("Show"))
@@ -500,11 +462,11 @@ namespace DBAccess
         }
         private void BuildSpawnIcons()
         {
-            if (dsVehicleSpawnPoints.Tables.Count == 0)
+            if (myDB.SpawnPoints.Tables.Count == 0)
                 return;
 
             int idx = 0;
-            foreach (DataRow row in dsVehicleSpawnPoints.Tables[0].Rows)
+            foreach (DataRow row in myDB.SpawnPoints.Tables[0].Rows)
             {
                 DataRow rowT = mycfg.vehicle_types.Tables[0].Rows.Find(row.Field<string>("class_name"));
                 if (rowT.Field<bool>("Show"))
@@ -557,7 +519,7 @@ namespace DBAccess
         private void BuildDeployableIcons()
         {
             int idx = 0;
-            foreach (DataRow row in dsDeployables.Tables[0].Rows)
+            foreach (DataRow row in myDB.Deployables.Tables[0].Rows)
             {
                 string name = row.Field<string>("class_name");
                 DataRow rowT = mycfg.deployable_types.Tables[0].Rows.Find(name);
@@ -603,8 +565,7 @@ namespace DBAccess
         private void Enable(bool bState)
         {
             bool bEpochGameType = (mycfg.game_type == "Epoch");
-            bConnected = bState;
-
+            
             buttonConnect.Enabled = !bState;
 
             toolStripStatusWorld.Enabled = bState;
@@ -926,361 +887,6 @@ namespace DBAccess
                 MessageBox.Show(ex.Message, "Exception found");
             }
         }
-        private void DB_OnConnection()
-        {
-            if (!bConnected)
-                return;
-
-            mtxUpdateDB.WaitOne();
-
-            DataSet _dsWorlds = new DataSet();
-            DataSet _dsAllVehicleTypes = new DataSet();
-
-            this.textBoxCmdStatus.Text = "";
-
-            try
-            {
-                MySqlCommand cmd = sqlCnx.CreateCommand();
-                MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
-
-                //
-                //  Instance -> World Id
-                //
-                cmd.CommandText = "SELECT * FROM instance";
-                this.dsInstances.Clear();
-                adapter.Fill(this.dsInstances);
-                DataColumn[] keysI = new DataColumn[1];
-                keysI[0] = dsInstances.Tables[0].Columns[0];
-                dsInstances.Tables[0].PrimaryKey = keysI;
-
-                //
-                //  Worlds
-                //
-                cmd.CommandText = "SELECT * FROM world";
-                _dsWorlds.Clear();
-                adapter.Fill(_dsWorlds);
-
-                //
-                //  Vehicle types
-                //
-                cmd.CommandText = "SELECT id,class_name FROM vehicle";
-                _dsAllVehicleTypes.Clear();
-                adapter.Fill(_dsAllVehicleTypes);
-                DataColumn[] keysV = new DataColumn[1];
-                keysV[0] = _dsAllVehicleTypes.Tables[0].Columns[0];
-                _dsAllVehicleTypes.Tables[0].PrimaryKey = keysV;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "Exception found");
-            }
-
-            mtxUpdateDB.ReleaseMutex();
-
-            mtxUseDS.WaitOne();
-
-            try
-            {
-                foreach (DataRow row in _dsAllVehicleTypes.Tables[0].Rows)
-                {
-                    var id = row.Field<UInt16>("id");
-                    var name = row.Field<string>("class_name");
-
-                    var rowT = mycfg.vehicle_types.Tables[0].Rows.Find(name);
-
-                    if(rowT == null)
-                        mycfg.vehicle_types.Tables[0].Rows.Add(name, "Car", true, id);
-                    else
-                        rowT.SetField<UInt16>("Id", id);
-                }
-
-                foreach (DataRow row in _dsWorlds.Tables[0].Rows)
-                {
-                    DataRow rowWD = mycfg.worlds_def.Tables[0].Rows.Find(row.Field<UInt16>("id"));
-                    if (rowWD == null)
-                    {
-                        mycfg.worlds_def.Tables[0].Rows.Add(row.Field<UInt16>("id"),
-                                                            row.Field<string>("name"),
-                                                            (UInt32)row.Field<Int32>("max_x"),
-                                                            (UInt32)row.Field<Int32>("max_y"),
-                                                            "");
-                    }
-                    else
-                    {
-                        rowWD.SetField<string>("World Name", row.Field<string>("name"));
-                    }
-                }
-
-                DataRow rowI = this.dsInstances.Tables[0].Rows.Find(UInt16.Parse(mycfg.instance_id));
-                if (rowI != null)
-                {
-                    mycfg.world_id = rowI.Field<UInt16>("world_id");
-
-                    DataRow rowW = mycfg.worlds_def.Tables[0].Rows.Find(mycfg.world_id);
-                    if (rowW != null)
-                        toolStripStatusWorld.Text = rowW.Field<string>("World Name");
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "Exception found");
-            }
-
-            mtxUseDS.ReleaseMutex();
-
-            if (mycfg.world_id == 0)
-            {
-                CloseConnection();
-                MessageBox.Show("Instance id '" + mycfg.instance_id + "' not found in database", "Warning");
-            }
-        }
-        private void DB_OnRefresh()
-        {
-            if (bConnected)
-            {
-                DataSet _dsAlivePlayers = new DataSet();
-                DataSet _dsOnlinePlayers = new DataSet();
-                DataSet _dsDeployables = new DataSet();
-                DataSet _dsVehicles = new DataSet();
-                DataSet _dsVehicleSpawnPoints = new DataSet();
-
-                mtxUpdateDB.WaitOne();
-
-                try
-                {
-                    MySqlCommand cmd = sqlCnx.CreateCommand();
-                    MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
-
-                    //
-                    //  Players alive
-                    //
-                    cmd.CommandText = "SELECT s.id id, s.unique_id unique_id, p.name name, p.humanity humanity, s.worldspace worldspace,"
-                                    + " s.inventory inventory, s.backpack backpack, s.medical medical, s.state state, s.last_updated last_updated"
-                                    + " FROM survivor as s, profile as p WHERE s.unique_id=p.unique_id AND s.world_id=" + mycfg.world_id + " AND s.is_dead=0";
-                    cmd.CommandText += " AND s.last_updated > now() - interval " + mycfg.filter_last_updated + " day";
-                    _dsAlivePlayers.Clear();
-                    adapter.Fill(_dsAlivePlayers);
-
-                    //
-                    //  Players online
-                    //
-                    cmd.CommandText = "SELECT s.id id, s.unique_id unique_id, p.name name, p.humanity humanity, s.worldspace worldspace,"
-                                    + " s.inventory inventory, s.backpack backpack, s.medical medical, s.state state, s.last_updated last_updated"
-                                    + " FROM survivor as s, profile as p WHERE s.unique_id=p.unique_id AND s.world_id=" + mycfg.world_id + " AND s.is_dead=0"
-                                    + " AND s.last_updated > now() - interval " + mycfg.online_time_limit + " minute";
-                    _dsOnlinePlayers.Clear();
-                    adapter.Fill(_dsOnlinePlayers);
-
-                    //
-                    //  Vehicles
-                    //
-                    cmd.CommandText = "SELECT iv.id id, wv.id spawn_id, v.class_name class_name, iv.worldspace worldspace, iv.inventory inventory,"
-                                    + " iv.fuel fuel, iv.damage damage, iv.last_updated last_updated, iv.parts parts"
-                                    + " FROM vehicle as v, world_vehicle as wv, instance_vehicle as iv"
-                                    + " WHERE iv.instance_id=" + mycfg.instance_id
-                                    + " AND iv.world_vehicle_id=wv.id AND wv.vehicle_id=v.id"
-                                    + " AND iv.last_updated > now() - interval " + mycfg.filter_last_updated + " day";
-                    _dsVehicles.Clear();
-                    adapter.Fill(_dsVehicles);
-
-                    //
-                    //  Vehicle Spawn points
-                    //
-                    cmd.CommandText = "SELECT w.id id, w.vehicle_id vid, w.worldspace worldspace, w.chance chance, v.inventory inventory, v.class_name class_name FROM world_vehicle as w, vehicle as v"
-                                    + " WHERE w.world_id=" + mycfg.world_id + " AND w.vehicle_id=v.id";
-                    _dsVehicleSpawnPoints.Clear();
-                    adapter.Fill(_dsVehicleSpawnPoints);
-
-                    //
-                    //  Deployables
-                    //
-                    cmd.CommandText = "SELECT id.id id, d.class_name class_name, id.worldspace, id.inventory"
-                                    + " FROM instance_deployable as id, deployable as d"
-                                    + " WHERE instance_id=" + mycfg.instance_id
-                                    + " AND id.deployable_id=d.id"
-                                    + " AND id.last_updated > now() - interval " + mycfg.filter_last_updated + " day";
-                    _dsDeployables.Clear();
-                    adapter.Fill(_dsDeployables);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message, "Exception found");
-                }
-
-                foreach (DataRow row in _dsDeployables.Tables[0].Rows)
-                {
-                    string name = row.Field<string>("class_name");
-
-                    if (mycfg.deployable_types.Tables[0].Rows.Find(name) == null)
-                        mycfg.deployable_types.Tables[0].Rows.Add(name, "Unknown", true);
-                }
-
-                mtxUpdateDB.ReleaseMutex();
-
-                mtxUseDS.WaitOne();
-
-                dsDeployables = _dsDeployables.Copy();
-                dsAlivePlayers = _dsAlivePlayers.Copy();
-                dsOnlinePlayers = _dsOnlinePlayers.Copy();
-                dsVehicles = _dsVehicles.Copy();
-                dsVehicleSpawnPoints = _dsVehicleSpawnPoints.Copy();
-
-                mtxUseDS.ReleaseMutex();
-            }
-        }
-        private void DBEpoch_OnConnection()
-        {
-            if (!bConnected)
-                return;
-
-            mtxUpdateDB.WaitOne();
-
-            DataSet _dsVehicles = new DataSet();
-
-            this.textBoxCmdStatus.Text = "";
-
-            try
-            {
-                MySqlCommand cmd = sqlCnx.CreateCommand();
-                MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
-
-                //
-                //  Vehicle types
-                //
-                cmd.CommandText = "SELECT ClassName class_name FROM object_data WHERE CharacterID=0";
-                _dsVehicles.Clear();
-                adapter.Fill(_dsVehicles);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "Exception found");
-            }
-
-            mtxUpdateDB.ReleaseMutex();
-
-            mtxUseDS.WaitOne();
-
-            try
-            {
-                foreach (DataRow row in _dsVehicles.Tables[0].Rows)
-                {
-                    string name = row.Field<string>("class_name");
-
-                    if (mycfg.vehicle_types.Tables[0].Rows.Find(name) == null)
-                        mycfg.vehicle_types.Tables[0].Rows.Add(name, "Car", true);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "Exception found");
-            }
-
-            mtxUseDS.ReleaseMutex();
-        }
-        private void DBEpoch_OnRefresh()
-        {
-            if (bConnected)
-            {
-                DataSet _dsAlivePlayers = new DataSet();
-                DataSet _dsOnlinePlayers = new DataSet();
-                DataSet _dsDeployables = new DataSet();
-                DataSet _dsVehicles = new DataSet();
-
-                mtxUpdateDB.WaitOne();
-
-                try
-                {
-                    MySqlCommand cmd = sqlCnx.CreateCommand();
-                    MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
-
-                    //
-                    //  Players alive
-                    //
-                    cmd.CommandText = "SELECT cd.CharacterID id, pd.PlayerUID unique_id, pd.PlayerName name, cd.Humanity humanity, cd.worldspace worldspace,"
-                                    + " cd.inventory inventory, cd.backpack backpack, cd.medical medical, cd.CurrentState state, cd.DateStamp last_updated"
-                                    + " FROM character_data as cd, player_data as pd"
-                                    + " WHERE cd.PlayerUID=pd.PlayerUID AND cd.Alive=1";
-                    _dsAlivePlayers.Clear();
-                    adapter.Fill(_dsAlivePlayers);
-
-                    //
-                    //  Players online
-                    //
-                    cmd.CommandText += " AND cd.DateStamp > now() - interval " + mycfg.online_time_limit + " minute";
-                    _dsOnlinePlayers.Clear();
-                    adapter.Fill(_dsOnlinePlayers);
-
-                    //
-                    //  Vehicles
-                    cmd.CommandText = "SELECT CAST(ObjectID AS UNSIGNED) id, CAST(0 AS UNSIGNED) spawn_id, ClassName class_name, worldspace, inventory,"
-                                    + " fuel, damage, DateStamp last_updated"
-                                    + " FROM object_data WHERE CharacterID=0";
-                    _dsVehicles.Clear();
-                    adapter.Fill(_dsVehicles);
-
-                    //
-                    //  Deployables
-                    //
-                    cmd.CommandText = "SELECT CAST(ObjectID AS UNSIGNED) id, Classname class_name, worldspace, inventory FROM object_data WHERE CharacterID!=0";
-                    _dsDeployables.Clear();
-                    adapter.Fill(_dsDeployables);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message, "Exception found");
-                }
-
-                foreach (DataRow row in _dsDeployables.Tables[0].Rows)
-                {
-                    string name = row.Field<string>("class_name");
-
-                    if (mycfg.deployable_types.Tables[0].Rows.Find(name) == null)
-                        mycfg.deployable_types.Tables[0].Rows.Add(name, "Unknown", true);
-                }
-
-                mtxUpdateDB.ReleaseMutex();
-
-                mtxUseDS.WaitOne();
-
-                dsDeployables = _dsDeployables.Copy();
-                dsAlivePlayers = _dsAlivePlayers.Copy();
-                dsOnlinePlayers = _dsOnlinePlayers.Copy();
-                dsVehicles = _dsVehicles.Copy();
-
-                mycfg.world_id = 1;
-
-                mtxUseDS.ReleaseMutex();
-            }
-        }
-        private int ExecuteSqlNonQuery(string query)
-        {
-            if (!bConnected)
-                return 0;
-
-            int res = 0;
-
-            this.Cursor = Cursors.WaitCursor;
-            mtxUpdateDB.WaitOne();
-
-            try
-            {
-                MySqlCommand cmd = sqlCnx.CreateCommand();
-
-                cmd.CommandText = query;
-
-                res = cmd.ExecuteNonQuery();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "Exception found");
-                Enable(false);
-            }
-
-            mtxUpdateDB.ReleaseMutex();
-            this.Cursor = Cursors.Arrow;
-
-            return res;
-        }
         internal UIDGraph GetUIDGraph(string uid)
         {
             UIDGraph uidgraph = null;
@@ -1291,143 +897,6 @@ namespace DBAccess
             return uidgraph;
         }
         public delegate void DlgUpdateIcons();
-        private void BackupDatabase(string filename)
-        {
-            if (!bConnected)
-                return;
-
-            this.Cursor = Cursors.WaitCursor;
-            mtxUpdateDB.WaitOne();
-
-            try
-            {
-                FileInfo fi = new FileInfo(filename);
-                StreamWriter sw = fi.CreateText();
-
-                MySqlCommand cmd = sqlCnx.CreateCommand();
-                MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
-                MySqlDataReader reader;
-
-                cmd.CommandText = "SHOW TABLES";
-                reader = cmd.ExecuteReader();
-
-                List<string> tables = new List<string>();
-                while (reader.Read())
-                {
-                    string name = reader.GetString(0);
-                    tables.Add(name);
-                }
-
-                reader.Close();
-
-                List<string> queries_tables = new List<string>();
-                foreach (string table in tables)
-                {
-                    textBoxCmdStatus.Text += "\r\nReading table `" + table + "`...";
-
-                    bool bSerializeTable = true;
-
-                    cmd.CommandText = "SHOW CREATE TABLE " + table;
-                    reader = cmd.ExecuteReader();
-                    while (reader.Read())
-                    {
-                        string str = reader.GetString(1);
-
-                        if (!(str.Contains("VIEW") && str.Contains("ALGORITHM")))
-                        {
-                            queries_tables.Add("\r\nDROP TABLE IF EXISTS `" + table + "`");
-                            queries_tables.Add(str);
-                        }
-                        else
-                        {
-                            queries_tables.Add("\r\n-- View `" + table + "` has been ignored. --");
-                            bSerializeTable = false;
-                        }
-                    }
-                    reader.Close();
-
-                    if (bSerializeTable)
-                    {
-                        cmd.CommandText = "SELECT * FROM " + table;
-                        reader = cmd.ExecuteReader();
-                        List<string> list_values = new List<string>();
-                        while (reader.Read())
-                        {
-                            string values = "";
-                            for (int i = 0; i < reader.FieldCount; i++)
-                            {
-                                Type type = reader.GetFieldType(i);
-
-                                if (reader.IsDBNull(i))
-                                {
-                                    values += "NULL,";
-                                }
-                                else if (type == typeof(string))
-                                {
-                                    string res = "";
-                                    string s = reader.GetString(i);
-                                    foreach (char c in s)
-                                    {
-                                        if (c == '\'' || c == '\"')
-                                            res += "\\";
-                                        res += c;
-                                    }
-                                    values += "'" + res + "',";
-                                }
-                                else if (type == typeof(DateTime))
-                                {
-                                    //  'YYYY-MM-DD h24:mm:ss'
-                                    DateTime dt = reader.GetDateTime(i).ToUniversalTime();
-                                    values += "'" + dt.ToString("yyyy-MM-dd HH:mm:ss") + "',";
-                                }
-                                else
-                                {
-                                    values += reader.GetString(i) + ",";
-                                }
-                            }
-                            values = values.TrimEnd(',');
-                            list_values.Add("(" + values + ")");
-                        }
-                        reader.Close();
-
-                        string all_values = "";
-                        foreach (string values in list_values)
-                            all_values += values + ",";
-                        all_values = all_values.TrimEnd(',');
-
-                        if (list_values.Count > 0)
-                        {
-                            queries_tables.Add("LOCK TABLES `" + table + "` WRITE");
-                            queries_tables.Add("REPLACE INTO `" + table + "` VALUES " + all_values);
-                            queries_tables.Add("UNLOCK TABLES");
-                        }
-
-                        textBoxCmdStatus.Text += " done.";
-                    }
-                    else
-                    {
-                        textBoxCmdStatus.Text += " ignored.";
-                    }
-                }
-
-                foreach (string query in queries_tables)
-                {
-                    sw.Write(query + ";\r\n");
-                }
-
-                sw.Close();
-
-                textBoxCmdStatus.Text += "\r\nBackup of " + tables.Count + " tables done.";
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "Exception found");
-                Enable(false);
-            }
-
-            mtxUpdateDB.ReleaseMutex();
-            this.Cursor = Cursors.Arrow;
-        }
 
         #region Callbacks
         private void comboBoxGameType_SelectedValueChanged(object sender, EventArgs e)
@@ -1551,45 +1020,12 @@ namespace DBAccess
                 var rowT = mycfg.vehicle_types.Tables[0].Rows.Find(classname);
                 if (rowT != null)
                 {
-                    string worldspace = "\"[0,[" + positionInDB.X.ToString() + "," + positionInDB.Y.ToString() + ",0.0015]]\"";
                     var vehicle_id = rowT.Field<UInt16>("Id");
 
-                    if (currentMode == displayMode.ShowVehicle)
+                    bool bRes = myDB.AddVehicle((currentMode == displayMode.ShowVehicle), classname, vehicle_id, positionInDB);
+                    if (!bRes)
                     {
-                        bool bFound = false;
-                        // we need to find a spawn point with this vehicle_id, to have a valid world_vehicle_id
-                        foreach (DataRow spawn in dsVehicleSpawnPoints.Tables[0].Rows)
-                        {
-                            if (spawn.Field<UInt16>("vid") == vehicle_id)
-                            {
-                                var wv_id = spawn.Field<UInt64>("id");
-                                float fuel = 0.7f;
-                                float damage = 0.1f;
-                                string inventory = "\"[]\"";
-                                string parts = "\"[]\"";
-                                int res = ExecuteSqlNonQuery("INSERT INTO instance_vehicle (`world_vehicle_id`, `instance_id`, `worldspace`, `inventory`, `parts`, `fuel`, `damage`, `created`) VALUES(" + wv_id + "," + mycfg.instance_id + "," + worldspace + "," + inventory + "," + parts + "," + fuel + "," + damage + ", now());");
-                                if (res == 0)
-                                {
-                                    MessageBox.Show("Error while trying to insert vehicle instane '" + classname + "' into database");
-                                }
-
-                                bFound = true;
-                                break;
-                            }
-                        }
-
-                        if (!bFound)
-                        {
-                            MessageBox.Show("There is no spawn points created for this class name '" + classname + "'.\nUnable to instantiate this vehicle.\ncreate a spawn point first.");
-                        }
-                    }
-                    else if (currentMode == displayMode.ShowSpawn)
-                    {
-                        int res = ExecuteSqlNonQuery("INSERT INTO world_vehicle (`vehicle_id`, `world_id`, `worldspace`, `description`, `chance`) VALUES(" + vehicle_id + "," + mycfg.world_id + "," + worldspace + ",\"" + classname + "\", 0.7);");
-                        if (res == 0)
-                        {
-                            MessageBox.Show("Error while trying to insert spawnpoint for vehicle class '" + classname + "' into database");
-                        }
+                        MessageBox.Show("Error while trying to insert vehicle instane '" + classname + "' into database");
                     }
                 }
             }
@@ -1628,6 +1064,7 @@ namespace DBAccess
             labelLastUpdate.Text = (track.Value == track.Maximum) ? "-" : track.Value.ToString();
 
             mycfg.filter_last_updated = (track.Value == track.Maximum) ? 999 : track.Value;
+            myDB.FilterLastUpdated = mycfg.filter_last_updated;
         }
 
         private void toolStripStatusMapHelper_Click(object sender, EventArgs e)
@@ -1694,5 +1131,771 @@ namespace DBAccess
         {
             MessageBox.Show(this.Text + "\n\ndevelopped by Orcalito / 2013\nhttps://github.com/orcalito/DayZ_DB_Access", "Info");
         }
+         //
+        //  Form
+        //
+        private void Form1Resize(object sender, EventArgs e)
+        {
+            ApplyMapChanges();
+        }
+        private void Form1_MouseWheel(object sender, MouseEventArgs e)
+        {
+            if (!virtualMap.Enabled)
+                return;
+
+            mapZoom.Start(virtualMap,
+                          (Tool.Point)(e.Location - virtualMap.Position),
+                          Math.Sign(e.Delta));
+        }
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            CloseConnection();
+
+            //
+            SaveConfigFile();
+        }
+        //
+        //  Panel
+        //
+        private void _Panel1_Paint(object sender, PaintEventArgs e)
+        {
+            try
+            {
+                if (virtualMap.Enabled)
+                {
+                    e.Graphics.CompositingMode = CompositingMode.SourceCopy;
+                    e.Graphics.CompositingQuality = CompositingQuality.HighQuality;
+                    e.Graphics.InterpolationMode = InterpolationMode.NearestNeighbor;
+                    e.Graphics.PixelOffsetMode = PixelOffsetMode.Half;
+
+                    int nb_tilesDrawn = 0;
+                    foreach (tileReq req in tileRequests)
+                    {
+                        tileNfo nfo = tileCache.Find(x => req.path == x.path);
+
+                        if (nfo != null)
+                        {
+                            e.Graphics.DrawImage(nfo.bitmap, req.rec);
+                            nb_tilesDrawn++;
+                        }
+                    }
+
+                    e.Graphics.CompositingMode = CompositingMode.SourceOver;
+
+                    if (!IsMapHelperEnabled)
+                    {
+                        if (bShowTrails == true)
+                        {
+                            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                            foreach (iconDB idb in listIcons)
+                            {
+                                if ((idb.type == UIDType.TypePlayer) || (idb.type == UIDType.TypeVehicle))
+                                    GetUIDGraph(idb.uid).DisplayInMap(e.Graphics, virtualMap);
+                            }
+                        }
+
+                        e.Graphics.SmoothingMode = SmoothingMode.None;
+                        Rectangle recPanel = new Rectangle(Point.Empty, splitContainer1.Panel1.Size);
+                        int nb_iconsDrawn = 0;
+                        foreach (iconDB idb in listIcons)
+                        {
+                            if (recPanel.IntersectsWith(idb.icon.rectangle))
+                            {
+                                e.Graphics.DrawImage(idb.icon.image, idb.icon.rectangle);
+                                nb_iconsDrawn++;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        mapHelper.Display(e.Graphics);
+                    }
+
+                    if (!IsMapHelperEnabled && bCartographer)
+                        cartographer.DisplayInMap(e.Graphics, virtualMap);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Exception found");
+            }
+        }
+        private void _Panel1_MouseClick(object sender, MouseEventArgs e)
+        {
+            System.Threading.Interlocked.CompareExchange(ref bUserAction, 1, 0);
+
+            if (IsMapHelperEnabled)
+                return;
+
+            if (bCartographer)
+            {
+                if (e.Button.HasFlag(MouseButtons.Left))
+                {
+                    Tool.Point mp = virtualMap.UnitToDB(virtualMap.PanelToUnit(e.Location));
+                    mp = mp / virtualMap.nfo.dbRefMapSize;
+                    mp.Y = 1.0f - mp.Y;
+                    cartographer.AddPoint(mp);
+                }
+                else if (e.Button.HasFlag(MouseButtons.Right))
+                {
+                    cartographer.RemoveLastPoint();
+                }
+                else if (e.Button.HasFlag(MouseButtons.Middle))
+                {
+                    cartographer.AddPoint(new Tool.Point(0, 1));
+                }
+            }
+            else
+            {
+                selectedIcon = null;
+                Rectangle mouseRec = new Rectangle(e.Location, Size.Empty);
+                foreach (iconDB idb in listIcons)
+                {
+                    if (mouseRec.IntersectsWith(idb.icon.rectangle))
+                    {
+                        // Call Click event from icon
+                        selectedIcon = idb;
+                        idb.icon.OnClick(this, e);
+                        break;
+                    }
+                }
+                if ((selectedIcon == null) && e.Button.HasFlag(MouseButtons.Right))
+                {
+                    contextMenuStripAddVehicle.Show(this, e.Location);
+                }
+            }
+        }
+        private void _Panel1_MouseDown(object sender, MouseEventArgs e)
+        {
+            System.Threading.Interlocked.CompareExchange(ref bUserAction, 1, 0);
+
+            if (e.Button.HasFlag(MouseButtons.Right) && IsMapHelperEnabled)
+            {
+                Tool.Point mousePos = (Tool.Point)(e.Location - virtualMap.Position);
+
+                mapHelper.isDraggingCtrlPoint = mapHelper.IntersectControl(mousePos, 5);
+
+                if (mapHelper.isDraggingCtrlPoint > 0)
+                {
+                    // Will drag selected Control point
+                    Tool.Point pt = mapHelper.controls[mapHelper.isDraggingCtrlPoint] * virtualMap.SizeCorrected + virtualMap.Position;
+                    dragndrop.Start(pt);
+                }
+                else
+                {
+                    // Will drag all Control points
+                    List<Tool.Point> points = new List<Tool.Point>(4);
+                    for (int i = 0; i < 4; i++)
+                    {
+                        Tool.Point pt = mapHelper.controls[i] * virtualMap.SizeCorrected + virtualMap.Position;
+                        points.Add(pt);
+                    }
+                    dragndrop.Start(points);
+                }
+
+                splitContainer1.Panel1.Invalidate();
+            }
+            else
+            {
+                dragndrop.Start(virtualMap.Position);
+            }
+        }
+        private void _Panel1_MouseMove(object sender, MouseEventArgs e)
+        {
+            Rectangle recPanel = new Rectangle(Point.Empty, splitContainer1.Panel1.Size);
+            Rectangle recMouse = new Rectangle(e.Location, Size.Empty);
+
+            if (!recPanel.IntersectsWith(recMouse))
+                return;
+
+            if (e.Button.HasFlag(MouseButtons.Right) && (mapHelper != null))
+            {
+                if (mapHelper.enabled)
+                {
+                    dragndrop.Update();
+
+                    if (mapHelper.isDraggingCtrlPoint >= 0)
+                    {
+                        Tool.Point newPos = dragndrop.Position(0);
+                        Tool.Point pt = (Tool.Point)((newPos - virtualMap.Position) / virtualMap.SizeCorrected);
+
+                        mapHelper.controls[mapHelper.isDraggingCtrlPoint] = pt;
+                        mapHelper.ControlPointUpdated(mapHelper.isDraggingCtrlPoint);
+                    }
+                    else
+                    {
+                        for (int i = 0; i < 2; i++)
+                        {
+                            Tool.Point newPos = dragndrop.Position(i);
+                            Tool.Point pt = (Tool.Point)((newPos - virtualMap.Position) / virtualMap.SizeCorrected);
+
+                            mapHelper.controls[i] = pt;
+                        }
+                        mapHelper.ControlPointUpdated(0);
+                    }
+
+                    ApplyMapChanges();
+                }
+            }
+            else if (e.Button.HasFlag(MouseButtons.Left))
+            {
+                dragndrop.Update();
+                virtualMap.Position = dragndrop.Position(0);
+                ApplyMapChanges();
+            }
+            else
+            {
+                if (mapHelper != null)
+                {
+                    Tool.Point mousePos = (Tool.Point)(e.Location - virtualMap.Position);
+                    mapHelper.isDraggingCtrlPoint = mapHelper.IntersectControl(mousePos, 5);
+                    splitContainer1.Panel1.Invalidate();
+                }
+
+                dragndrop.Stop();
+            }
+
+            if (!IsMapHelperEnabled && bCartographer)
+            {
+                string pathstr = "public static Point[] ptsXXX = new Point[]\r\n{";
+                foreach (PathDef def in cartographer.paths)
+                {
+                    foreach (Tool.Point pt in def.points)
+                    {
+                        Tool.Point npt = pt;
+                        npt.Y = 1.0f - npt.Y;
+                        npt = npt * virtualMap.nfo.dbRefMapSize;
+                        pathstr += "\r\nnew Point" + npt.ToStringInt() + ",";
+                    }
+                }
+                pathstr = pathstr.TrimEnd(',');
+                pathstr += "\r\n};";
+                textBoxCmdStatus.Text = pathstr;
+            }
+
+            // Database coordinates
+            positionInDB = virtualMap.UnitToDB(virtualMap.PanelToUnit(e.Location));
+            // Map coordinates
+            Tool.Point mp = virtualMap.UnitToMap(virtualMap.PanelToUnit(e.Location));
+
+            if ((mp.X > -100000) && (mp.X < 100000))
+            {
+                toolStripStatusCoordDB.Text = ((int)positionInDB.X).ToString() + " : " + ((int)positionInDB.Y).ToString();
+                toolStripStatusCoordMap.Text = ((int)mp.X).ToString() + " : " + ((int)mp.Y).ToString();
+            }
+        }
+        private void _Panel1_MouseUp(object sender, MouseEventArgs e)
+        {
+            if (mapHelper != null)
+                mapHelper.isDraggingCtrlPoint = -1;
+
+            System.Threading.Interlocked.CompareExchange(ref bUserAction, 0, 1);
+        }
+        //
+        //  myIcon
+        //
+        private void OnPlayerClick(object sender, EventArgs e)
+        {
+            myIcon pb = sender as myIcon;
+
+            Survivor player = new Survivor(pb.iconDB);
+            player.Rebuild();
+            propertyGrid1.SelectedObject = player;
+            propertyGrid1.ExpandAllGridItems();
+        }
+        private void OnVehicleClick(object sender, EventArgs e)
+        {
+            myIcon pb = sender as myIcon;
+
+            if (pb.iconDB.type == UIDType.TypeVehicle)
+            {
+                Vehicle vehicle = new Vehicle(pb.iconDB);
+                vehicle.Rebuild();
+                propertyGrid1.SelectedObject = vehicle;
+                propertyGrid1.ExpandAllGridItems();
+            }
+            else
+            {
+                Spawn spawn = new Spawn(pb.iconDB);
+                spawn.Rebuild();
+                propertyGrid1.SelectedObject = spawn;
+                propertyGrid1.ExpandAllGridItems();
+            }
+
+            // Select class name in Vehicles table
+            foreach (DataGridViewRow row in dataGridViewVehicleTypes.Rows)
+            {
+                if (row.Cells["ColGVVTClassName"].Value as string == pb.iconDB.row.Field<string>("class_name"))
+                    row.Cells["ColGVVTType"].Selected = true;
+            }
+        }
+        private void OnDeployableClick(object sender, EventArgs e)
+        {
+            myIcon pb = sender as myIcon;
+
+            Deployable deployable = new Deployable(pb.iconDB);
+            deployable.Rebuild();
+            propertyGrid1.SelectedObject = deployable;
+            propertyGrid1.ExpandAllGridItems();
+
+            // Select class name in Deployables table
+            foreach (DataGridViewRow row in dataGridViewDeployableTypes.Rows)
+            {
+                if (row.Cells["ColGVDTClassName"].Value as string == pb.iconDB.row.Field<string>("class_name"))
+                    row.Cells["ColGVDTType"].Selected = true;
+            }
+        }
+        //
+        //  Contextual menu
+        //
+        private void toolStripMenuItemDelete_Click(object sender, EventArgs e)
+        {
+            if (selectedIcon != null)
+            {
+                int res = myDB.ExecuteSqlNonQuery("DELETE FROM instance_vehicle WHERE id=" + selectedIcon.uid + " AND instance_id=" + mycfg.instance_id);
+                if (res == 1)
+                    textBoxCmdStatus.Text = "removed vehicle id " + selectedIcon.uid;
+            }
+            selectedIcon = null;
+        }
+        private void toolStripMenuItemDeleteSpawn_Click(object sender, EventArgs e)
+        {
+            if (selectedIcon != null)
+            {
+                int res = myDB.ExecuteSqlNonQuery("DELETE FROM world_vehicle WHERE id=" + selectedIcon.uid + " AND world_id=" + mycfg.world_id);
+                if (res == 1)
+                    textBoxCmdStatus.Text = "removed vehicle spawnpoint id " + selectedIcon.uid;
+            }
+            selectedIcon = null;
+        }
+        //
+        //  Database's Tab
+        //
+        private void _buttonConnect_Click(object sender, EventArgs e)
+        {
+            this.Cursor = Cursors.WaitCursor;
+
+            myDB.Connect(textBoxURL.Text,
+                         int.Parse(textBoxPort.Text),
+                         textBoxBaseName.Text,
+                         textBoxUser.Text,
+                         textBoxPassword.Text,
+                         int.Parse(numericUpDownInstanceId.Text),
+                         mycfg);
+
+            if(myDB.Connected)
+            {
+                Enable(true);
+
+                mycfg.instance_id = myDB.InstanceId.ToString();
+                mycfg.world_id = (UInt16)myDB.WorldId;
+
+                this.textBoxCmdStatus.Text = "";
+                this.toolStripStatusWorld.Text = myDB.WorldName;
+
+                SetCurrentMap();
+
+                groupBoxCnx.Enabled = false;
+                groupBoxCnx.Visible = false;
+            }
+
+            this.Cursor = Cursors.Arrow;
+        }
+        private void _comboBoxGameType_SelectedValueChanged(object sender, EventArgs e)
+        {
+            ComboBox cb = sender as ComboBox;
+
+            mycfg.game_type = cb.Items[cb.SelectedIndex] as string;
+            numericUpDownInstanceId.Enabled = (cb.SelectedIndex == 0);
+        }
+        private void _cbCartographer_CheckedChanged(object sender, EventArgs e)
+        {
+            if ((sender as CheckBox).Checked == true)
+                cartographer.paths.Clear();
+        }
+        private void _MapHelperStateChanged()
+        {
+            if (mapHelper == null)
+                return;
+
+            if (!mapHelper.enabled)
+            {
+                // Apply map helper's new size
+                DataRow row = mycfg.worlds_def.Tables[0].Rows.Find(mycfg.world_id);
+
+                Tool.Size refSize = new Tool.Size(row.Field<UInt32>("DB_refWidth"),
+                                                  row.Field<UInt32>("DB_refHeight"));
+
+                Tool.Point offUnit = mapHelper.boundaries[0];
+                Tool.Size sizeUnit = mapHelper.boundaries[1] - mapHelper.boundaries[0];
+                Tool.Point offset = offUnit * refSize;
+                Tool.Size size = sizeUnit * refSize;
+
+                virtualMap.nfo.dbMapOffsetUnit = offset / refSize;
+                virtualMap.nfo.dbMapSize = size;
+                virtualMap.nfo.dbRefMapSize = refSize;
+
+                row.SetField<int>("DB_X", (int)offset.X);
+                row.SetField<int>("DB_Y", (int)offset.Y);
+                row.SetField<UInt32>("DB_Width", (UInt32)size.Width);
+                row.SetField<UInt32>("DB_Height", (UInt32)size.Height);
+
+                splitContainer1.Panel1.Invalidate();
+            }
+        }
+        //
+        //  Data grids
+        //
+        private void _dataGridViewMaps_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if ((e.RowIndex < 0) || (e.RowIndex >= dataGridViewMaps.Rows.Count))
+                return;
+
+            // Ignore clicks that are not on button cells.  
+            if (e.ColumnIndex == dataGridViewMaps.Columns["ColGVMChoosePath"].Index)
+            {
+                openFileDialog1.FileName = "";
+                openFileDialog1.CheckFileExists = true;
+                openFileDialog1.CheckPathExists = true;
+                openFileDialog1.Multiselect = false;
+
+                if (openFileDialog1.ShowDialog() == DialogResult.OK)
+                {
+                    dataGridViewMaps["ColGVMPath", e.RowIndex].Value = openFileDialog1.FileName;
+
+                    try
+                    {
+                        string filepath = openFileDialog1.FileName;
+                        int world_id = int.Parse(dataGridViewMaps["ColGVMID", e.RowIndex].Value.ToString());
+
+                        if (File.Exists(filepath))
+                        {
+                            FileInfo fi = new FileInfo(filepath);
+
+                            string tileBasePath = configPath + "\\World" + world_id + "\\LOD";
+
+                            MessageBox.Show("Please wait while generating tiles...\r\nThis is done once when selecting a new map.");
+
+                            tileCache.Clear();
+
+                            this.Cursor = Cursors.WaitCursor;
+
+                            DirectoryInfo di = new DirectoryInfo(configPath + "\\World" + world_id);
+                            if (di.Exists)
+                                di.Delete(true);
+
+                            Tuple<Tool.Size, Tool.Size, Tool.Size> sizes = Tool.CreateTiles(filepath, tileBasePath, 256);
+
+                            DataRow rowW = mycfg.worlds_def.Tables[0].Rows.Find(world_id);
+                            rowW.SetField<float>("RatioX", sizes.Item1.Width / sizes.Item2.Width);
+                            rowW.SetField<float>("RatioY", sizes.Item1.Height / sizes.Item2.Height);
+                            rowW.SetField<int>("TileSizeX", (int)sizes.Item3.Width);
+                            rowW.SetField<int>("TileSizeY", (int)sizes.Item3.Height);
+
+                            int tileCount = (int)(sizes.Item2.Width / 256);
+                            int depth = (int)Math.Log(tileCount, 2) + 1;
+
+                            rowW.SetField<int>("TileDepth", depth);
+
+                            this.Cursor = Cursors.Arrow;
+                            MessageBox.Show("Tiles generation done.");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Error while generating tiles !\r\nMaybe the bitmap is too large to be processed...");
+                        textBoxCmdStatus.Text += ex.ToString();
+                        this.Cursor = Cursors.Arrow;
+                    }
+
+                    if (dataGridViewMaps["ColGVMID", e.RowIndex].Value.ToString() == mycfg.world_id.ToString())
+                        SetCurrentMap();
+                }
+            }
+        }
+        private void _dataGridViewVehicleTypes_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if ((e.RowIndex < 0) || (e.RowIndex >= dataGridViewVehicleTypes.Rows.Count))
+                return;
+
+            // Ignore clicks that are not on checkbox cells.  
+            if (e.ColumnIndex == dataGridViewVehicleTypes.Columns["ColGVVTShow"].Index)
+            {
+                dataGridViewVehicleTypes.CommitEdit(DataGridViewDataErrorContexts.Commit);
+            }
+        }
+        private void _dataGridViewVehicleTypes_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+            if ((e.RowIndex < 0) || (e.RowIndex >= dataGridViewVehicleTypes.Rows.Count))
+                return;
+
+            bool bState = (bool)dataGridViewVehicleTypes["ColGVVTShow", e.RowIndex].Value;
+
+            DataRow row = mycfg.vehicle_types.Tables[0].Rows.Find(dataGridViewVehicleTypes["ColGVVTClassName", e.RowIndex].Value);
+
+            row.SetField<bool>("Show", bState);
+        }
+        private static bool GVVT_bCurrentState = true;
+        private void _dataGridViewVehicleTypes_ColumnHeaderMouseDoubleClick(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            if (e.ColumnIndex == dataGridViewVehicleTypes.Columns["ColGVVTShow"].Index)
+            {
+                GVVT_bCurrentState = !GVVT_bCurrentState;
+
+                foreach (DataRow row in mycfg.vehicle_types.Tables[0].Rows)
+                    row.SetField<bool>("Show", GVVT_bCurrentState);
+            }
+        }
+        private void _dataGridViewDeployableTypes_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if ((e.RowIndex < 0) || (e.RowIndex >= dataGridViewDeployableTypes.Rows.Count))
+                return;
+
+            // Ignore clicks that are not on checkbox cells.  
+            if (e.ColumnIndex == dataGridViewDeployableTypes.Columns["ColGVDTShow"].Index)
+            {
+                dataGridViewDeployableTypes.CommitEdit(DataGridViewDataErrorContexts.Commit);
+            }
+        }
+        private void _dataGridViewDeployableTypes_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+            if ((e.RowIndex < 0) || (e.RowIndex >= dataGridViewDeployableTypes.Rows.Count))
+                return;
+
+            bool bState = (bool)dataGridViewDeployableTypes["ColGVDTShow", e.RowIndex].Value;
+
+            DataRow row = mycfg.deployable_types.Tables[0].Rows.Find(dataGridViewDeployableTypes["ColGVDTClassName", e.RowIndex].Value);
+
+            row.SetField<bool>("Show", bState);
+        }
+        private static bool GVDT_bCurrentState = true;
+        private void _dataGridViewDeployableTypes_ColumnHeaderMouseDoubleClick(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            if (e.ColumnIndex == dataGridViewDeployableTypes.Columns["ColGVDTShow"].Index)
+            {
+                GVDT_bCurrentState = !GVDT_bCurrentState;
+
+                foreach (DataRow row in mycfg.deployable_types.Tables[0].Rows)
+                    row.SetField<bool>("Show", GVDT_bCurrentState);
+            }
+        }
+        //
+        // Scripts
+        //
+        private void _buttonBackup_Click(object sender, EventArgs e)
+        {
+            string s_date = DateTime.Now.Year + "-"
+                          + DateTime.Now.Month.ToString("00") + "-"
+                          + DateTime.Now.Day.ToString("00") + " "
+                          + DateTime.Now.Hour.ToString("00") + "h"
+                          + DateTime.Now.Minute.ToString("00");
+            saveFileDialog1.FileName = "Backup " + textBoxBaseName.Text + " " + s_date + ".sql";
+            saveFileDialog1.CheckFileExists = false;
+            saveFileDialog1.CheckPathExists = true;
+            saveFileDialog1.Filter = "SQL file|*.sql";
+
+            if (saveFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                this.Cursor = Cursors.WaitCursor;
+
+                string result = myDB.BackupToFile(saveFileDialog1.FileName);
+
+                textBoxCmdStatus.Text = result;
+
+                this.Cursor = Cursors.Arrow;
+            }
+        }
+        private void _buttonRemoveDestroyed_Click(object sender, EventArgs e)
+        {
+            int res = myDB.ExecuteSqlNonQuery("DELETE FROM instance_vehicle WHERE instance_id=" + mycfg.instance_id + " AND damage=1");
+
+            textBoxCmdStatus.Text = "removed " + res + " destroyed vehicles.";
+        }
+        private void _buttonSpawnNew_Click(object sender, EventArgs e)
+        {
+            this.Cursor = Cursors.WaitCursor;
+
+            string sResult = myDB.SpawnNewVehicles(int.Parse(textBoxVehicleMax.Text));
+
+            textBoxCmdStatus.Text = sResult;
+            
+            this.Cursor = Cursors.Arrow;
+        }
+        private void _buttonRemoveBodies_Click(object sender, EventArgs e)
+        {
+            int limit = int.Parse(textBoxOldBodyLimit.Text);
+
+            string query = "DELETE FROM survivor WHERE world_id=" + mycfg.world_id + " AND is_dead=1 AND last_updated < now() - interval " + limit + " day";
+            int res = myDB.ExecuteSqlNonQuery(query);
+
+            textBoxCmdStatus.Text = "removed " + res + " bodies older than " + limit + " days.";
+        }
+        private void _buttonRemoveTents_Click(object sender, EventArgs e)
+        {
+            int limit = int.Parse(textBoxOldTentLimit.Text);
+
+            string query = "DELETE FROM id using instance_deployable id inner join deployable d on id.deployable_id = d.id"
+                         + " inner join survivor s on id.owner_id = s.id and s.is_dead=1"
+                         + " WHERE id.instance_id=" + mycfg.instance_id + " AND d.class_name = 'TentStorage' AND id.last_updated < now() - interval " + limit + " day";
+            int res = myDB.ExecuteSqlNonQuery(query);
+        }
+        //
+        //  Custom scripts
+        //
+        private void _buttonSelectCustom_Click(object sender, EventArgs e)
+        {
+            Button btSel = sender as Button;
+
+            openFileDialog1.FileName = "";
+            openFileDialog1.CheckFileExists = true;
+            openFileDialog1.CheckPathExists = true;
+            openFileDialog1.Multiselect = false;
+            openFileDialog1.Filter = "SQL & BAT files|*.sql;*.bat|SQL files|*.sql|Batch files|*.bat";
+
+            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                Button btExe = null;
+                switch (btSel.Name)
+                {
+                    case "buttonSelectCustom1": btExe = this.buttonCustom1; mycfg.customscript1 = openFileDialog1.FileName; break;
+                    case "buttonSelectCustom2": btExe = this.buttonCustom2; mycfg.customscript2 = openFileDialog1.FileName; break;
+                    case "buttonSelectCustom3": btExe = this.buttonCustom3; mycfg.customscript3 = openFileDialog1.FileName; break;
+                }
+                if (btExe != null)
+                {
+                    FileInfo fi = new FileInfo(openFileDialog1.FileName);
+                    btExe.Text = fi.Name;
+                    btExe.Enabled = true;
+                }
+            }
+        }
+        private void _buttonCustom_Click(object sender, EventArgs e)
+        {
+            Button bt = sender as Button;
+
+            string fullpath = null;
+            switch (bt.Name)
+            {
+                case "buttonCustom1": fullpath = mycfg.customscript1; break;
+                case "buttonCustom2": fullpath = mycfg.customscript2; break;
+                case "buttonCustom3": fullpath = mycfg.customscript3; break;
+            }
+
+            if (Tool.NullOrEmpty(fullpath))
+                return;
+
+            this.Cursor = Cursors.WaitCursor;
+            try
+            {
+                FileInfo fi = new FileInfo(fullpath);
+
+                switch (fi.Extension.ToLowerInvariant())
+                {
+                    case ".sql":
+                        StreamReader sr = fi.OpenText();
+                        string queries = sr.ReadToEnd();
+
+                        string result = myDB.ExecuteScript(queries);
+
+                        this.textBoxCmdStatus.Text += result;
+
+                        sr.Close();
+                        break;
+
+                    case ".bat":
+                        System.Diagnostics.Process proc = System.Diagnostics.Process.Start(fullpath);
+                        proc.WaitForExit();
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Exception found");
+            }
+            this.Cursor = Cursors.Arrow;
+        }
+        //
+        //  Background Workers
+        //
+        private void bgWorkerRefreshDatabase_DoWork(object sender, DoWorkEventArgs e)
+        {
+            BackgroundWorker bw = sender as BackgroundWorker;
+
+            while (!bw.CancellationPending)
+            {
+                Thread.Sleep(5000);
+
+                myDB.Refresh();
+
+                if (System.Threading.Interlocked.CompareExchange(ref bUserAction, 1, 0) == 0)
+                {
+                    dlgUpdateIcons = this.BuildIcons;
+
+                    if (myDB.Connected)
+                        this.Invoke(dlgUpdateIcons);
+
+                    System.Threading.Interlocked.Exchange(ref bUserAction, 0);
+                }
+            }
+        }
+        private void bgWorkerFast_DoWork(object sender, DoWorkEventArgs e)
+        {
+            BackgroundWorker bw = sender as BackgroundWorker;
+
+            while (!bw.CancellationPending)
+            {
+                eventFastBgWorker.WaitOne();
+
+                if (virtualMap.Enabled)
+                {
+                    if (System.Threading.Interlocked.CompareExchange(ref bUserAction, 1, 0) == 0)
+                    {
+                        while (mapZoom.Update(virtualMap))
+                        {
+                            dlgRefreshMap = this.ApplyMapChanges;
+                            this.Invoke(dlgRefreshMap);
+
+                            Thread.Sleep(20);
+                        }
+
+                        dlgRefreshMap = this.ApplyMapChanges;
+                        this.Invoke(dlgRefreshMap);
+                    }
+
+                    System.Threading.Interlocked.CompareExchange(ref bUserAction, 0, 1);
+                }
+            }
+        }
+        //
+        static int penCount = 0;
+        static Pen[] pens = new Pen[6]
+        {
+            new Pen(Color.Red, 2),
+            new Pen(Color.Green, 2),
+            new Pen(Color.Blue, 2),
+            new Pen(Color.Yellow, 2),
+            new Pen(Color.Orange, 2),
+            new Pen(Color.Violet, 2)
+        };
+
+        private void toolStripMenuItemResetTypes_Click(object sender, EventArgs e)
+        {
+            var item = sender as ToolStripMenuItem;
+            var menu = item.Owner as ContextMenuStrip;
+
+            switch (menu.SourceControl.Name)
+            {
+                case "dataGridViewVehicleTypes":
+                    mycfg.vehicle_types.Tables[0].Rows.Clear();
+                    break;
+                case "dataGridViewDeployableTypes":
+                    mycfg.deployable_types.Tables[0].Rows.Clear();
+                    break;
+            }
+
+            myDB.OnConnection();
+        }
+
+        private iconDB selectedIcon;
     }
 }
