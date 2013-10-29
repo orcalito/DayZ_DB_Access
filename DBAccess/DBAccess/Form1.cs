@@ -1567,7 +1567,7 @@ namespace DBAccess
                                 float damage = 0.1f;
                                 string inventory = "\"[]\"";
                                 string parts = "\"[]\"";
-                                int res = ExecuteSqlNonQuery("INSERT INTO instance_vehicle (`world_vehicle_id`, `instance_id`, `worldspace`, `inventory`, `parts`, `fuel`, `damage`) VALUES(" + wv_id + "," + mycfg.instance_id + "," + worldspace + "," + inventory + "," + parts + "," + fuel + "," + damage + ");");
+                                int res = ExecuteSqlNonQuery("INSERT INTO instance_vehicle (`world_vehicle_id`, `instance_id`, `worldspace`, `inventory`, `parts`, `fuel`, `damage`, `created`) VALUES(" + wv_id + "," + mycfg.instance_id + "," + worldspace + "," + inventory + "," + parts + "," + fuel + "," + damage + ", now());");
                                 if (res == 0)
                                 {
                                     MessageBox.Show("Error while trying to insert vehicle instane '" + classname + "' into database");

@@ -76,8 +76,13 @@ namespace DBAccess
             this.medical = this.medical.TrimEnd(',');
 
             this.blood = (int)double.Parse(arr[7] as string, CultureInfo.InvariantCulture.NumberFormat);
-            this.hunger = ((int)(double.Parse((arr[11] as ArrayList)[0] as string, CultureInfo.InvariantCulture.NumberFormat) / 21.60f)).ToString() + " %";
-            this.thirst = ((int)(double.Parse((arr[11] as ArrayList)[1] as string, CultureInfo.InvariantCulture.NumberFormat) / 14.40f)).ToString() + " %";
+
+            // between life & death, some data may be missing...
+            if (arr.Count > 11)
+            {
+                this.hunger = ((int)(double.Parse((arr[11] as ArrayList)[0] as string, CultureInfo.InvariantCulture.NumberFormat) / 21.60f)).ToString() + " %";
+                this.thirst = ((int)(double.Parse((arr[11] as ArrayList)[1] as string, CultureInfo.InvariantCulture.NumberFormat) / 14.40f)).ToString() + " %";
+            }
 
             arr = Tool.ParseInventoryString(idb.row.Field<string>("inventory"));
 
