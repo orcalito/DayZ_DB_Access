@@ -3,14 +3,17 @@ DayZ DB Access
 
 (WIP) Simple tool to show some data from a DayZ database. (Windows Only)
 
- - Supporting classic DayZ databases. (Basic access to the Epoch's specific DB)
+ - Supporting classic & Epoch DayZ databases.
  - Show on map:
 	- players online (1)
 	- players alive
-	- vehicles - can be filtered by types
-	- vehicle spawn points - can be filtered by types (2)
-	- deployables - can be filtered by types
+	- vehicles
+	- vehicle spawn points
+	- deployables
+ - Filter items by class
+ - Filter items by time
  - Show players/vehicles/deployables inventory.
+ - Add/Delete vehicle instances / spawnpoints
  - Bitmap selection for each World's type.
  - Map helper to do the link between selected bitmap & DB's coordinates
  - Vehicles Tab: associate an icon to each vehicle's class.
