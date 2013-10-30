@@ -113,7 +113,7 @@ namespace DBAccess
                 default: ClassicDB_Refresh(); break;
             }
         }
-         public int ExecuteSqlNonQuery(string query)
+        public int ExecuteSqlNonQuery(string query)
         {
             if (!Connected)
                 return 0;
@@ -329,6 +329,48 @@ namespace DBAccess
             /*else spawn point */
             res = ExecuteSqlNonQuery("INSERT INTO world_vehicle (`vehicle_id`, `world_id`, `worldspace`, `description`, `chance`) VALUES(" + vehicle_id + "," + WorldId + "," + worldspace + ",\"" + classname + "\", 0.7);");
             return (res != 0);
+        }
+        public bool RepairAndRefuelVehicle(string uid)
+        {
+            int res;
+            switch (GameType)
+            {
+                case "Epoch":
+                    res = ExecuteSqlNonQuery("UPDATE object_data SET Hitpoints='[]',Fuel='1',Damage='0' WHERE (ObjectID=" + uid + ")");
+                    break;
+                default:
+                    res = ExecuteSqlNonQuery("UPDATE instance_vehicle SET parts='[]',fuel='1',damage='0' WHERE (id=" + uid + ")");
+                    break;
+            }
+            return (res == 1);
+        }
+        public bool DeleteVehicle(string uid)
+        {
+            int res;
+            switch (GameType)
+            {
+                case "Epoch":
+                    res = ExecuteSqlNonQuery("DELETE FROM object_data WHERE ObjectID=" + uid);
+                    break;
+                default:
+                    res = ExecuteSqlNonQuery("DELETE FROM instance_vehicle WHERE id=" + uid + " AND instance_id=" + InstanceId);
+                    break;
+            }
+            return (res == 1);
+        }
+        public bool DeleteSpawn(string uid)
+        {
+            int res;
+            switch (GameType)
+            {
+                case "Epoch":
+                    res = 0;
+                    break;
+                default:
+                    res = ExecuteSqlNonQuery("DELETE FROM world_vehicle WHERE id=" + uid + " AND world_id=" + WorldId);
+                    break;
+            }
+            return (res == 1);
         }
         public string SpawnNewVehicles(int max_vehicles)
         {
@@ -703,21 +745,27 @@ namespace DBAccess
                                     + " cd.inventory inventory, cd.backpack backpack, cd.medical medical, cd.CurrentState state, cd.DateStamp last_updated"
                                     + " FROM character_data as cd, player_data as pd"
                                     + " WHERE cd.PlayerUID=pd.PlayerUID AND cd.Alive=1";
+                    cmd.CommandText += " AND cd.LastLogin > now() - interval " + FilterLastUpdated + " day";
                     _dsAlivePlayers.Clear();
                     adapter.Fill(_dsAlivePlayers);
 
                     //
                     //  Players online
                     //
-                    cmd.CommandText += " AND cd.DateStamp > now() - interval " + OnlineTimeLimit + " minute";
+                    cmd.CommandText = "SELECT cd.CharacterID id, pd.PlayerUID unique_id, pd.PlayerName name, cd.Humanity humanity, cd.worldspace worldspace,"
+                                    + " cd.inventory inventory, cd.backpack backpack, cd.medical medical, cd.CurrentState state, cd.DateStamp last_updated"
+                                    + " FROM character_data as cd, player_data as pd"
+                                    + " WHERE cd.PlayerUID=pd.PlayerUID AND cd.Alive=1";
+                    cmd.CommandText += " AND cd.LastLogin > now() - interval " + OnlineTimeLimit + " minute";
                     _dsOnlinePlayers.Clear();
                     adapter.Fill(_dsOnlinePlayers);
 
                     //
                     //  Vehicles
-                    cmd.CommandText = "SELECT CAST(ObjectID AS UNSIGNED) id, CAST(0 AS UNSIGNED) spawn_id, ClassName class_name, worldspace, inventory,"
+                    cmd.CommandText = "SELECT CAST(ObjectID AS UNSIGNED) id, CAST(0 AS UNSIGNED) spawn_id, ClassName class_name, worldspace, inventory, Hitpoints parts,"
                                     + " fuel, damage, DateStamp last_updated"
                                     + " FROM object_data WHERE CharacterID=0";
+                    cmd.CommandText += " AND Datestamp > now() - interval " + FilterLastUpdated + " day";
                     _dsVehicles.Clear();
                     adapter.Fill(_dsVehicles);
 
@@ -725,6 +773,7 @@ namespace DBAccess
                     //  Deployables
                     //
                     cmd.CommandText = "SELECT CAST(ObjectID AS UNSIGNED) id, Classname class_name, worldspace, inventory FROM object_data WHERE CharacterID!=0";
+                    cmd.CommandText += " AND Datestamp > now() - interval " + FilterLastUpdated + " day";
                     _dsDeployables.Clear();
                     adapter.Fill(_dsDeployables);
                 }

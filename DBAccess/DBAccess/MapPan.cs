@@ -10,6 +10,7 @@ namespace DBAccess
     //
     public class MapPan
     {
+        public bool IsStarted { get { return (refPositions != null); } }
         public void Start(List<Tool.Point> refPos)
         {
             refPositions = refPos;
@@ -30,6 +31,7 @@ namespace DBAccess
         public void Stop()
         {
             offset = Tool.Size.Empty;
+            refPositions = null;
         }
 
         public Tool.Size Offset { get { return offset; } }

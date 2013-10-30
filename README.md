@@ -54,6 +54,12 @@ You can edit the config file, or delete all files to restore an empty configurat
 
 History
 =======
+ - v2.8.3
+	- some fixes for Epoch DB type
+	- context menu on items will fill the property grid for selected item
+
+ - v2.8.2
+	- added Repair & Refuel command on vehicles
 
  - v2.8.1
 	- refactored some display elements

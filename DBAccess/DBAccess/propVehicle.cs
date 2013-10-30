@@ -87,7 +87,6 @@ namespace DBAccess
                     this.inventory.bags.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
             }
 
-
             arr = Tool.ParseInventoryString(idb.row.Field<string>("parts"));
             if (arr.Count > 0)
             {
