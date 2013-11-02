@@ -168,6 +168,10 @@ namespace DBAccess
             bgWorkerLoadTiles.RunWorkerAsync();
 
             Enable(false);
+
+            //Tool.CreateBitmapFromTiles("E:\\Download\\DayZDB\\DayZDB\\static.dayzdb.com\\tiles\\6\\Total.jpg",
+            //                           "E:\\Download\\DayZDB\\DayZDB\\static.dayzdb.com\\tiles\\6\\",
+            //                           64, 54, new Tool.Size(256, 256));
         }
         void ApplyMapChanges()
         {
@@ -1720,7 +1724,7 @@ namespace DBAccess
             if (mapHelper == null)
                 return;
 
-            if (!mapHelper.enabled)
+            if (mapHelper.enabled)
             {
                 // Apply map helper's new size
                 DataRow row = mycfg.worlds_def.Tables[0].Rows.Find(mycfg.world_id);

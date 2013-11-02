@@ -30,9 +30,10 @@ DayZ DB Access
 [2] : disabled with Epoch's DB because useless.
 
 Executable (ClickOnce) can be found here:
-
 http://82.67.37.43/publish
 
+Chernarus 16384*13824 bitmap can be found here:
+http://82.67.37.43/Chernarus_16k.jpg
 
 Configuration
 =============

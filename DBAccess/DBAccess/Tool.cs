@@ -234,6 +234,28 @@ namespace DBAccess
             return b;
         }
 
+        public static void CreateBitmapFromTiles(string dstFilePath, string srcDirPath, int tileCountX, int tileCountY, Tool.Size tileSize)
+        {
+            Bitmap result = new Bitmap((int)tileSize.Width * tileCountX,
+                                       (int)tileSize.Height * tileCountY);
+            Graphics g = Graphics.FromImage((Image)result);
+            g.InterpolationMode = InterpolationMode.NearestNeighbor;
+            g.Clear(Color.White);
+
+            for (int y = 0; y < tileCountY; y++)
+            {
+                for (int x = 0; x < tileCountX; x++)
+                {
+                    Bitmap input = new Bitmap(srcDirPath + x +"_" + y + ".png");
+                    g.DrawImage(input, new Rectangle((int)(x * tileSize.Width), (int)(y * tileSize.Height), (int)tileSize.Width, (int)tileSize.Height));
+                    input.Dispose();
+                }
+            }
+
+            SaveJpeg(dstFilePath, result, 90);
+            result.Dispose();
+        }
+
         public static int maxSize = 8192;
         public static Tuple<Size, Size, Size> CreateTiles(string filepath, string basepath, int limit)
         {
