@@ -17,9 +17,12 @@ namespace DBAccess
         {
             this.centerUnit = center / map.SizeCorrected;
 
+            this.currDepth = Math.Min(Math.Max(this.currDepth, map.nfo.min_depth), map.nfo.depth - 1);
+            this.destDepth = Math.Min(Math.Max(this.destDepth, map.nfo.min_depth), map.nfo.depth - 1);
+
             int newDepth = this.destDepth + depthDir;
 
-            if (newDepth >= 0 && newDepth <= map.nfo.depth - 1)
+            if ((newDepth >= map.nfo.min_depth) && (newDepth <= map.nfo.depth - 1))
             {
                 this.destDepth = newDepth;
                 this.evtHandle.Set();

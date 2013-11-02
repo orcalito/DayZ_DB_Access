@@ -233,12 +233,89 @@ namespace DBAccess
 
             return b;
         }
+
+        public static int maxSize = 8192;
         public static Tuple<Size, Size, Size> CreateTiles(string filepath, string basepath, int limit)
         {
             Bitmap input = new Bitmap(filepath);
 
             Size inSize = input.Size;
             Size sqSize = inSize.UpperPowerOf2;
+
+            double iMax = 1.0 / Math.Min(sqSize.Width, sqSize.Height);
+            Size limits = sqSize * (float)(limit * iMax);
+
+            // Cut in Xk*Xk blocks
+            Rectangle rXk = new Rectangle(0, 0, maxSize, maxSize);
+
+            Size blkCount = sqSize / maxSize;
+
+            if (Directory.Exists(basepath + "X") == false)
+                Directory.CreateDirectory(basepath + "X");
+
+            for (int y = 0; y < sqSize.Height / maxSize; y++)
+            {
+                for (int x = 0; x < sqSize.Width / maxSize; x++)
+                {
+                    rXk.Location = new Point(x * maxSize, y * maxSize);
+
+                    Size blkSize = new Size(Math.Min(input.Width - x * maxSize, maxSize), 
+                                            Math.Min(input.Height - y * maxSize, maxSize));
+                    rXk.Size = blkSize;
+
+                    if ((blkSize.Width > 0) && (blkSize.Height > 0))
+                    {
+                        Bitmap blk = CropImage(input, rXk);
+
+                        if ((blkSize.Width < maxSize) || (blkSize.Height < maxSize))
+                        {
+                            blk = IncreaseImageSize(blk, new Size(maxSize, maxSize));
+                        }
+
+                        SaveJpeg(basepath + "X\\Blk_" + y.ToString("00") + x.ToString("00") + ".jpg", blk, 90);
+                        blk.Dispose();
+                    }
+                }
+            }
+            input.Dispose();
+
+            int depth = (int)Math.Log(Math.Max(blkCount.Width, blkCount.Height), 2);
+
+            rXk.Size = new Size(maxSize, maxSize);
+            for (int y = 0; y < sqSize.Height / maxSize; y++)
+            {
+                for (int x = 0; x < sqSize.Width / maxSize; x++)
+                {
+                    string BlkPath = basepath + "X\\Blk_" + y.ToString("00") + x.ToString("00") + ".jpg";
+                    if (File.Exists(BlkPath))
+                    {
+                        input = new Bitmap(BlkPath);
+
+                        rXk.Location = new System.Drawing.Point(x * maxSize, y * maxSize);
+                        Point location = new Point(x, y);
+
+                        RecursCreateTiles(location, Size.Empty, basepath, "Tile", input, limits, depth);
+
+                        input.Dispose();
+                    }
+                }
+            }
+
+            DirectoryInfo di = new DirectoryInfo(basepath + "X");
+            if (di.Exists)
+                di.Delete(true);
+
+            return new Tuple<Size, Size, Size>(inSize, sqSize, limits);
+        }
+/*        public static Tuple<Size, Size, Size> CreateTiles(string filepath, string basepath, int limit)
+        {
+            Bitmap input = new Bitmap(filepath);
+
+            Size inSize = input.Size;
+            Size sqSize = inSize.UpperPowerOf2;
+
+            if (sqSize.Width * sqSize.Height > (16384 * 16384))
+                throw new Exception("Input bitmap is too large, don't use bitmaps larger than 16384 * 16384");
 
             Bitmap sqInput = IncreaseImageSize(input, sqSize);
 
@@ -252,7 +329,7 @@ namespace DBAccess
             sqInput.Dispose();
 
             return new Tuple<Size, Size, Size>(inSize, sqSize, limits);
-        }
+        }*/
         private static void RecursCreateTiles(Point father, Size child, string basepath, string name, Bitmap input, Size limits, int recCnt)
         {
             Point pos = father + child;

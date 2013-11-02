@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.IO;
 
 namespace DBAccess
 {
@@ -71,12 +72,14 @@ namespace DBAccess
         }
         public float ResizeFromZoom(float zoom)
         {
-            Tool.Size maxSize = new Tool.Size(/*2**/(int)nfo.defTileSize.Width << (nfo.depth - 1),
-                /*2**/(int)nfo.defTileSize.Height << (nfo.depth - 1));
+            Tool.Size minSize = nfo.defTileSize * (float)Math.Pow(2, nfo.min_depth);
+
+            Tool.Size maxSize = new Tool.Size((int)nfo.defTileSize.Width << (nfo.depth - 1),
+                                              (int)nfo.defTileSize.Height << (nfo.depth - 1));
 
             Tool.Size temp = nfo.defTileSize * zoom;
 
-            Size = Tool.Size.Max(nfo.defTileSize, Tool.Size.Min(maxSize, temp));
+            Size = Tool.Size.Max(minSize, Tool.Size.Min(maxSize, temp));
 
             return Size.Width / nfo.defTileSize.Width;
         }
@@ -96,6 +99,9 @@ namespace DBAccess
 
             _depth = (int)Math.Log(Math.Max(reqTileCount.Width, reqTileCount.Height), 2);
 
+            // Clamp to min depth
+            _depth = Math.Max(_depth, nfo.min_depth); 
+
             // Clamp to max depth
             _depth = Math.Min(_depth, nfo.depth - 1);
 
@@ -111,10 +117,18 @@ namespace DBAccess
             _sizeCorrected = (_size * _ratio).Ceiling;
         }
 
+        public void Calibrate()
+        {
+            nfo.min_depth = 0;
+            while (Directory.Exists(nfo.tileBasePath + nfo.min_depth) == false)
+                nfo.min_depth++;
+        }
+
         public class BitmapNfo
         {
             public string tileBasePath = "";
             public int depth = 0;
+            public int min_depth = 0;
             public Tool.Size defTileSize = new Tool.Size(1, 1);
             public Tool.Size dbMapSize = new Tool.Size(1, 1);
             public Tool.Point dbMapOffsetUnit = Tool.Point.Empty;

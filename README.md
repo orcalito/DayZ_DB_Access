@@ -57,6 +57,13 @@ You can edit the config file, or delete all files to restore an empty configurat
 
 History
 =======
+ - v2.8.5
+	- refactored bitmap to tiles generation. Can now support larger input bitmap (validated with a 20897x20900 image)
+
+ - v2.8.4
+	- background bitmap tiles loading
+	- try to display zoomed father if wanted tile is not yet loaded
+
  - v2.8.3
 	- some fixes for Epoch DB type
 	- context menu on items will fill the property grid for selected item

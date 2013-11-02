@@ -848,7 +848,8 @@ namespace DBAccess
 
                     if (File.Exists(filepath))
                     {
-                        virtualMap.nfo.tileBasePath = configPath + "\\World" + mycfg.world_id + "\\LOD"; ;
+                        virtualMap.nfo.tileBasePath = configPath + "\\World" + mycfg.world_id + "\\LOD";
+                        virtualMap.Calibrate();
                     }
                     else
                     {
@@ -863,7 +864,7 @@ namespace DBAccess
                     virtualMap.nfo.dbMapSize = new Tool.Size(rowW.Field<UInt32>("DB_Width"), rowW.Field<UInt32>("DB_Height"));
                     virtualMap.nfo.dbRefMapSize = new Tool.Size(rowW.Field<UInt32>("DB_refWidth"), rowW.Field<UInt32>("DB_refHeight"));
                     virtualMap.nfo.dbMapOffsetUnit = new Tool.Point(rowW.Field<int>("DB_X") / virtualMap.nfo.dbRefMapSize.Width,
-                                                                     rowW.Field<int>("DB_Y") / virtualMap.nfo.dbRefMapSize.Height);
+                                                                    rowW.Field<int>("DB_Y") / virtualMap.nfo.dbRefMapSize.Height);
                 }
 
                 if (virtualMap.Enabled)
@@ -1500,7 +1501,7 @@ namespace DBAccess
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show("Error while generating tiles !\r\nMaybe the bitmap is too large to be processed...");
+                        MessageBox.Show("Error while generating tiles !\r\nMaybe the bitmap is too large to be processed, max size is 16384*16384...");
                         textBoxCmdStatus.Text += ex.ToString();
                         this.Cursor = Cursors.Arrow;
                     }
