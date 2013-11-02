@@ -22,6 +22,8 @@ namespace DBAccess
 
         private static int bUserAction = 0;
         private static EventWaitHandle eventFastBgWorker = new EventWaitHandle(false, EventResetMode.AutoReset);
+        private static Mutex mtxTileRequest = new Mutex();
+        private static Mutex mtxTileUpdate = new Mutex();
         private DlgUpdateIcons dlgUpdateIcons;
         private DlgUpdateIcons dlgRefreshMap;
         //
@@ -163,6 +165,7 @@ namespace DBAccess
 
             bgWorkerDatabase.RunWorkerAsync();
             bgWorkerFast.RunWorkerAsync();
+            bgWorkerLoadTiles.RunWorkerAsync();
 
             Enable(false);
         }
@@ -258,6 +261,8 @@ namespace DBAccess
 
             if (virtualMap.Enabled)
             {
+                mtxTileRequest.WaitOne();
+
                 tileRequests.Clear();
 
                 Rectangle recPanel = new Rectangle(Point.Empty, splitContainer1.Panel1.Size);
@@ -272,7 +277,7 @@ namespace DBAccess
 
                         if (recPanel.IntersectsWith(recTile))
                         {
-                            tileReq req = new tileReq();
+                            tileReq req = new tileReq(x, y, tileDepth);
                             req.path = virtualMap.nfo.tileBasePath + tileDepth + "\\Tile" + y.ToString("000") + x.ToString("000") + ".jpg";
                             req.rec = recTile;
                             tileRequests.Add(req);
@@ -280,18 +285,7 @@ namespace DBAccess
                     }
                 }
 
-                long now_ticks = DateTime.Now.Ticks;
-
-                foreach (tileReq req in tileRequests)
-                {
-                    tileNfo nfo = tileCache.Find(x => req.path == x.path);
-                    if (nfo == null)
-                        tileCache.Add(nfo = new tileNfo(req.path));
-                    else
-                        nfo.ticks = now_ticks;
-                }
-
-                tileCache.RemoveAll(x => now_ticks - x.ticks > 10 * 10000000L);
+                mtxTileRequest.ReleaseMutex();
             }
 
             foreach (iconDB idb in listIcons)
@@ -1047,6 +1041,7 @@ namespace DBAccess
                     e.Graphics.InterpolationMode = InterpolationMode.NearestNeighbor;
                     e.Graphics.PixelOffsetMode = PixelOffsetMode.Half;
 
+                    mtxTileUpdate.WaitOne();
                     int nb_tilesDrawn = 0;
                     foreach (tileReq req in tileRequests)
                     {
@@ -1054,10 +1049,31 @@ namespace DBAccess
 
                         if (nfo != null)
                         {
+                            //  Display tile
                             e.Graphics.DrawImage(nfo.bitmap, req.rec);
                             nb_tilesDrawn++;
                         }
+                        else
+                        {
+                            // Display father
+                            int fdepth = req.depth - 1;
+                            if (fdepth >= 0)
+                            {
+                                int fx = req.x / 2;
+                                int fy = req.y / 2;
+                                string fpath = virtualMap.nfo.tileBasePath + fdepth + "\\Tile" + fy.ToString("000") + fx.ToString("000") + ".jpg";
+                                nfo = tileCache.Find(x => fpath == x.path);
+                                if (nfo != null)
+                                {
+                                    int halfW = nfo.bitmap.Width/2;
+                                    int halfH = nfo.bitmap.Height/2;
+                                    Rectangle recSrc = new Rectangle(((req.x & 1) == 0) ? 0 : halfW, ((req.y & 1) == 0) ? 0 : halfH, halfW, halfH);
+                                    e.Graphics.DrawImage(nfo.bitmap, req.rec, recSrc, GraphicsUnit.Pixel);
+                                }
+                            }
+                        }
                     }
+                    mtxTileUpdate.ReleaseMutex();
 
                     e.Graphics.CompositingMode = CompositingMode.SourceOver;
 
@@ -1455,7 +1471,9 @@ namespace DBAccess
 
                             MessageBox.Show("Please wait while generating tiles...\r\nThis is done once when selecting a new map.");
 
+                            mtxTileUpdate.WaitOne();
                             tileCache.Clear();
+                            mtxTileUpdate.ReleaseMutex();
 
                             this.Cursor = Cursors.WaitCursor;
 
@@ -1776,6 +1794,67 @@ namespace DBAccess
 
                     System.Threading.Interlocked.CompareExchange(ref bUserAction, 0, 1);
                 }
+            }
+        }
+        private void bgWorkerLoadTiles_DoWork(object sender, DoWorkEventArgs e)
+        {
+            BackgroundWorker bw = sender as BackgroundWorker;
+
+            while (!bw.CancellationPending)
+            {
+                bool bCacheChanged = false;
+
+                //
+                //  fast: Check cache validity (mutexed)
+                //
+                mtxTileRequest.WaitOne();
+
+                tileReq[] toCheck = tileRequests.ToArray();
+
+                List<tileReq> toLoad = new List<tileReq>();
+
+                long now_ticks = DateTime.Now.Ticks;
+
+                foreach (tileReq req in toCheck)
+                {
+                    tileNfo nfo = tileCache.Find(x => req.path == x.path);
+                    if (nfo == null)
+                        toLoad.Add(req);
+                    else
+                        nfo.ticks = now_ticks;
+                }
+
+                bCacheChanged = (toLoad.Count != 0);
+
+                mtxTileRequest.ReleaseMutex();
+
+                List<tileNfo> newTiles = new List<tileNfo>();
+                //
+                //  heavy: Loading (not mutexed)
+                //
+                foreach (tileReq req in toLoad)
+                {
+                    tileNfo nfo = new tileNfo(req.path);
+
+                    // each tile loaded is immediately inserted in cache
+                    mtxTileUpdate.WaitOne();
+                    tileCache.Add(nfo);
+                    mtxTileUpdate.ReleaseMutex();
+                }
+
+                //
+                //  fast: Update cache (mutexed)
+                //
+                mtxTileUpdate.WaitOne();
+
+                tileCache.RemoveAll(x => now_ticks - x.ticks > 10 * 10000000L);
+
+                mtxTileUpdate.ReleaseMutex();
+
+                if (bCacheChanged)
+                    this.Invoke((System.Threading.ThreadStart)(delegate { splitContainer1.Panel1.Invalidate(); }));
+
+                Thread.Sleep(50);
             }
         }
         //

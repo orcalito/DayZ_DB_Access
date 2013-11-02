@@ -8,10 +8,20 @@ using System.Threading.Tasks;
 
 namespace DBAccess
 {
-    class tileReq
+    public class tileReq
     {
+        public tileReq(int x, int y, int depth)
+        {
+            this.x = x;
+            this.y = y;
+            this.depth = depth;
+        }
+
         public string path;
         public Rectangle rec;
+        public int x;
+        public int y;
+        public int depth;
     }
     class tileNfo
     {
