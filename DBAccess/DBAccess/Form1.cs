@@ -281,7 +281,7 @@ namespace DBAccess
 
                         if (recPanel.IntersectsWith(recTile))
                         {
-                            tileReq req = new tileReq(x, y, tileDepth);
+                            tileReq req = new tileReq(x, y, tileDepth, (tileDepth==virtualMap.nfo.min_depth));
                             req.path = virtualMap.nfo.tileBasePath + tileDepth + "\\Tile" + y.ToString("000") + x.ToString("000") + ".jpg";
                             req.rec = recTile;
                             tileRequests.Add(req);
@@ -1060,20 +1060,30 @@ namespace DBAccess
                         }
                         else
                         {
-                            // Display father
-                            int fdepth = req.depth - 1;
-                            if (fdepth >= 0)
+                            //bool bDone = false;
+                            int hdepth = req.depth;
+                            int hx = req.x;
+                            int hy = req.y;
+                            int hpow = 1;
+
+                            while (hdepth > virtualMap.nfo.min_depth)
                             {
-                                int fx = req.x / 2;
-                                int fy = req.y / 2;
-                                string fpath = virtualMap.nfo.tileBasePath + fdepth + "\\Tile" + fy.ToString("000") + fx.ToString("000") + ".jpg";
+                                // Try to display the closest ancestor
+                                hdepth--;
+                                hx /= 2;
+                                hy /= 2;
+                                hpow *= 2;
+                                string fpath = virtualMap.nfo.tileBasePath + hdepth + "\\Tile" + hy.ToString("000") + hx.ToString("000") + ".jpg";
                                 nfo = tileCache.Find(x => fpath == x.path);
                                 if (nfo != null)
                                 {
-                                    int halfW = nfo.bitmap.Width/2;
-                                    int halfH = nfo.bitmap.Height/2;
-                                    Rectangle recSrc = new Rectangle(((req.x & 1) == 0) ? 0 : halfW, ((req.y & 1) == 0) ? 0 : halfH, halfW, halfH);
+                                    int width = nfo.bitmap.Width / hpow;
+                                    int height = nfo.bitmap.Height / hpow;
+                                    int x = (req.x % hpow) * width;
+                                    int y = (req.y % hpow) * height;
+                                    Rectangle recSrc = new Rectangle(x, y, width, height);
                                     e.Graphics.DrawImage(nfo.bitmap, req.rec, recSrc, GraphicsUnit.Pixel);
+                                    break;
                                 }
                             }
                         }
@@ -1790,7 +1800,7 @@ namespace DBAccess
                             dlgRefreshMap = this.ApplyMapChanges;
                             this.Invoke(dlgRefreshMap);
 
-                            Thread.Sleep(20);
+                            Thread.Sleep(10);
                         }
 
                         dlgRefreshMap = this.ApplyMapChanges;
@@ -1839,11 +1849,12 @@ namespace DBAccess
                 //
                 foreach (tileReq req in toLoad)
                 {
-                    tileNfo nfo = new tileNfo(req.path);
+                    tileNfo nfo = new tileNfo(req);
 
                     // each tile loaded is immediately inserted in cache
                     mtxTileUpdate.WaitOne();
                     tileCache.Add(nfo);
+                    //Thread.Sleep(25);
                     mtxTileUpdate.ReleaseMutex();
                 }
 
@@ -1852,14 +1863,14 @@ namespace DBAccess
                 //
                 mtxTileUpdate.WaitOne();
 
-                tileCache.RemoveAll(x => now_ticks - x.ticks > 10 * 10000000L);
+                tileCache.RemoveAll(x => (now_ticks - x.ticks > 10 * 10000000L) && !x.bKeepLoaded);
 
                 mtxTileUpdate.ReleaseMutex();
 
                 if (bCacheChanged)
                     this.Invoke((System.Threading.ThreadStart)(delegate { splitContainer1.Panel1.Invalidate(); }));
 
-                Thread.Sleep(50);
+                Thread.Sleep(5);
             }
         }
         //

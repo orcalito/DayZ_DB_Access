@@ -10,11 +10,12 @@ namespace DBAccess
 {
     public class tileReq
     {
-        public tileReq(int x, int y, int depth)
+        public tileReq(int x, int y, int depth, bool bKeepLoaded)
         {
             this.x = x;
             this.y = y;
             this.depth = depth;
+            this.bKeepLoaded = bKeepLoaded;
         }
 
         public string path;
@@ -22,15 +23,16 @@ namespace DBAccess
         public int x;
         public int y;
         public int depth;
+        public bool bKeepLoaded;
     }
     class tileNfo
     {
-        public tileNfo(string path)
+        public tileNfo(tileReq req)
         {
-            bFileExists = File.Exists(path);
-            if (bFileExists)
+            if (File.Exists(req.path))
             {
-                this.path = path;
+                this.bKeepLoaded = req.bKeepLoaded;
+                this.path = req.path;
                 //this.bitmap = new Bitmap(path);
                 using (var bmpTemp = new Bitmap(path))
                 {
@@ -45,9 +47,9 @@ namespace DBAccess
                 bitmap.Dispose();
         }
 
-        public bool bFileExists = false;
         public string path;
         public Bitmap bitmap;
         public long ticks;
+        public bool bKeepLoaded = false;
     }
 }
