@@ -58,6 +58,9 @@ You can edit the config file, or delete all files to restore an empty configurat
 
 History
 =======
+ - v2.8.6
+	- added automatic selection of DB schema (GameType must be reset to "Auto")
+ 
  - v2.8.5
 	- refactored bitmap to tiles generation. Can now support larger input bitmap (validated with a 20897x20900 image)
 

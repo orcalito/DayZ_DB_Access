@@ -850,6 +850,7 @@
             this.comboBoxGameType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboBoxGameType.FormattingEnabled = true;
             this.comboBoxGameType.Items.AddRange(new object[] {
+            "Auto",
             "Classic",
             "Epoch"});
             this.comboBoxGameType.Location = new System.Drawing.Point(80, 120);

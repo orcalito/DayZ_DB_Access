@@ -121,6 +121,7 @@ namespace DBAccess
         }
         #endregion
 
+        public bool IsEpochSchema { get { return (mycfg.game_type == "Epoch") || (myDB.GameType == "Epoch"); } }
         public Form1()
         {
             InitializeComponent();
@@ -168,10 +169,6 @@ namespace DBAccess
             bgWorkerLoadTiles.RunWorkerAsync();
 
             Enable(false);
-
-            //Tool.CreateBitmapFromTiles("E:\\Download\\DayZDB\\DayZDB\\static.dayzdb.com\\tiles\\6\\Total.jpg",
-            //                           "E:\\Download\\DayZDB\\DayZDB\\static.dayzdb.com\\tiles\\6\\",
-            //                           64, 54, new Tool.Size(256, 256));
         }
         void ApplyMapChanges()
         {
@@ -562,7 +559,7 @@ namespace DBAccess
         }
         private void Enable(bool bState)
         {
-            bool bEpochGameType = (mycfg.game_type == "Epoch");
+            bool bEpochGameType = this.IsEpochSchema;
             
             buttonConnect.Enabled = !bState;
 
@@ -920,7 +917,7 @@ namespace DBAccess
         }
         private void contextMenuStripAddVehicle_Opening(object sender, CancelEventArgs e)
         {
-            if (!((currentMode == displayMode.ShowVehicle || currentMode == displayMode.ShowSpawn) && (mycfg.game_type != "Epoch")))
+            if (!((currentMode == displayMode.ShowVehicle || currentMode == displayMode.ShowSpawn) && !IsEpochSchema))
             {
                 e.Cancel = true;
             }
@@ -1446,7 +1443,7 @@ namespace DBAccess
             ComboBox cb = sender as ComboBox;
 
             mycfg.game_type = cb.Items[cb.SelectedIndex] as string;
-            numericUpDownInstanceId.Enabled = (cb.SelectedIndex == 0);
+            numericUpDownInstanceId.Enabled = (cb.SelectedItem.ToString() != "Epoch");
         }
         private void cbCartographer_CheckedChanged(object sender, EventArgs e)
         {

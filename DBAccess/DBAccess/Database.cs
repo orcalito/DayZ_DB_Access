@@ -54,7 +54,6 @@ namespace DBAccess
             {
                 sqlCnx.Open();
 
-                this.bConnected = true;
                 this.FilterLastUpdated = cfg.filter_last_updated;
                 this.OnlineTimeLimit = int.Parse(cfg.online_time_limit);
                 this.gameType = cfg.game_type;
@@ -64,23 +63,53 @@ namespace DBAccess
                 dsVehicleTypes = cfg.vehicle_types;
                 dsDeployableTypes = cfg.deployable_types;
 
-                switch (GameType)
+                if (gameType == "Auto")
                 {
-                    case "Epoch": EpochDB_OnConnection(); break;
-                    default: ClassicDB_OnConnection(); break;
+                    bool bFoundClassic = false;
+                    bool bFoundEpoch = false;
+
+                    MySqlCommand cmd = sqlCnx.CreateCommand();
+                    cmd.CommandText = "SHOW TABLES";
+                    MySqlDataReader reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        string name = reader.GetString(0);
+
+                        bFoundClassic |= (name == "instance_vehicle");
+                        bFoundEpoch |= (name == "object_data");
+                    }
+                    reader.Close();
+
+                    if (bFoundEpoch && !bFoundClassic)
+                        gameType = "Epoch";
+                    else if (!bFoundEpoch && bFoundClassic)
+                        gameType = "Classic";
+                    else
+                    {
+                        MessageBox.Show("Can't determine the type of database between epoch and default DayZ schema, using default schema");
+                        gameType = "Classic";
+                    }
                 }
+
+                this.bConnected = true;
+
+                OnConnection();
 
                 Refresh();
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "Exception found");
+                this.bConnected = false;
             }
             mtxUpdate.ReleaseMutex();
         }
         public void CloseConnection()
         {
             mtxUseDS.WaitOne();
+            mtxUpdate.WaitOne();
+
+            this.bConnected = false;
 
             dsOnlinePlayers.Clear();
             dsAlivePlayers.Clear();
@@ -88,14 +117,11 @@ namespace DBAccess
             dsSpawnPoints.Clear();
             dsDeployables.Clear();
 
-            mtxUseDS.ReleaseMutex();
-
-            mtxUpdate.WaitOne();
-
             if (sqlCnx != null)
                 sqlCnx.Close();
 
             mtxUpdate.ReleaseMutex();
+            mtxUseDS.ReleaseMutex();
         }
         public void OnConnection()
         {
@@ -107,6 +133,9 @@ namespace DBAccess
         }
         public void Refresh()
         {
+            if (!Connected)
+                return;
+
             switch (GameType)
             {
                 case "Epoch": EpochDB_Refresh(); break;
@@ -521,9 +550,13 @@ namespace DBAccess
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "Exception found");
+                this.bConnected = false;
             }
 
             mtxUpdate.ReleaseMutex();
+
+            if (!Connected)
+                return;
 
             mtxUseDS.WaitOne();
 
@@ -571,6 +604,7 @@ namespace DBAccess
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "Exception found");
+                this.bConnected = false;
             }
 
             mtxUseDS.ReleaseMutex();
@@ -593,73 +627,77 @@ namespace DBAccess
 
                 mtxUpdate.WaitOne();
 
-                try
+                if (bConnected)
                 {
-                    MySqlCommand cmd = sqlCnx.CreateCommand();
-                    MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
+                    try
+                    {
+                        MySqlCommand cmd = sqlCnx.CreateCommand();
+                        MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
 
-                    //
-                    //  Players alive
-                    //
-                    cmd.CommandText = "SELECT s.id id, s.unique_id unique_id, p.name name, p.humanity humanity, s.worldspace worldspace,"
-                                    + " s.inventory inventory, s.backpack backpack, s.medical medical, s.state state, s.last_updated last_updated"
-                                    + " FROM survivor as s, profile as p WHERE s.unique_id=p.unique_id AND s.world_id=" + WorldId + " AND s.is_dead=0";
-                    cmd.CommandText += " AND s.last_updated > now() - interval " + FilterLastUpdated + " day";
-                    _dsAlivePlayers.Clear();
-                    adapter.Fill(_dsAlivePlayers);
+                        //
+                        //  Players alive
+                        //
+                        cmd.CommandText = "SELECT s.id id, s.unique_id unique_id, p.name name, p.humanity humanity, s.worldspace worldspace,"
+                                        + " s.inventory inventory, s.backpack backpack, s.medical medical, s.state state, s.last_updated last_updated"
+                                        + " FROM survivor as s, profile as p WHERE s.unique_id=p.unique_id AND s.world_id=" + WorldId + " AND s.is_dead=0";
+                        cmd.CommandText += " AND s.last_updated > now() - interval " + FilterLastUpdated + " day";
+                        _dsAlivePlayers.Clear();
+                        adapter.Fill(_dsAlivePlayers);
 
-                    //
-                    //  Players online
-                    //
-                    cmd.CommandText = "SELECT s.id id, s.unique_id unique_id, p.name name, p.humanity humanity, s.worldspace worldspace,"
-                                    + " s.inventory inventory, s.backpack backpack, s.medical medical, s.state state, s.last_updated last_updated"
-                                    + " FROM survivor as s, profile as p WHERE s.unique_id=p.unique_id AND s.world_id=" + WorldId + " AND s.is_dead=0"
-                                    + " AND s.last_updated > now() - interval " + OnlineTimeLimit + " minute";
-                    _dsOnlinePlayers.Clear();
-                    adapter.Fill(_dsOnlinePlayers);
+                        //
+                        //  Players online
+                        //
+                        cmd.CommandText = "SELECT s.id id, s.unique_id unique_id, p.name name, p.humanity humanity, s.worldspace worldspace,"
+                                        + " s.inventory inventory, s.backpack backpack, s.medical medical, s.state state, s.last_updated last_updated"
+                                        + " FROM survivor as s, profile as p WHERE s.unique_id=p.unique_id AND s.world_id=" + WorldId + " AND s.is_dead=0"
+                                        + " AND s.last_updated > now() - interval " + OnlineTimeLimit + " minute";
+                        _dsOnlinePlayers.Clear();
+                        adapter.Fill(_dsOnlinePlayers);
 
-                    //
-                    //  Vehicles
-                    //
-                    cmd.CommandText = "SELECT iv.id id, wv.id spawn_id, v.class_name class_name, iv.worldspace worldspace, iv.inventory inventory,"
-                                    + " iv.fuel fuel, iv.damage damage, iv.last_updated last_updated, iv.parts parts"
-                                    + " FROM vehicle as v, world_vehicle as wv, instance_vehicle as iv"
-                                    + " WHERE iv.instance_id=" + InstanceId
-                                    + " AND iv.world_vehicle_id=wv.id AND wv.vehicle_id=v.id"
-                                    + " AND iv.last_updated > now() - interval " + FilterLastUpdated + " day";
-                    _dsVehicles.Clear();
-                    adapter.Fill(_dsVehicles);
+                        //
+                        //  Vehicles
+                        //
+                        cmd.CommandText = "SELECT iv.id id, wv.id spawn_id, v.class_name class_name, iv.worldspace worldspace, iv.inventory inventory,"
+                                        + " iv.fuel fuel, iv.damage damage, iv.last_updated last_updated, iv.parts parts"
+                                        + " FROM vehicle as v, world_vehicle as wv, instance_vehicle as iv"
+                                        + " WHERE iv.instance_id=" + InstanceId
+                                        + " AND iv.world_vehicle_id=wv.id AND wv.vehicle_id=v.id"
+                                        + " AND iv.last_updated > now() - interval " + FilterLastUpdated + " day";
+                        _dsVehicles.Clear();
+                        adapter.Fill(_dsVehicles);
 
-                    //
-                    //  Vehicle Spawn points
-                    //
-                    cmd.CommandText = "SELECT w.id id, w.vehicle_id vid, w.worldspace worldspace, w.chance chance, v.inventory inventory, v.class_name class_name FROM world_vehicle as w, vehicle as v"
-                                    + " WHERE w.world_id=" + WorldId + " AND w.vehicle_id=v.id";
-                    _dsVehicleSpawnPoints.Clear();
-                    adapter.Fill(_dsVehicleSpawnPoints);
+                        //
+                        //  Vehicle Spawn points
+                        //
+                        cmd.CommandText = "SELECT w.id id, w.vehicle_id vid, w.worldspace worldspace, w.chance chance, v.inventory inventory, v.class_name class_name FROM world_vehicle as w, vehicle as v"
+                                        + " WHERE w.world_id=" + WorldId + " AND w.vehicle_id=v.id";
+                        _dsVehicleSpawnPoints.Clear();
+                        adapter.Fill(_dsVehicleSpawnPoints);
 
-                    //
-                    //  Deployables
-                    //
-                    cmd.CommandText = "SELECT id.id id, d.class_name class_name, id.worldspace, id.inventory"
-                                    + " FROM instance_deployable as id, deployable as d"
-                                    + " WHERE instance_id=" + InstanceId
-                                    + " AND id.deployable_id=d.id"
-                                    + " AND id.last_updated > now() - interval " + FilterLastUpdated + " day";
-                    _dsDeployables.Clear();
-                    adapter.Fill(_dsDeployables);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message, "Exception found");
-                }
+                        //
+                        //  Deployables
+                        //
+                        cmd.CommandText = "SELECT id.id id, d.class_name class_name, id.worldspace, id.inventory"
+                                        + " FROM instance_deployable as id, deployable as d"
+                                        + " WHERE instance_id=" + InstanceId
+                                        + " AND id.deployable_id=d.id"
+                                        + " AND id.last_updated > now() - interval " + FilterLastUpdated + " day";
+                        _dsDeployables.Clear();
+                        adapter.Fill(_dsDeployables);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message, "Exception found");
+                        this.bConnected = false;
+                    }
 
-                foreach (DataRow row in _dsDeployables.Tables[0].Rows)
-                {
-                    string name = row.Field<string>("class_name");
+                    foreach (DataRow row in _dsDeployables.Tables[0].Rows)
+                    {
+                        string name = row.Field<string>("class_name");
 
-                    if (dsDeployableTypes.Tables[0].Rows.Find(name) == null)
-                        dsDeployableTypes.Tables[0].Rows.Add(name, "Unknown", true);
+                        if (dsDeployableTypes.Tables[0].Rows.Find(name) == null)
+                            dsDeployableTypes.Tables[0].Rows.Add(name, "Unknown", true);
+                    }
                 }
 
                 mtxUpdate.ReleaseMutex();
@@ -699,6 +737,7 @@ namespace DBAccess
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "Exception found");
+                this.bConnected = false;
             }
 
             mtxUpdate.ReleaseMutex();
@@ -718,6 +757,7 @@ namespace DBAccess
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "Exception found");
+                this.bConnected = false;
             }
 
             mtxUseDS.ReleaseMutex();
@@ -733,61 +773,65 @@ namespace DBAccess
 
                 mtxUpdate.WaitOne();
 
-                try
+                if (bConnected)
                 {
-                    MySqlCommand cmd = sqlCnx.CreateCommand();
-                    MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
+                    try
+                    {
+                        MySqlCommand cmd = sqlCnx.CreateCommand();
+                        MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
 
-                    //
-                    //  Players alive
-                    //
-                    cmd.CommandText = "SELECT cd.CharacterID id, pd.PlayerUID unique_id, pd.PlayerName name, cd.Humanity humanity, cd.worldspace worldspace,"
-                                    + " cd.inventory inventory, cd.backpack backpack, cd.medical medical, cd.CurrentState state, cd.DateStamp last_updated"
-                                    + " FROM character_data as cd, player_data as pd"
-                                    + " WHERE cd.PlayerUID=pd.PlayerUID AND cd.Alive=1";
-                    cmd.CommandText += " AND cd.LastLogin > now() - interval " + FilterLastUpdated + " day";
-                    _dsAlivePlayers.Clear();
-                    adapter.Fill(_dsAlivePlayers);
+                        //
+                        //  Players alive
+                        //
+                        cmd.CommandText = "SELECT cd.CharacterID id, pd.PlayerUID unique_id, pd.PlayerName name, cd.Humanity humanity, cd.worldspace worldspace,"
+                                        + " cd.inventory inventory, cd.backpack backpack, cd.medical medical, cd.CurrentState state, cd.DateStamp last_updated"
+                                        + " FROM character_data as cd, player_data as pd"
+                                        + " WHERE cd.PlayerUID=pd.PlayerUID AND cd.Alive=1";
+                        cmd.CommandText += " AND cd.LastLogin > now() - interval " + FilterLastUpdated + " day";
+                        _dsAlivePlayers.Clear();
+                        adapter.Fill(_dsAlivePlayers);
 
-                    //
-                    //  Players online
-                    //
-                    cmd.CommandText = "SELECT cd.CharacterID id, pd.PlayerUID unique_id, pd.PlayerName name, cd.Humanity humanity, cd.worldspace worldspace,"
-                                    + " cd.inventory inventory, cd.backpack backpack, cd.medical medical, cd.CurrentState state, cd.DateStamp last_updated"
-                                    + " FROM character_data as cd, player_data as pd"
-                                    + " WHERE cd.PlayerUID=pd.PlayerUID AND cd.Alive=1";
-                    cmd.CommandText += " AND cd.LastLogin > now() - interval " + OnlineTimeLimit + " minute";
-                    _dsOnlinePlayers.Clear();
-                    adapter.Fill(_dsOnlinePlayers);
+                        //
+                        //  Players online
+                        //
+                        cmd.CommandText = "SELECT cd.CharacterID id, pd.PlayerUID unique_id, pd.PlayerName name, cd.Humanity humanity, cd.worldspace worldspace,"
+                                        + " cd.inventory inventory, cd.backpack backpack, cd.medical medical, cd.CurrentState state, cd.DateStamp last_updated"
+                                        + " FROM character_data as cd, player_data as pd"
+                                        + " WHERE cd.PlayerUID=pd.PlayerUID AND cd.Alive=1";
+                        cmd.CommandText += " AND cd.LastLogin > now() - interval " + OnlineTimeLimit + " minute";
+                        _dsOnlinePlayers.Clear();
+                        adapter.Fill(_dsOnlinePlayers);
 
-                    //
-                    //  Vehicles
-                    cmd.CommandText = "SELECT CAST(ObjectID AS UNSIGNED) id, CAST(0 AS UNSIGNED) spawn_id, ClassName class_name, worldspace, inventory, Hitpoints parts,"
-                                    + " fuel, damage, DateStamp last_updated"
-                                    + " FROM object_data WHERE CharacterID=0";
-                    cmd.CommandText += " AND Datestamp > now() - interval " + FilterLastUpdated + " day";
-                    _dsVehicles.Clear();
-                    adapter.Fill(_dsVehicles);
+                        //
+                        //  Vehicles
+                        cmd.CommandText = "SELECT CAST(ObjectID AS UNSIGNED) id, CAST(0 AS UNSIGNED) spawn_id, ClassName class_name, worldspace, inventory, Hitpoints parts,"
+                                        + " fuel, damage, DateStamp last_updated"
+                                        + " FROM object_data WHERE CharacterID=0";
+                        cmd.CommandText += " AND Datestamp > now() - interval " + FilterLastUpdated + " day";
+                        _dsVehicles.Clear();
+                        adapter.Fill(_dsVehicles);
 
-                    //
-                    //  Deployables
-                    //
-                    cmd.CommandText = "SELECT CAST(ObjectID AS UNSIGNED) id, Classname class_name, worldspace, inventory FROM object_data WHERE CharacterID!=0";
-                    cmd.CommandText += " AND Datestamp > now() - interval " + FilterLastUpdated + " day";
-                    _dsDeployables.Clear();
-                    adapter.Fill(_dsDeployables);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message, "Exception found");
-                }
+                        //
+                        //  Deployables
+                        //
+                        cmd.CommandText = "SELECT CAST(ObjectID AS UNSIGNED) id, Classname class_name, worldspace, inventory FROM object_data WHERE CharacterID!=0";
+                        cmd.CommandText += " AND Datestamp > now() - interval " + FilterLastUpdated + " day";
+                        _dsDeployables.Clear();
+                        adapter.Fill(_dsDeployables);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message, "Exception found");
+                        this.bConnected = false;
+                    }
 
-                foreach (DataRow row in _dsDeployables.Tables[0].Rows)
-                {
-                    string name = row.Field<string>("class_name");
+                    foreach (DataRow row in _dsDeployables.Tables[0].Rows)
+                    {
+                        string name = row.Field<string>("class_name");
 
-                    if (dsDeployableTypes.Tables[0].Rows.Find(name) == null)
-                        dsDeployableTypes.Tables[0].Rows.Add(name, "Unknown", true);
+                        if (dsDeployableTypes.Tables[0].Rows.Find(name) == null)
+                            dsDeployableTypes.Tables[0].Rows.Add(name, "Unknown", true);
+                    }
                 }
 
                 mtxUpdate.ReleaseMutex();
