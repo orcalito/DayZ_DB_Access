@@ -1,4 +1,5 @@
-﻿using MySql.Data.MySqlClient;
+﻿using BattleNET;
+using MySql.Data.MySqlClient;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -8,6 +9,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Globalization;
 using System.IO;
+using System.Net;
 using System.Reflection;
 using System.Threading;
 using System.Windows.Forms;
@@ -15,7 +17,7 @@ using System.Xml.Serialization;
 
 namespace DBAccess
 {
-    public partial class Form1 : Form
+    public partial class MainWindow : Form
     {
         #region Fields
         static ModuleVersion curCfgVersion = new ModuleVersion(4, 1);
@@ -33,6 +35,11 @@ namespace DBAccess
         private VirtualMap virtualMap = new VirtualMap();
         //
         private myDatabase myDB = new myDatabase();
+        //
+        internal BattlEyeClient rCon = null;
+        private DataSet PlayersOnline = new DataSet("Players Online DS");
+        //
+        private MessageToPlayer diagMsgToPlayer = null;
         //
         private Dictionary<string, UIDGraph> dicUIDGraph = new Dictionary<string, UIDGraph>();
         private List<iconDB> listIcons = new List<iconDB>();
@@ -119,12 +126,20 @@ namespace DBAccess
                 }
             }
         }
+        private iconDB selectedIcon;
+
         #endregion
 
         public bool IsEpochSchema { get { return (mycfg.game_type == "Epoch") || (myDB.GameType == "Epoch"); } }
-        public Form1()
+        public MainWindow()
         {
             InitializeComponent();
+
+            //
+            splitContainerGlobal.Panel2Collapsed = true;
+
+            //
+            diagMsgToPlayer = new MessageToPlayer(this);
 
             //
             ModeButtons.Add(displayMode.SetMaps, toolStripStatusWorld);
@@ -164,6 +179,18 @@ namespace DBAccess
             //
             LoadConfigFile();
 
+            //
+            DataTable table = PlayersOnline.Tables.Add();
+            table.Columns.Add(new DataColumn("Id", typeof(string)));
+            table.Columns.Add(new DataColumn("Name", typeof(string)));
+            table.Columns.Add(new DataColumn("GUID", typeof(string)));
+            table.Columns.Add(new DataColumn("IP", typeof(string)));
+            table.Columns.Add(new DataColumn("Status", typeof(string)));
+            DataColumn[] keys = new DataColumn[1];
+            keys[0] = table.Columns[1];
+            table.PrimaryKey = keys;
+            dataGridViewPlayers.DataSource = PlayersOnline.Tables[0];
+
             bgWorkerDatabase.RunWorkerAsync();
             bgWorkerFast.RunWorkerAsync();
             bgWorkerLoadTiles.RunWorkerAsync();
@@ -186,6 +213,9 @@ namespace DBAccess
         }
         private void CloseConnection()
         {
+            if ((rCon != null) && rCon.Connected)
+                rCon.Disconnect();
+
             myDB.CloseConnection();
 
             propertyGrid1.SelectedObject = null;
@@ -213,8 +243,8 @@ namespace DBAccess
 
                 try
                 {
-                    toolStripStatusOnline.Text = (myDB.OnlinePlayers.Tables.Count > 0) ? myDB.OnlinePlayers.Tables[0].Rows.Count.ToString() : "-";
-                    toolStripStatusAlive.Text = (myDB.AlivePlayers.Tables.Count > 0) ? myDB.AlivePlayers.Tables[0].Rows.Count.ToString() : "-";
+                    toolStripStatusOnline.Text = (PlayersOnline.Tables.Count > 0) ? PlayersOnline.Tables[0].Rows.Count.ToString() : "-";
+                    toolStripStatusAlive.Text = (myDB.PlayersAlive.Tables.Count > 0) ? myDB.PlayersAlive.Tables[0].Rows.Count.ToString() : "-";
                     toolStripStatusVehicle.Text = (myDB.Vehicles.Tables.Count > 0) ? myDB.Vehicles.Tables[0].Rows.Count.ToString() : "-";
                     toolStripStatusSpawn.Text = (myDB.SpawnPoints.Tables.Count > 0) ? myDB.SpawnPoints.Tables[0].Rows.Count.ToString() : "-";
                     toolStripStatusDeployable.Text = (myDB.Deployables.Tables.Count > 0) ? myDB.Deployables.Tables[0].Rows.Count.ToString() : "-";
@@ -299,44 +329,49 @@ namespace DBAccess
         private void BuildOnlineIcons()
         {
             int idx = 0;
-            foreach (DataRow row in myDB.OnlinePlayers.Tables[0].Rows)
+            foreach (DataRow row in myDB.PlayersAlive.Tables[0].Rows)
             {
-                if (idx >= iconsDB.Count)
-                    iconsDB.Add(new iconDB());
-
-                iconDB idb = iconsDB[idx];
-
-                idb.uid = row.Field<string>("unique_id");
-                idb.type = UIDType.TypePlayer;
-                idb.row = row;
-                idb.pos = GetUnitPosFromString(row.Field<string>("worldspace"));
-
-                if (idx >= iconPlayers.Count)
+                // Check the list of online players from rCon
+                DataRow rowOnline = PlayersOnline.Tables[0].Rows.Find(row.Field<string>("name"));
+                if (rowOnline != null)
                 {
-                    myIcon icon = new myIcon();
-                    icon.Click += OnPlayerClick;
-                    iconPlayers.Add(icon);
+                    if (idx >= iconsDB.Count)
+                        iconsDB.Add(new iconDB());
+
+                    iconDB idb = iconsDB[idx];
+
+                    idb.uid = row.Field<string>("unique_id");
+                    idb.type = UIDType.TypePlayer;
+                    idb.row = row;
+                    idb.pos = GetUnitPosFromString(row.Field<string>("worldspace"));
+
+                    if (idx >= iconPlayers.Count)
+                    {
+                        myIcon icon = new myIcon();
+                        icon.Click += OnPlayerClick;
+                        iconPlayers.Add(icon);
+                    }
+
+                    idb.icon = iconPlayers[idx];
+                    idb.icon.image = (rowOnline.Field<string>("Status") == "Ingame") ? global::DBAccess.Properties.Resources.iconOnline :global::DBAccess.Properties.Resources.iconLobby;
+                    idb.icon.Size = idb.icon.image.Size;
+                    idb.icon.iconDB = idb;
+
+                    //toolTip1.SetToolTip(idb.icon, row.Field<string>("name"));
+
+                    listIcons.Add(idb);
+
+                    if (bShowTrails == true)
+                        GetUIDGraph(idb.uid).AddPoint(idb.pos);
+
+                    idx++;
                 }
-
-                idb.icon = iconPlayers[idx];
-                idb.icon.image = global::DBAccess.Properties.Resources.iconOnline;
-                idb.icon.Size = idb.icon.image.Size;
-                idb.icon.iconDB = idb;
-
-                //toolTip1.SetToolTip(idb.icon, row.Field<string>("name"));
-
-                listIcons.Add(idb);
-
-                if (bShowTrails == true)
-                    GetUIDGraph(idb.uid).AddPoint(idb.pos);
-
-                idx++;
             }
         }
         private void BuildAliveIcons()
         {
             int idx = 0;
-            foreach (DataRow row in myDB.AlivePlayers.Tables[0].Rows)
+            foreach (DataRow row in myDB.PlayersAlive.Tables[0].Rows)
             {
                 if (idx >= iconsDB.Count)
                     iconsDB.Add(new iconDB());
@@ -570,13 +605,15 @@ namespace DBAccess
             toolStripStatusSpawn.Enabled = bState && !bEpochGameType;
             toolStripStatusDeployable.Enabled = bState;
             toolStripStatusMapHelper.Enabled = bState;
+            toolStripStatusTrail.Enabled = bState;
+            toolStripStatusChat.Enabled = bState;
 
             //
-            textBoxURL.Enabled = !bState;
-            textBoxBaseName.Enabled = !bState;
-            textBoxPort.Enabled = !bState;
-            textBoxUser.Enabled = !bState;
-            textBoxPassword.Enabled = !bState;
+            textBoxDBURL.Enabled = !bState;
+            textBoxDBBaseName.Enabled = !bState;
+            textBoxDBPort.Enabled = !bState;
+            textBoxDBUser.Enabled = !bState;
+            textBoxDBPassword.Enabled = !bState;
             comboBoxGameType.Enabled = !bState;
 
             // Script buttons
@@ -751,11 +788,11 @@ namespace DBAccess
 
             try
             {
-                textBoxURL.Text = mycfg.url;
-                textBoxPort.Text = mycfg.port;
-                textBoxBaseName.Text = mycfg.basename;
-                textBoxUser.Text = mycfg.username;
-                textBoxPassword.Text = mycfg.password;
+                textBoxDBURL.Text = mycfg.url;
+                textBoxDBPort.Text = mycfg.port;
+                textBoxDBBaseName.Text = mycfg.basename;
+                textBoxDBUser.Text = mycfg.username;
+                textBoxDBPassword.Text = mycfg.password;
                 numericUpDownInstanceId.Value = Decimal.Parse(mycfg.instance_id);
                 comboBoxGameType.SelectedItem = mycfg.game_type;
                 textBoxVehicleMax.Text = mycfg.vehicle_limit;
@@ -790,11 +827,11 @@ namespace DBAccess
         {
             try
             {
-                mycfg.url = textBoxURL.Text;
-                mycfg.port = textBoxPort.Text;
-                mycfg.basename = textBoxBaseName.Text;
-                mycfg.username = textBoxUser.Text;
-                mycfg.password = textBoxPassword.Text;
+                mycfg.url = textBoxDBURL.Text;
+                mycfg.port = textBoxDBPort.Text;
+                mycfg.basename = textBoxDBBaseName.Text;
+                mycfg.username = textBoxDBUser.Text;
+                mycfg.password = textBoxDBPassword.Text;
                 mycfg.instance_id = numericUpDownInstanceId.Value.ToString();
                 mycfg.cfgVersion = curCfgVersion;
                 mycfg.game_type = comboBoxGameType.SelectedItem as string;
@@ -910,34 +947,98 @@ namespace DBAccess
                     bool bRes = myDB.AddVehicle((currentMode == displayMode.ShowSpawn), classname, vehicle_id, positionInDB);
                     if (!bRes)
                     {
-                        MessageBox.Show("Error while trying to insert vehicle instane '" + classname + "' into database");
+                        MessageBox.Show("Error while trying to insert vehicle instance '" + classname + "' into database");
                     }
                 }
             }
         }
-        private void contextMenuStripAddVehicle_Opening(object sender, CancelEventArgs e)
+        private void toolStripMenuItemTeleportPlayer_Click(object sender, EventArgs e)
         {
-            if (!((currentMode == displayMode.ShowVehicle || currentMode == displayMode.ShowSpawn) && !IsEpochSchema))
+            var survivor = propertyGrid1.SelectedObject as Survivor;
+            if(survivor != null)
             {
-                e.Cancel = true;
+                bool bRes = myDB.TeleportPlayer(survivor.uid, positionInDB);
+                if (!bRes)
+                {
+                    MessageBox.Show("Error while trying to teleport player '" + survivor.name + "' into database");
+                }
             }
-            else
+        }
+        private bool? IsPlayerOnline(string uid)
+        {
+            DataRow rowAlive = myDB.PlayersAlive.Tables[0].Rows.Find(uid);
+            if(rowAlive != null)
             {
-                if (dataGridViewVehicleTypes.SelectedCells.Count == 1)
-                {
-                    var row = dataGridViewVehicleTypes.Rows[dataGridViewVehicleTypes.SelectedCells[0].RowIndex];
-                    string sType = "";
-                    if (currentMode == displayMode.ShowSpawn)
-                        sType = "Spawnpoint";
+                DataRow rowOnline = PlayersOnline.Tables[0].Rows.Find(rowAlive.Field<string>("name"));
+                if (rowOnline != null)
+                    return (rowOnline.Field<string>("Status") == "Ingame");
+            }
 
-                    toolStripMenuItemAddVehicle.Text = "Add " + row.Cells["ColGVVTType"].Value + " '" + row.Cells["ColGVVTClassName"].Value + "' " + sType;
-                    toolStripMenuItemAddVehicle.Enabled = true;
-                }
-                else
-                {
-                    toolStripMenuItemAddVehicle.Text = "Select a vehicle from tab 'Vehicles'";
-                    toolStripMenuItemAddVehicle.Enabled = false;
-                }
+            return null;
+        }
+        private void contextMenuStripItemMenu_Opening(object sender, CancelEventArgs e)
+        {
+            e.Cancel = false;
+
+            switch (currentMode)
+            {
+                case displayMode.ShowAlive:
+                case displayMode.ShowOnline:
+                    var survivor = propertyGrid1.SelectedObject as Survivor;
+
+                    if(survivor != null)
+                    {
+                        if(IsPlayerOnline(survivor.uid) != true)
+                        {
+                            toolStripMenuMapTeleportPlayer.Text = "Teleport player '" + survivor.name + "'";
+                            toolStripMenuMapTeleportPlayer.Enabled = true;
+                        }
+                        else
+                        {
+                            toolStripMenuMapTeleportPlayer.Text = "Teleport: player '" + survivor.name + "' must be offline or in lobby";
+                            toolStripMenuMapTeleportPlayer.Enabled = false;
+                        }
+                    }
+                    else
+                    {
+                        toolStripMenuMapTeleportPlayer.Text = "Teleport: No survivor selected";
+                        toolStripMenuMapTeleportPlayer.Enabled = false;
+                    }
+                    contextMenuStripMapMenu.Items.Clear();
+                    contextMenuStripMapMenu.Items.Add(toolStripMenuMapTeleportPlayer);
+                    break;
+
+                case displayMode.ShowVehicle:
+                case displayMode.ShowSpawn:
+                    if (!IsEpochSchema)
+                    {
+                        if (dataGridViewVehicleTypes.SelectedCells.Count == 1)
+                        {
+                            var row = dataGridViewVehicleTypes.Rows[dataGridViewVehicleTypes.SelectedCells[0].RowIndex];
+                            string sType = "";
+                            if (currentMode == displayMode.ShowSpawn)
+                                sType = "Spawnpoint";
+
+                            toolStripMenuMapAddVehicle.Text = "Add " + row.Cells["ColGVVTType"].Value + " '" + row.Cells["ColGVVTClassName"].Value + "' " + sType;
+                            toolStripMenuMapAddVehicle.Enabled = true;
+                        }
+                        else
+                        {
+                            toolStripMenuMapAddVehicle.Text = "Add vehicle: Select a vehicle from tab 'Vehicles'";
+                            toolStripMenuMapAddVehicle.Enabled = false;
+                        }
+                        contextMenuStripMapMenu.Items.Clear();
+                        contextMenuStripMapMenu.Items.Add(toolStripMenuMapAddVehicle);
+                    }
+                    else
+                    {
+                        e.Cancel = true;
+                    }
+                    break;
+
+                default:
+                    e.Cancel = true;
+                    break;
             }
         }
         private void trackBarLastUpdated_ValueChanged(object sender, EventArgs e)
@@ -1004,9 +1105,12 @@ namespace DBAccess
 
         private void toolStripStatusHelp_Click(object sender, EventArgs e)
         {
-            MessageBox.Show(this.Text + "\n\ndevelopped by Orcalito / 2013\nhttps://github.com/orcalito/DayZ_DB_Access", "Info");
+            // Show/Hide chat panel
+            splitContainerGlobal.Panel2Collapsed = !splitContainerGlobal.Panel2Collapsed;
+
+            toolStripStatusChat.BorderSides = (!splitContainerGlobal.Panel2Collapsed) ? ToolStripStatusLabelBorderSides.All : ToolStripStatusLabelBorderSides.None;
         }
-         //
+        //
         //  Form
         //
         private void Form1Resize(object sender, EventArgs e)
@@ -1168,7 +1272,7 @@ namespace DBAccess
                 }
                 if ((selectedIcon == null) && e.Button.HasFlag(MouseButtons.Right))
                 {
-                    contextMenuStripAddVehicle.Show(this, e.Location);
+                    contextMenuStripMapMenu.Show(this, e.Location);
                 }
             }
         }
@@ -1395,11 +1499,11 @@ namespace DBAccess
         {
             this.Cursor = Cursors.WaitCursor;
 
-            myDB.Connect(textBoxURL.Text,
-                         int.Parse(textBoxPort.Text),
-                         textBoxBaseName.Text,
-                         textBoxUser.Text,
-                         textBoxPassword.Text,
+            myDB.Connect(textBoxDBURL.Text,
+                         int.Parse(textBoxDBPort.Text),
+                         textBoxDBBaseName.Text,
+                         textBoxDBUser.Text,
+                         textBoxDBPassword.Text,
                          int.Parse(numericUpDownInstanceId.Text),
                          mycfg);
 
@@ -1415,11 +1519,83 @@ namespace DBAccess
 
                 SetCurrentMap();
 
-                groupBoxCnx.Enabled = false;
-                groupBoxCnx.Visible = false;
+                panelCnx.Enabled = false;
+                panelCnx.Visible = false;
+            }
+
+            if((textBoxrConPort.Text != "") && (textBoxrConPassword.Text != ""))
+            {
+                var hostEntry = Dns.GetHostEntry(textBoxDBURL.Text);
+                IPAddress ip = hostEntry.AddressList[0];
+                int port = int.Parse(textBoxrConPort.Text);
+                string pass = textBoxrConPassword.Text;
+                rCon = new BattlEyeClient(new BattlEyeLoginCredentials(ip, port, pass));
+                rCon.BattlEyeMessageReceived += BattlEyeMessageReceived;
+                rCon.BattlEyeConnected += BattlEyeConnected;
+                rCon.BattlEyeDisconnected += BattlEyeDisconnected;
+                rCon.ReconnectOnPacketLoss = true;
+                rCon.Connect();
             }
 
             this.Cursor = Cursors.Arrow;
+        }
+        private void BattlEyeConnected(BattlEyeConnectEventArgs args)
+        {
+            richTextBoxChat.Invoke((System.Threading.ThreadStart)(delegate { richTextBoxChat.Text += args.Message + "\n"; }));
+        }
+
+        private void BattlEyeDisconnected(BattlEyeDisconnectEventArgs args)
+        {
+            richTextBoxChat.Invoke((System.Threading.ThreadStart)(delegate { richTextBoxChat.Text += args.Message + "\n"; }));
+        }
+
+        private List<string> players = new List<string>();
+        private void BattlEyeMessageReceived(BattlEyeMessageEventArgs args)
+        {
+            if (args.Message.StartsWith("Players"))
+            {
+                // Player list
+                //  format [#] [IP Address]:[Port] [Ping] [GUID] [Name]
+                StringReader sr = new StringReader(args.Message);
+                
+                string line;
+                do
+	            {
+	                line = sr.ReadLine();
+	            } while (line.EndsWith("----") == false);
+
+                do
+                {
+                    line = sr.ReadLine();
+                    line = ((line.Replace("  ", " ")).Replace("  ", " ")).Replace("  ", " ");
+
+                    if (line.StartsWith("(") == false)
+                    {
+                        string[] items = line.Split(' ', ':');
+
+                        players.Add(items[0]);
+                        players.Add(items[5]);
+                        players.Add(items[4].Split('(')[0]);
+                        players.Add(items[1]);
+                        players.Add((items.GetLength(0) > 6) ? "Lobby" : "Ingame");
+                    }
+                } while (line.StartsWith("(") == false);
+            
+                this.Invoke((System.Threading.ThreadStart)(delegate { UpdatePlayersOnline(); }));
+            }
+            else
+            {
+                richTextBoxChat.Invoke((System.Threading.ThreadStart)(delegate { richTextBoxChat.Text += args.Message + "\n"; } ));
+            }
+        }
+        private void UpdatePlayersOnline()
+        {
+            PlayersOnline.Tables[0].Rows.Clear();
+            while (players.Count > 0)
+            {
+                PlayersOnline.Tables[0].Rows.Add(players[0], players[1], players[2], players[3], players[4]);
+                players.RemoveRange(0, 5);
+            }
         }
         private void toolStripMenuItemResetTypes_Click(object sender, EventArgs e)
         {
@@ -1598,7 +1774,7 @@ namespace DBAccess
                           + DateTime.Now.Day.ToString("00") + " "
                           + DateTime.Now.Hour.ToString("00") + "h"
                           + DateTime.Now.Minute.ToString("00");
-            saveFileDialog1.FileName = "Backup " + textBoxBaseName.Text + " " + s_date + ".sql";
+            saveFileDialog1.FileName = "Backup " + textBoxDBBaseName.Text + " " + s_date + ".sql";
             saveFileDialog1.CheckFileExists = false;
             saveFileDialog1.CheckPathExists = true;
             saveFileDialog1.Filter = "SQL file|*.sql";
@@ -1769,6 +1945,9 @@ namespace DBAccess
 
                 myDB.Refresh();
 
+                if ((rCon != null) && rCon.Connected)
+                    rCon.SendCommand(BattlEyeCommand.Players);
+
                 if (System.Threading.Interlocked.CompareExchange(ref bUserAction, 1, 0) == 0)
                 {
                     dlgUpdateIcons = this.BuildIcons;
@@ -1882,6 +2061,57 @@ namespace DBAccess
             new Pen(Color.Violet, 2)
         };
 
-        private iconDB selectedIcon;
+        private void messageToPlayerToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if ((rCon == null) || !rCon.Connected)
+                return;
+
+            var menu = (sender as ToolStripMenuItem).Owner as ContextMenuStrip;
+            if ((menu.SourceControl.Name == "dataGridViewPlayers") && (dataGridViewPlayers.CurrentRow != null))
+            {
+                diagMsgToPlayer.Text = "Send message to " + dataGridViewPlayers.CurrentRow.Cells["Name"].Value as string;
+
+                if (diagMsgToPlayer.ShowDialog() == DialogResult.OK)
+                {
+                    string id = dataGridViewPlayers.CurrentRow.Cells["Id"].Value as string;
+                    rCon.SendCommand(BattlEyeCommand.Say, id + " " + diagMsgToPlayer.textBoxMsgToPlayer.Text);
+                }
+                diagMsgToPlayer.textBoxMsgToPlayer.Text = "";
+            }
+        }
+        private void kickPlayerToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if ((rCon == null) || !rCon.Connected)
+                return;
+
+            var menu = (sender as ToolStripMenuItem).Owner as ContextMenuStrip;
+            if ((menu.SourceControl.Name == "dataGridViewPlayers") && (dataGridViewPlayers.CurrentRow != null))
+            {
+                diagMsgToPlayer.Text = "Kick " + dataGridViewPlayers.CurrentRow.Cells["Name"].Value as string;
+
+                if (diagMsgToPlayer.ShowDialog() == DialogResult.OK)
+                {
+                    string id = dataGridViewPlayers.CurrentRow.Cells["Id"].Value as string;
+                    rCon.SendCommand(BattlEyeCommand.Kick, id + " " + diagMsgToPlayer.textBoxMsgToPlayer.Text);
+                }
+                diagMsgToPlayer.textBoxMsgToPlayer.Text = "";
+            }
+        }
+        private void textBoxChatInput_TextChanged(object sender, EventArgs e)
+        {
+            if (textBoxChatInput.Text.EndsWith("\n"))
+            {
+                if((rCon != null) && rCon.Connected)
+                    rCon.SendCommand(BattlEyeCommand.Say, "-1 " + textBoxChatInput.Text.TrimEnd('\n'));
+                textBoxChatInput.Text = "";
+            }
+        }
+        private void splitContainer1_Panel1_SizeChanged(object sender, EventArgs e)
+        {
+            var splitter = sender as SplitterPanel;
+
+            panelCnx.Location = new Point((splitter.Width - panelCnx.Width) / 2,
+                                         (splitter.Height - panelCnx.Height) / 2);
+        }
     }
 }

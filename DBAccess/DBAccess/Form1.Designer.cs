@@ -1,6 +1,6 @@
 ﻿namespace DBAccess
 {
-    partial class Form1
+    partial class MainWindow
     {
         /// <summary>
         /// Required designer variable.
@@ -29,14 +29,15 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainWindow));
             this.BottomToolStripPanel = new System.Windows.Forms.ToolStripPanel();
             this.TopToolStripPanel = new System.Windows.Forms.ToolStripPanel();
             this.RightToolStripPanel = new System.Windows.Forms.ToolStripPanel();
             this.LeftToolStripPanel = new System.Windows.Forms.ToolStripPanel();
             this.ContentPanel = new System.Windows.Forms.ToolStripContentPanel();
-            this.contextMenuStripAddVehicle = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.toolStripMenuItemAddVehicle = new System.Windows.Forms.ToolStripMenuItem();
+            this.contextMenuStripMapMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.toolStripMenuMapAddVehicle = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuMapTeleportPlayer = new System.Windows.Forms.ToolStripMenuItem();
             this.dataSetBindingSource = new System.Windows.Forms.BindingSource(this.components);
             this.contextMenuStripResetTypes = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.toolStripMenuItemResetTypes = new System.Windows.Forms.ToolStripMenuItem();
@@ -59,7 +60,7 @@
             this.toolStripStatusDeployable = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusMapHelper = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusTrail = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusHelp = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusChat = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusCoordMap = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusCoordDB = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusCnx = new System.Windows.Forms.ToolStripStatusLabel();
@@ -72,7 +73,6 @@
             this.toolStripStatusLabel9 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusCoordMapL = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusCoordDBL = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripContainer1 = new System.Windows.Forms.ToolStripContainer();
             this.ttootToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.showPlayersAliveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.showVehiclesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -93,29 +93,46 @@
             this.toolStripMenuItemTrails = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripStatusLabelCnx = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripContainer2 = new System.Windows.Forms.ToolStripContainer();
+            this.toolStripContainer1 = new System.Windows.Forms.ToolStripContainer();
+            this.splitContainerGlobal = new System.Windows.Forms.SplitContainer();
+            this.contextMenuPlayersOnline = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.messageToPlayerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.kickPlayerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.splitContainerChat = new System.Windows.Forms.SplitContainer();
+            this.richTextBoxChat = new System.Windows.Forms.RichTextBox();
+            this.textBoxChatInput = new System.Windows.Forms.TextBox();
             this.toolStripContainer3 = new System.Windows.Forms.ToolStripContainer();
             this.bgWorkerLoadTiles = new System.ComponentModel.BackgroundWorker();
             this.splitContainer1 = new DBAccess.MySplitContainer();
-            this.dataGridViewMaps = new System.Windows.Forms.DataGridView();
-            this.ColGVMID = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ColGVMName = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ColGVMChoosePath = new System.Windows.Forms.DataGridViewButtonColumn();
-            this.ColGVMPath = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.groupBoxCnx = new System.Windows.Forms.GroupBox();
+            this.panelCnx = new System.Windows.Forms.Panel();
+            this.groupBoxrCon = new System.Windows.Forms.GroupBox();
+            this.textBoxrConPassword = new System.Windows.Forms.TextBox();
+            this.label8 = new System.Windows.Forms.Label();
+            this.textBoxrConUser = new System.Windows.Forms.TextBox();
+            this.label9 = new System.Windows.Forms.Label();
+            this.label7 = new System.Windows.Forms.Label();
+            this.textBoxrConPort = new System.Windows.Forms.TextBox();
+            this.groupBoxDB = new System.Windows.Forms.GroupBox();
+            this.label6 = new System.Windows.Forms.Label();
             this.numericUpDownInstanceId = new System.Windows.Forms.NumericUpDown();
             this.label10 = new System.Windows.Forms.Label();
             this.comboBoxGameType = new System.Windows.Forms.ComboBox();
             this.label13 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
-            this.buttonConnect = new System.Windows.Forms.Button();
-            this.textBoxURL = new System.Windows.Forms.TextBox();
-            this.textBoxPort = new System.Windows.Forms.TextBox();
-            this.textBoxPassword = new System.Windows.Forms.TextBox();
+            this.textBoxDBURL = new System.Windows.Forms.TextBox();
+            this.textBoxDBPort = new System.Windows.Forms.TextBox();
+            this.textBoxDBPassword = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
-            this.textBoxUser = new System.Windows.Forms.TextBox();
+            this.textBoxDBUser = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
-            this.textBoxBaseName = new System.Windows.Forms.TextBox();
+            this.textBoxDBBaseName = new System.Windows.Forms.TextBox();
+            this.buttonConnect = new System.Windows.Forms.Button();
+            this.dataGridViewMaps = new System.Windows.Forms.DataGridView();
+            this.ColGVMID = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColGVMName = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColGVMChoosePath = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.ColGVMPath = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPageDisplay = new System.Windows.Forms.TabPage();
             this.label2 = new System.Windows.Forms.Label();
@@ -150,16 +167,26 @@
             this.ColGVDTShow = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.ColGVDTClassName = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColGVDTType = new System.Windows.Forms.DataGridViewComboBoxColumn();
-            this.contextMenuStripAddVehicle.SuspendLayout();
+            this.tabPagePlayers = new System.Windows.Forms.TabPage();
+            this.dataGridViewPlayers = new System.Windows.Forms.DataGridView();
             ((System.ComponentModel.ISupportInitialize)(this.dataSetBindingSource)).BeginInit();
             this.contextMenuStripResetTypes.SuspendLayout();
             this.contextMenuStripSpawn.SuspendLayout();
             this.contextMenuStripVehicle.SuspendLayout();
             this.statusStrip1.SuspendLayout();
-            this.toolStripContainer1.ContentPanel.SuspendLayout();
-            this.toolStripContainer1.SuspendLayout();
             this.toolStripContainer2.ContentPanel.SuspendLayout();
             this.toolStripContainer2.SuspendLayout();
+            this.toolStripContainer1.ContentPanel.SuspendLayout();
+            this.toolStripContainer1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainerGlobal)).BeginInit();
+            this.splitContainerGlobal.Panel1.SuspendLayout();
+            this.splitContainerGlobal.Panel2.SuspendLayout();
+            this.splitContainerGlobal.SuspendLayout();
+            this.contextMenuPlayersOnline.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainerChat)).BeginInit();
+            this.splitContainerChat.Panel1.SuspendLayout();
+            this.splitContainerChat.Panel2.SuspendLayout();
+            this.splitContainerChat.SuspendLayout();
             this.toolStripContainer3.BottomToolStripPanel.SuspendLayout();
             this.toolStripContainer3.ContentPanel.SuspendLayout();
             this.toolStripContainer3.SuspendLayout();
@@ -167,9 +194,11 @@
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewMaps)).BeginInit();
-            this.groupBoxCnx.SuspendLayout();
+            this.panelCnx.SuspendLayout();
+            this.groupBoxrCon.SuspendLayout();
+            this.groupBoxDB.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownInstanceId)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewMaps)).BeginInit();
             this.tabControl1.SuspendLayout();
             this.tabPageDisplay.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.trackBarLastUpdated)).BeginInit();
@@ -179,6 +208,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewVehicleTypes)).BeginInit();
             this.tabPageDeployables.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewDeployableTypes)).BeginInit();
+            this.tabPagePlayers.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewPlayers)).BeginInit();
             this.SuspendLayout();
             // 
             // BottomToolStripPanel
@@ -218,20 +249,25 @@
             this.ContentPanel.AutoScroll = true;
             this.ContentPanel.Size = new System.Drawing.Size(791, 553);
             // 
-            // contextMenuStripAddVehicle
+            // contextMenuStripMapMenu
             // 
-            this.contextMenuStripAddVehicle.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripMenuItemAddVehicle});
-            this.contextMenuStripAddVehicle.Name = "contextMenuStripAddVehicle";
-            this.contextMenuStripAddVehicle.Size = new System.Drawing.Size(163, 26);
-            this.contextMenuStripAddVehicle.Opening += new System.ComponentModel.CancelEventHandler(this.contextMenuStripAddVehicle_Opening);
+            this.contextMenuStripMapMenu.Name = "contextMenuStripItemMenu";
+            this.contextMenuStripMapMenu.Size = new System.Drawing.Size(61, 4);
+            this.contextMenuStripMapMenu.Opening += new System.ComponentModel.CancelEventHandler(this.contextMenuStripItemMenu_Opening);
             // 
-            // toolStripMenuItemAddVehicle
+            // toolStripMenuMapAddVehicle
             // 
-            this.toolStripMenuItemAddVehicle.Name = "toolStripMenuItemAddVehicle";
-            this.toolStripMenuItemAddVehicle.Size = new System.Drawing.Size(162, 22);
-            this.toolStripMenuItemAddVehicle.Text = "Add SpawnPoint";
-            this.toolStripMenuItemAddVehicle.Click += new System.EventHandler(this.toolStripMenuItemAddVehicle_Click);
+            this.toolStripMenuMapAddVehicle.Name = "toolStripMenuMapAddVehicle";
+            this.toolStripMenuMapAddVehicle.Size = new System.Drawing.Size(162, 22);
+            this.toolStripMenuMapAddVehicle.Text = "Add SpawnPoint";
+            this.toolStripMenuMapAddVehicle.Click += new System.EventHandler(this.toolStripMenuItemAddVehicle_Click);
+            // 
+            // toolStripMenuMapTeleportPlayer
+            // 
+            this.toolStripMenuMapTeleportPlayer.Name = "toolStripMenuMapTeleportPlayer";
+            this.toolStripMenuMapTeleportPlayer.Size = new System.Drawing.Size(162, 22);
+            this.toolStripMenuMapTeleportPlayer.Text = "Teleport";
+            this.toolStripMenuMapTeleportPlayer.Click += new System.EventHandler(this.toolStripMenuItemTeleportPlayer_Click);
             // 
             // dataSetBindingSource
             // 
@@ -312,7 +348,9 @@
             // 
             // statusStrip1
             // 
+            this.statusStrip1.AutoSize = false;
             this.statusStrip1.Dock = System.Windows.Forms.DockStyle.None;
+            this.statusStrip1.ImageScalingSize = new System.Drawing.Size(32, 32);
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripStatusWorld,
             this.toolStripStatusOnline,
@@ -322,23 +360,25 @@
             this.toolStripStatusDeployable,
             this.toolStripStatusMapHelper,
             this.toolStripStatusTrail,
-            this.toolStripStatusHelp,
+            this.toolStripStatusChat,
             this.toolStripStatusCoordMap,
             this.toolStripStatusCoordDB});
             this.statusStrip1.Location = new System.Drawing.Point(0, 0);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(800, 27);
+            this.statusStrip1.ShowItemToolTips = true;
+            this.statusStrip1.Size = new System.Drawing.Size(955, 36);
             this.statusStrip1.TabIndex = 1;
             this.statusStrip1.Text = "statusStrip1";
             // 
             // toolStripStatusWorld
             // 
+            this.toolStripStatusWorld.AutoSize = false;
+            this.toolStripStatusWorld.AutoToolTip = true;
             this.toolStripStatusWorld.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
             this.toolStripStatusWorld.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
-            this.toolStripStatusWorld.Image = global::DBAccess.Properties.Resources.World;
-            this.toolStripStatusWorld.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            this.toolStripStatusWorld.Image = global::DBAccess.Properties.Resources.world64;
             this.toolStripStatusWorld.Name = "toolStripStatusWorld";
-            this.toolStripStatusWorld.Size = new System.Drawing.Size(81, 22);
+            this.toolStripStatusWorld.Size = new System.Drawing.Size(95, 31);
             this.toolStripStatusWorld.Text = "chernarus";
             this.toolStripStatusWorld.ToolTipText = "Set maps for each world";
             this.toolStripStatusWorld.Click += new System.EventHandler(this.toolStripStatusWorld_Click);
@@ -346,13 +386,12 @@
             // toolStripStatusOnline
             // 
             this.toolStripStatusOnline.AutoSize = false;
+            this.toolStripStatusOnline.AutoToolTip = true;
             this.toolStripStatusOnline.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
             this.toolStripStatusOnline.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
-            this.toolStripStatusOnline.Image = global::DBAccess.Properties.Resources.iconOnline;
-            this.toolStripStatusOnline.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            this.toolStripStatusOnline.Image = global::DBAccess.Properties.Resources.player64;
             this.toolStripStatusOnline.Name = "toolStripStatusOnline";
-            this.toolStripStatusOnline.Size = new System.Drawing.Size(82, 22);
-            this.toolStripStatusOnline.Spring = true;
+            this.toolStripStatusOnline.Size = new System.Drawing.Size(80, 31);
             this.toolStripStatusOnline.Text = "888";
             this.toolStripStatusOnline.ToolTipText = "Show online players";
             this.toolStripStatusOnline.Click += new System.EventHandler(this.toolStripStatusOnline_Click);
@@ -360,13 +399,12 @@
             // toolStripStatusAlive
             // 
             this.toolStripStatusAlive.AutoSize = false;
+            this.toolStripStatusAlive.AutoToolTip = true;
             this.toolStripStatusAlive.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
             this.toolStripStatusAlive.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
-            this.toolStripStatusAlive.Image = global::DBAccess.Properties.Resources.iconAlive;
-            this.toolStripStatusAlive.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            this.toolStripStatusAlive.Image = global::DBAccess.Properties.Resources.player64;
             this.toolStripStatusAlive.Name = "toolStripStatusAlive";
-            this.toolStripStatusAlive.Size = new System.Drawing.Size(82, 22);
-            this.toolStripStatusAlive.Spring = true;
+            this.toolStripStatusAlive.Size = new System.Drawing.Size(80, 31);
             this.toolStripStatusAlive.Text = "888";
             this.toolStripStatusAlive.ToolTipText = "Show alive players";
             this.toolStripStatusAlive.Click += new System.EventHandler(this.toolStripStatusAlive_Click);
@@ -374,13 +412,12 @@
             // toolStripStatusVehicle
             // 
             this.toolStripStatusVehicle.AutoSize = false;
+            this.toolStripStatusVehicle.AutoToolTip = true;
             this.toolStripStatusVehicle.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
             this.toolStripStatusVehicle.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
-            this.toolStripStatusVehicle.Image = global::DBAccess.Properties.Resources.Vehicle;
-            this.toolStripStatusVehicle.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            this.toolStripStatusVehicle.Image = global::DBAccess.Properties.Resources.car64;
             this.toolStripStatusVehicle.Name = "toolStripStatusVehicle";
-            this.toolStripStatusVehicle.Size = new System.Drawing.Size(82, 22);
-            this.toolStripStatusVehicle.Spring = true;
+            this.toolStripStatusVehicle.Size = new System.Drawing.Size(80, 31);
             this.toolStripStatusVehicle.Text = "888";
             this.toolStripStatusVehicle.ToolTipText = "Show vehicles";
             this.toolStripStatusVehicle.Click += new System.EventHandler(this.toolStripStatusVehicle_Click);
@@ -388,13 +425,12 @@
             // toolStripStatusSpawn
             // 
             this.toolStripStatusSpawn.AutoSize = false;
+            this.toolStripStatusSpawn.AutoToolTip = true;
             this.toolStripStatusSpawn.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
             this.toolStripStatusSpawn.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
-            this.toolStripStatusSpawn.Image = ((System.Drawing.Image)(resources.GetObject("toolStripStatusSpawn.Image")));
-            this.toolStripStatusSpawn.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            this.toolStripStatusSpawn.Image = global::DBAccess.Properties.Resources.flag64;
             this.toolStripStatusSpawn.Name = "toolStripStatusSpawn";
-            this.toolStripStatusSpawn.Size = new System.Drawing.Size(82, 22);
-            this.toolStripStatusSpawn.Spring = true;
+            this.toolStripStatusSpawn.Size = new System.Drawing.Size(80, 31);
             this.toolStripStatusSpawn.Text = "888";
             this.toolStripStatusSpawn.ToolTipText = "Show spawn points";
             this.toolStripStatusSpawn.Click += new System.EventHandler(this.toolStripStatusSpawn_Click);
@@ -402,13 +438,13 @@
             // toolStripStatusDeployable
             // 
             this.toolStripStatusDeployable.AutoSize = false;
+            this.toolStripStatusDeployable.AutoToolTip = true;
             this.toolStripStatusDeployable.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
             this.toolStripStatusDeployable.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
-            this.toolStripStatusDeployable.Image = global::DBAccess.Properties.Resources.deployable;
-            this.toolStripStatusDeployable.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            this.toolStripStatusDeployable.Image = global::DBAccess.Properties.Resources.tent64;
             this.toolStripStatusDeployable.Name = "toolStripStatusDeployable";
-            this.toolStripStatusDeployable.Size = new System.Drawing.Size(82, 22);
-            this.toolStripStatusDeployable.Spring = true;
+            this.toolStripStatusDeployable.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.toolStripStatusDeployable.Size = new System.Drawing.Size(80, 31);
             this.toolStripStatusDeployable.Text = "888";
             this.toolStripStatusDeployable.ToolTipText = "Show deployables";
             this.toolStripStatusDeployable.Click += new System.EventHandler(this.toolStripStatusDeployable_Click);
@@ -416,63 +452,66 @@
             // toolStripStatusMapHelper
             // 
             this.toolStripStatusMapHelper.AutoSize = false;
+            this.toolStripStatusMapHelper.AutoToolTip = true;
             this.toolStripStatusMapHelper.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
             this.toolStripStatusMapHelper.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
-            this.toolStripStatusMapHelper.Image = global::DBAccess.Properties.Resources.Tool;
-            this.toolStripStatusMapHelper.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            this.toolStripStatusMapHelper.Image = global::DBAccess.Properties.Resources.tools64;
             this.toolStripStatusMapHelper.Name = "toolStripStatusMapHelper";
-            this.toolStripStatusMapHelper.Size = new System.Drawing.Size(32, 22);
+            this.toolStripStatusMapHelper.Size = new System.Drawing.Size(48, 31);
             this.toolStripStatusMapHelper.ToolTipText = "Set link between bitmap and the database coordinates";
             this.toolStripStatusMapHelper.Click += new System.EventHandler(this.toolStripStatusMapHelper_Click);
             // 
             // toolStripStatusTrail
             // 
             this.toolStripStatusTrail.AutoSize = false;
+            this.toolStripStatusTrail.AutoToolTip = true;
             this.toolStripStatusTrail.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
             this.toolStripStatusTrail.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
             this.toolStripStatusTrail.Image = global::DBAccess.Properties.Resources.Trail;
             this.toolStripStatusTrail.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             this.toolStripStatusTrail.Name = "toolStripStatusTrail";
-            this.toolStripStatusTrail.Size = new System.Drawing.Size(32, 22);
+            this.toolStripStatusTrail.Size = new System.Drawing.Size(48, 31);
             this.toolStripStatusTrail.ToolTipText = "Display moves for players/vehicles";
             this.toolStripStatusTrail.Click += new System.EventHandler(this.toolStripStatusTrail_Click);
             // 
-            // toolStripStatusHelp
+            // toolStripStatusChat
             // 
-            this.toolStripStatusHelp.AutoSize = false;
-            this.toolStripStatusHelp.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
-            this.toolStripStatusHelp.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
-            this.toolStripStatusHelp.Image = global::DBAccess.Properties.Resources.help;
-            this.toolStripStatusHelp.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
-            this.toolStripStatusHelp.Name = "toolStripStatusHelp";
-            this.toolStripStatusHelp.Size = new System.Drawing.Size(32, 22);
-            this.toolStripStatusHelp.Click += new System.EventHandler(this.toolStripStatusHelp_Click);
+            this.toolStripStatusChat.AutoSize = false;
+            this.toolStripStatusChat.AutoToolTip = true;
+            this.toolStripStatusChat.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
+            this.toolStripStatusChat.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
+            this.toolStripStatusChat.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.toolStripStatusChat.Image = global::DBAccess.Properties.Resources.chat64;
+            this.toolStripStatusChat.Name = "toolStripStatusChat";
+            this.toolStripStatusChat.Size = new System.Drawing.Size(48, 31);
+            this.toolStripStatusChat.ToolTipText = "Chat window";
+            this.toolStripStatusChat.Click += new System.EventHandler(this.toolStripStatusHelp_Click);
             // 
             // toolStripStatusCoordMap
             // 
             this.toolStripStatusCoordMap.AutoSize = false;
+            this.toolStripStatusCoordMap.AutoToolTip = true;
             this.toolStripStatusCoordMap.BorderSides = ((System.Windows.Forms.ToolStripStatusLabelBorderSides)((((System.Windows.Forms.ToolStripStatusLabelBorderSides.Left | System.Windows.Forms.ToolStripStatusLabelBorderSides.Top) 
             | System.Windows.Forms.ToolStripStatusLabelBorderSides.Right) 
             | System.Windows.Forms.ToolStripStatusLabelBorderSides.Bottom)));
             this.toolStripStatusCoordMap.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
-            this.toolStripStatusCoordMap.Image = global::DBAccess.Properties.Resources.Map;
-            this.toolStripStatusCoordMap.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            this.toolStripStatusCoordMap.Image = global::DBAccess.Properties.Resources.globe64;
             this.toolStripStatusCoordMap.Name = "toolStripStatusCoordMap";
-            this.toolStripStatusCoordMap.Size = new System.Drawing.Size(98, 22);
+            this.toolStripStatusCoordMap.Size = new System.Drawing.Size(98, 31);
             this.toolStripStatusCoordMap.Text = "-";
             this.toolStripStatusCoordMap.ToolTipText = "Map coordinates";
             // 
             // toolStripStatusCoordDB
             // 
             this.toolStripStatusCoordDB.AutoSize = false;
+            this.toolStripStatusCoordDB.AutoToolTip = true;
             this.toolStripStatusCoordDB.BorderSides = ((System.Windows.Forms.ToolStripStatusLabelBorderSides)((((System.Windows.Forms.ToolStripStatusLabelBorderSides.Left | System.Windows.Forms.ToolStripStatusLabelBorderSides.Top) 
             | System.Windows.Forms.ToolStripStatusLabelBorderSides.Right) 
             | System.Windows.Forms.ToolStripStatusLabelBorderSides.Bottom)));
             this.toolStripStatusCoordDB.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
             this.toolStripStatusCoordDB.Image = global::DBAccess.Properties.Resources.DB;
-            this.toolStripStatusCoordDB.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             this.toolStripStatusCoordDB.Name = "toolStripStatusCoordDB";
-            this.toolStripStatusCoordDB.Size = new System.Drawing.Size(96, 22);
+            this.toolStripStatusCoordDB.Size = new System.Drawing.Size(96, 31);
             this.toolStripStatusCoordDB.Text = "-";
             this.toolStripStatusCoordDB.ToolTipText = "DB coordinates";
             // 
@@ -531,24 +570,6 @@
             // 
             this.toolStripStatusCoordDBL.Name = "toolStripStatusCoordDBL";
             this.toolStripStatusCoordDBL.Size = new System.Drawing.Size(23, 23);
-            // 
-            // toolStripContainer1
-            // 
-            // 
-            // toolStripContainer1.ContentPanel
-            // 
-            this.toolStripContainer1.ContentPanel.AutoScroll = true;
-            this.toolStripContainer1.ContentPanel.Controls.Add(this.splitContainer1);
-            this.toolStripContainer1.ContentPanel.Size = new System.Drawing.Size(800, 495);
-            this.toolStripContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.toolStripContainer1.LeftToolStripPanelVisible = false;
-            this.toolStripContainer1.Location = new System.Drawing.Point(0, 0);
-            this.toolStripContainer1.Name = "toolStripContainer1";
-            this.toolStripContainer1.RightToolStripPanelVisible = false;
-            this.toolStripContainer1.Size = new System.Drawing.Size(800, 495);
-            this.toolStripContainer1.TabIndex = 3;
-            this.toolStripContainer1.Text = "toolStripContainer1";
-            this.toolStripContainer1.TopToolStripPanelVisible = false;
             // 
             // ttootToolStripMenuItem
             // 
@@ -672,16 +693,119 @@
             // 
             this.toolStripContainer2.ContentPanel.AutoScroll = true;
             this.toolStripContainer2.ContentPanel.Controls.Add(this.toolStripContainer1);
-            this.toolStripContainer2.ContentPanel.Size = new System.Drawing.Size(800, 495);
+            this.toolStripContainer2.ContentPanel.Size = new System.Drawing.Size(955, 488);
             this.toolStripContainer2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.toolStripContainer2.LeftToolStripPanelVisible = false;
             this.toolStripContainer2.Location = new System.Drawing.Point(0, 0);
             this.toolStripContainer2.Name = "toolStripContainer2";
             this.toolStripContainer2.RightToolStripPanelVisible = false;
-            this.toolStripContainer2.Size = new System.Drawing.Size(800, 495);
+            this.toolStripContainer2.Size = new System.Drawing.Size(955, 488);
             this.toolStripContainer2.TabIndex = 4;
             this.toolStripContainer2.Text = "toolStripContainer2";
             this.toolStripContainer2.TopToolStripPanelVisible = false;
+            // 
+            // toolStripContainer1
+            // 
+            // 
+            // toolStripContainer1.ContentPanel
+            // 
+            this.toolStripContainer1.ContentPanel.AutoScroll = true;
+            this.toolStripContainer1.ContentPanel.Controls.Add(this.splitContainerGlobal);
+            this.toolStripContainer1.ContentPanel.Size = new System.Drawing.Size(955, 488);
+            this.toolStripContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.toolStripContainer1.LeftToolStripPanelVisible = false;
+            this.toolStripContainer1.Location = new System.Drawing.Point(0, 0);
+            this.toolStripContainer1.Name = "toolStripContainer1";
+            this.toolStripContainer1.RightToolStripPanelVisible = false;
+            this.toolStripContainer1.Size = new System.Drawing.Size(955, 488);
+            this.toolStripContainer1.TabIndex = 3;
+            this.toolStripContainer1.Text = "toolStripContainer1";
+            this.toolStripContainer1.TopToolStripPanelVisible = false;
+            // 
+            // splitContainerGlobal
+            // 
+            this.splitContainerGlobal.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainerGlobal.Location = new System.Drawing.Point(0, 0);
+            this.splitContainerGlobal.Name = "splitContainerGlobal";
+            this.splitContainerGlobal.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            // 
+            // splitContainerGlobal.Panel1
+            // 
+            this.splitContainerGlobal.Panel1.Controls.Add(this.splitContainer1);
+            // 
+            // splitContainerGlobal.Panel2
+            // 
+            this.splitContainerGlobal.Panel2.Controls.Add(this.splitContainerChat);
+            this.splitContainerGlobal.Size = new System.Drawing.Size(955, 488);
+            this.splitContainerGlobal.SplitterDistance = 382;
+            this.splitContainerGlobal.TabIndex = 2;
+            // 
+            // contextMenuPlayersOnline
+            // 
+            this.contextMenuPlayersOnline.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.messageToPlayerToolStripMenuItem,
+            this.kickPlayerToolStripMenuItem});
+            this.contextMenuPlayersOnline.Name = "contextMenuPlayersOnline";
+            this.contextMenuPlayersOnline.Size = new System.Drawing.Size(170, 48);
+            // 
+            // messageToPlayerToolStripMenuItem
+            // 
+            this.messageToPlayerToolStripMenuItem.Name = "messageToPlayerToolStripMenuItem";
+            this.messageToPlayerToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
+            this.messageToPlayerToolStripMenuItem.Text = "Message to player";
+            this.messageToPlayerToolStripMenuItem.Click += new System.EventHandler(this.messageToPlayerToolStripMenuItem_Click);
+            // 
+            // kickPlayerToolStripMenuItem
+            // 
+            this.kickPlayerToolStripMenuItem.Name = "kickPlayerToolStripMenuItem";
+            this.kickPlayerToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
+            this.kickPlayerToolStripMenuItem.Text = "Kick player";
+            this.kickPlayerToolStripMenuItem.Click += new System.EventHandler(this.kickPlayerToolStripMenuItem_Click);
+            // 
+            // splitContainerChat
+            // 
+            this.splitContainerChat.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainerChat.FixedPanel = System.Windows.Forms.FixedPanel.Panel2;
+            this.splitContainerChat.IsSplitterFixed = true;
+            this.splitContainerChat.Location = new System.Drawing.Point(0, 0);
+            this.splitContainerChat.Name = "splitContainerChat";
+            this.splitContainerChat.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            // 
+            // splitContainerChat.Panel1
+            // 
+            this.splitContainerChat.Panel1.Controls.Add(this.richTextBoxChat);
+            this.splitContainerChat.Panel1MinSize = 28;
+            // 
+            // splitContainerChat.Panel2
+            // 
+            this.splitContainerChat.Panel2.Controls.Add(this.textBoxChatInput);
+            this.splitContainerChat.Panel2MinSize = 28;
+            this.splitContainerChat.Size = new System.Drawing.Size(955, 102);
+            this.splitContainerChat.SplitterDistance = 73;
+            this.splitContainerChat.SplitterWidth = 1;
+            this.splitContainerChat.TabIndex = 2;
+            // 
+            // richTextBoxChat
+            // 
+            this.richTextBoxChat.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.richTextBoxChat.Location = new System.Drawing.Point(0, 0);
+            this.richTextBoxChat.Name = "richTextBoxChat";
+            this.richTextBoxChat.ReadOnly = true;
+            this.richTextBoxChat.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
+            this.richTextBoxChat.Size = new System.Drawing.Size(955, 73);
+            this.richTextBoxChat.TabIndex = 1;
+            this.richTextBoxChat.Text = "";
+            // 
+            // textBoxChatInput
+            // 
+            this.textBoxChatInput.AcceptsReturn = true;
+            this.textBoxChatInput.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.textBoxChatInput.Location = new System.Drawing.Point(0, 0);
+            this.textBoxChatInput.Multiline = true;
+            this.textBoxChatInput.Name = "textBoxChatInput";
+            this.textBoxChatInput.Size = new System.Drawing.Size(955, 28);
+            this.textBoxChatInput.TabIndex = 0;
+            this.textBoxChatInput.TextChanged += new System.EventHandler(this.textBoxChatInput_TextChanged);
             // 
             // toolStripContainer3
             // 
@@ -694,13 +818,13 @@
             // 
             this.toolStripContainer3.ContentPanel.AutoScroll = true;
             this.toolStripContainer3.ContentPanel.Controls.Add(this.toolStripContainer2);
-            this.toolStripContainer3.ContentPanel.Size = new System.Drawing.Size(800, 495);
+            this.toolStripContainer3.ContentPanel.Size = new System.Drawing.Size(955, 488);
             this.toolStripContainer3.Dock = System.Windows.Forms.DockStyle.Fill;
             this.toolStripContainer3.LeftToolStripPanelVisible = false;
             this.toolStripContainer3.Location = new System.Drawing.Point(0, 0);
             this.toolStripContainer3.Name = "toolStripContainer3";
             this.toolStripContainer3.RightToolStripPanelVisible = false;
-            this.toolStripContainer3.Size = new System.Drawing.Size(800, 522);
+            this.toolStripContainer3.Size = new System.Drawing.Size(955, 524);
             this.toolStripContainer3.TabIndex = 5;
             this.toolStripContainer3.Text = "toolStripContainer3";
             this.toolStripContainer3.TopToolStripPanelVisible = false;
@@ -720,8 +844,9 @@
             // splitContainer1.Panel1
             // 
             this.splitContainer1.Panel1.BackColor = System.Drawing.Color.White;
+            this.splitContainer1.Panel1.Controls.Add(this.panelCnx);
             this.splitContainer1.Panel1.Controls.Add(this.dataGridViewMaps);
-            this.splitContainer1.Panel1.Controls.Add(this.groupBoxCnx);
+            this.splitContainer1.Panel1.SizeChanged += new System.EventHandler(this.splitContainer1_Panel1_SizeChanged);
             this.splitContainer1.Panel1.Paint += new System.Windows.Forms.PaintEventHandler(this.Panel1_Paint);
             this.splitContainer1.Panel1.MouseClick += new System.Windows.Forms.MouseEventHandler(this.Panel1_MouseClick);
             this.splitContainer1.Panel1.MouseDown += new System.Windows.Forms.MouseEventHandler(this.Panel1_MouseDown);
@@ -732,9 +857,264 @@
             // 
             this.splitContainer1.Panel2.Controls.Add(this.tabControl1);
             this.splitContainer1.Panel2MinSize = 220;
-            this.splitContainer1.Size = new System.Drawing.Size(800, 495);
-            this.splitContainer1.SplitterDistance = 533;
+            this.splitContainer1.Size = new System.Drawing.Size(955, 382);
+            this.splitContainer1.SplitterDistance = 635;
             this.splitContainer1.TabIndex = 1;
+            // 
+            // panelCnx
+            // 
+            this.panelCnx.Controls.Add(this.groupBoxrCon);
+            this.panelCnx.Controls.Add(this.groupBoxDB);
+            this.panelCnx.Controls.Add(this.buttonConnect);
+            this.panelCnx.Location = new System.Drawing.Point(124, 48);
+            this.panelCnx.Margin = new System.Windows.Forms.Padding(2);
+            this.panelCnx.Name = "panelCnx";
+            this.panelCnx.Size = new System.Drawing.Size(376, 251);
+            this.panelCnx.TabIndex = 10;
+            // 
+            // groupBoxrCon
+            // 
+            this.groupBoxrCon.Controls.Add(this.textBoxrConPassword);
+            this.groupBoxrCon.Controls.Add(this.label8);
+            this.groupBoxrCon.Controls.Add(this.textBoxrConUser);
+            this.groupBoxrCon.Controls.Add(this.label9);
+            this.groupBoxrCon.Controls.Add(this.label7);
+            this.groupBoxrCon.Controls.Add(this.textBoxrConPort);
+            this.groupBoxrCon.Location = new System.Drawing.Point(14, 138);
+            this.groupBoxrCon.Margin = new System.Windows.Forms.Padding(2);
+            this.groupBoxrCon.Name = "groupBoxrCon";
+            this.groupBoxrCon.Padding = new System.Windows.Forms.Padding(2);
+            this.groupBoxrCon.Size = new System.Drawing.Size(348, 68);
+            this.groupBoxrCon.TabIndex = 10;
+            this.groupBoxrCon.TabStop = false;
+            this.groupBoxrCon.Text = "rCon (optional)";
+            // 
+            // textBoxrConPassword
+            // 
+            this.textBoxrConPassword.Location = new System.Drawing.Point(241, 42);
+            this.textBoxrConPassword.MaxLength = 64;
+            this.textBoxrConPassword.Name = "textBoxrConPassword";
+            this.textBoxrConPassword.Size = new System.Drawing.Size(102, 20);
+            this.textBoxrConPassword.TabIndex = 112;
+            // 
+            // label8
+            // 
+            this.label8.AutoSize = true;
+            this.label8.Location = new System.Drawing.Point(205, 44);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(30, 13);
+            this.label8.TabIndex = 114;
+            this.label8.Text = "Pass";
+            // 
+            // textBoxrConUser
+            // 
+            this.textBoxrConUser.Location = new System.Drawing.Point(41, 42);
+            this.textBoxrConUser.MaxLength = 256;
+            this.textBoxrConUser.Name = "textBoxrConUser";
+            this.textBoxrConUser.Size = new System.Drawing.Size(130, 20);
+            this.textBoxrConUser.TabIndex = 111;
+            // 
+            // label9
+            // 
+            this.label9.AutoSize = true;
+            this.label9.Location = new System.Drawing.Point(8, 44);
+            this.label9.Name = "label9";
+            this.label9.Size = new System.Drawing.Size(29, 13);
+            this.label9.TabIndex = 113;
+            this.label9.Text = "User";
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(11, 18);
+            this.label7.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(26, 13);
+            this.label7.TabIndex = 110;
+            this.label7.Text = "Port";
+            // 
+            // textBoxrConPort
+            // 
+            this.textBoxrConPort.Location = new System.Drawing.Point(41, 16);
+            this.textBoxrConPort.MaxLength = 6;
+            this.textBoxrConPort.Name = "textBoxrConPort";
+            this.textBoxrConPort.Size = new System.Drawing.Size(50, 20);
+            this.textBoxrConPort.TabIndex = 109;
+            // 
+            // groupBoxDB
+            // 
+            this.groupBoxDB.Controls.Add(this.label6);
+            this.groupBoxDB.Controls.Add(this.numericUpDownInstanceId);
+            this.groupBoxDB.Controls.Add(this.label10);
+            this.groupBoxDB.Controls.Add(this.comboBoxGameType);
+            this.groupBoxDB.Controls.Add(this.label13);
+            this.groupBoxDB.Controls.Add(this.label1);
+            this.groupBoxDB.Controls.Add(this.textBoxDBURL);
+            this.groupBoxDB.Controls.Add(this.textBoxDBPort);
+            this.groupBoxDB.Controls.Add(this.textBoxDBPassword);
+            this.groupBoxDB.Controls.Add(this.label4);
+            this.groupBoxDB.Controls.Add(this.label3);
+            this.groupBoxDB.Controls.Add(this.textBoxDBUser);
+            this.groupBoxDB.Controls.Add(this.label5);
+            this.groupBoxDB.Controls.Add(this.textBoxDBBaseName);
+            this.groupBoxDB.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.groupBoxDB.Location = new System.Drawing.Point(14, 11);
+            this.groupBoxDB.Name = "groupBoxDB";
+            this.groupBoxDB.Size = new System.Drawing.Size(348, 121);
+            this.groupBoxDB.TabIndex = 9;
+            this.groupBoxDB.TabStop = false;
+            this.groupBoxDB.Text = "Database";
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(211, 18);
+            this.label6.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(26, 13);
+            this.label6.TabIndex = 108;
+            this.label6.Text = "Port";
+            // 
+            // numericUpDownInstanceId
+            // 
+            this.numericUpDownInstanceId.Location = new System.Drawing.Point(274, 96);
+            this.numericUpDownInstanceId.Maximum = new decimal(new int[] {
+            20,
+            0,
+            0,
+            0});
+            this.numericUpDownInstanceId.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.numericUpDownInstanceId.Name = "numericUpDownInstanceId";
+            this.numericUpDownInstanceId.Size = new System.Drawing.Size(50, 20);
+            this.numericUpDownInstanceId.TabIndex = 107;
+            this.numericUpDownInstanceId.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            // 
+            // label10
+            // 
+            this.label10.AutoSize = true;
+            this.label10.Location = new System.Drawing.Point(208, 96);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(60, 13);
+            this.label10.TabIndex = 105;
+            this.label10.Text = "Instance Id";
+            // 
+            // comboBoxGameType
+            // 
+            this.comboBoxGameType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboBoxGameType.FormattingEnabled = true;
+            this.comboBoxGameType.Items.AddRange(new object[] {
+            "Auto",
+            "Classic",
+            "Epoch"});
+            this.comboBoxGameType.Location = new System.Drawing.Point(79, 94);
+            this.comboBoxGameType.MaxDropDownItems = 4;
+            this.comboBoxGameType.Name = "comboBoxGameType";
+            this.comboBoxGameType.Size = new System.Drawing.Size(92, 21);
+            this.comboBoxGameType.TabIndex = 6;
+            this.comboBoxGameType.SelectedValueChanged += new System.EventHandler(this.comboBoxGameType_SelectedValueChanged);
+            // 
+            // label13
+            // 
+            this.label13.AutoSize = true;
+            this.label13.Location = new System.Drawing.Point(4, 97);
+            this.label13.Name = "label13";
+            this.label13.Size = new System.Drawing.Size(62, 13);
+            this.label13.TabIndex = 106;
+            this.label13.Text = "Game Type";
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(10, 18);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(29, 13);
+            this.label1.TabIndex = 100;
+            this.label1.Text = "URL";
+            // 
+            // textBoxDBURL
+            // 
+            this.textBoxDBURL.Location = new System.Drawing.Point(41, 16);
+            this.textBoxDBURL.MaxLength = 256;
+            this.textBoxDBURL.Name = "textBoxDBURL";
+            this.textBoxDBURL.Size = new System.Drawing.Size(162, 20);
+            this.textBoxDBURL.TabIndex = 0;
+            // 
+            // textBoxDBPort
+            // 
+            this.textBoxDBPort.Location = new System.Drawing.Point(241, 16);
+            this.textBoxDBPort.MaxLength = 6;
+            this.textBoxDBPort.Name = "textBoxDBPort";
+            this.textBoxDBPort.Size = new System.Drawing.Size(50, 20);
+            this.textBoxDBPort.TabIndex = 1;
+            // 
+            // textBoxDBPassword
+            // 
+            this.textBoxDBPassword.Location = new System.Drawing.Point(241, 68);
+            this.textBoxDBPassword.MaxLength = 64;
+            this.textBoxDBPassword.Name = "textBoxDBPassword";
+            this.textBoxDBPassword.Size = new System.Drawing.Size(102, 20);
+            this.textBoxDBPassword.TabIndex = 4;
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(208, 70);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(30, 13);
+            this.label4.TabIndex = 104;
+            this.label4.Text = "Pass";
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(6, 44);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(31, 13);
+            this.label3.TabIndex = 102;
+            this.label3.Text = "Base";
+            // 
+            // textBoxDBUser
+            // 
+            this.textBoxDBUser.Location = new System.Drawing.Point(41, 68);
+            this.textBoxDBUser.MaxLength = 256;
+            this.textBoxDBUser.Name = "textBoxDBUser";
+            this.textBoxDBUser.Size = new System.Drawing.Size(130, 20);
+            this.textBoxDBUser.TabIndex = 3;
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(8, 70);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(29, 13);
+            this.label5.TabIndex = 103;
+            this.label5.Text = "User";
+            // 
+            // textBoxDBBaseName
+            // 
+            this.textBoxDBBaseName.Location = new System.Drawing.Point(41, 42);
+            this.textBoxDBBaseName.MaxLength = 256;
+            this.textBoxDBBaseName.Name = "textBoxDBBaseName";
+            this.textBoxDBBaseName.Size = new System.Drawing.Size(162, 20);
+            this.textBoxDBBaseName.TabIndex = 2;
+            // 
+            // buttonConnect
+            // 
+            this.buttonConnect.Location = new System.Drawing.Point(160, 216);
+            this.buttonConnect.Name = "buttonConnect";
+            this.buttonConnect.Size = new System.Drawing.Size(70, 23);
+            this.buttonConnect.TabIndex = 7;
+            this.buttonConnect.Text = "Connect";
+            this.buttonConnect.UseVisualStyleBackColor = true;
+            this.buttonConnect.Click += new System.EventHandler(this.buttonConnect_Click);
             // 
             // dataGridViewMaps
             // 
@@ -756,7 +1136,7 @@
             this.dataGridViewMaps.MultiSelect = false;
             this.dataGridViewMaps.Name = "dataGridViewMaps";
             this.dataGridViewMaps.RowHeadersVisible = false;
-            this.dataGridViewMaps.Size = new System.Drawing.Size(529, 491);
+            this.dataGridViewMaps.Size = new System.Drawing.Size(631, 378);
             this.dataGridViewMaps.TabIndex = 0;
             this.dataGridViewMaps.Visible = false;
             this.dataGridViewMaps.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewMaps_CellClick);
@@ -790,182 +1170,18 @@
             this.ColGVMPath.HeaderText = "Path";
             this.ColGVMPath.Name = "ColGVMPath";
             // 
-            // groupBoxCnx
-            // 
-            this.groupBoxCnx.Controls.Add(this.numericUpDownInstanceId);
-            this.groupBoxCnx.Controls.Add(this.label10);
-            this.groupBoxCnx.Controls.Add(this.comboBoxGameType);
-            this.groupBoxCnx.Controls.Add(this.label13);
-            this.groupBoxCnx.Controls.Add(this.label1);
-            this.groupBoxCnx.Controls.Add(this.buttonConnect);
-            this.groupBoxCnx.Controls.Add(this.textBoxURL);
-            this.groupBoxCnx.Controls.Add(this.textBoxPort);
-            this.groupBoxCnx.Controls.Add(this.textBoxPassword);
-            this.groupBoxCnx.Controls.Add(this.label4);
-            this.groupBoxCnx.Controls.Add(this.label3);
-            this.groupBoxCnx.Controls.Add(this.textBoxUser);
-            this.groupBoxCnx.Controls.Add(this.label5);
-            this.groupBoxCnx.Controls.Add(this.textBoxBaseName);
-            this.groupBoxCnx.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.groupBoxCnx.Location = new System.Drawing.Point(112, 155);
-            this.groupBoxCnx.Name = "groupBoxCnx";
-            this.groupBoxCnx.Size = new System.Drawing.Size(312, 192);
-            this.groupBoxCnx.TabIndex = 9;
-            this.groupBoxCnx.TabStop = false;
-            this.groupBoxCnx.Text = "Connection";
-            // 
-            // numericUpDownInstanceId
-            // 
-            this.numericUpDownInstanceId.Location = new System.Drawing.Point(255, 120);
-            this.numericUpDownInstanceId.Maximum = new decimal(new int[] {
-            20,
-            0,
-            0,
-            0});
-            this.numericUpDownInstanceId.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.numericUpDownInstanceId.Name = "numericUpDownInstanceId";
-            this.numericUpDownInstanceId.Size = new System.Drawing.Size(50, 20);
-            this.numericUpDownInstanceId.TabIndex = 107;
-            this.numericUpDownInstanceId.Value = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            // 
-            // label10
-            // 
-            this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(189, 123);
-            this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(60, 13);
-            this.label10.TabIndex = 105;
-            this.label10.Text = "Instance Id";
-            // 
-            // comboBoxGameType
-            // 
-            this.comboBoxGameType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboBoxGameType.FormattingEnabled = true;
-            this.comboBoxGameType.Items.AddRange(new object[] {
-            "Auto",
-            "Classic",
-            "Epoch"});
-            this.comboBoxGameType.Location = new System.Drawing.Point(80, 120);
-            this.comboBoxGameType.MaxDropDownItems = 4;
-            this.comboBoxGameType.Name = "comboBoxGameType";
-            this.comboBoxGameType.Size = new System.Drawing.Size(92, 21);
-            this.comboBoxGameType.TabIndex = 6;
-            this.comboBoxGameType.SelectedValueChanged += new System.EventHandler(this.comboBoxGameType_SelectedValueChanged);
-            // 
-            // label13
-            // 
-            this.label13.AutoSize = true;
-            this.label13.Location = new System.Drawing.Point(5, 123);
-            this.label13.Name = "label13";
-            this.label13.Size = new System.Drawing.Size(62, 13);
-            this.label13.TabIndex = 106;
-            this.label13.Text = "Game Type";
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(6, 19);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(29, 13);
-            this.label1.TabIndex = 100;
-            this.label1.Text = "URL";
-            // 
-            // buttonConnect
-            // 
-            this.buttonConnect.Location = new System.Drawing.Point(121, 160);
-            this.buttonConnect.Name = "buttonConnect";
-            this.buttonConnect.Size = new System.Drawing.Size(70, 23);
-            this.buttonConnect.TabIndex = 7;
-            this.buttonConnect.Text = "Connect";
-            this.buttonConnect.UseVisualStyleBackColor = true;
-            this.buttonConnect.Click += new System.EventHandler(this.buttonConnect_Click);
-            // 
-            // textBoxURL
-            // 
-            this.textBoxURL.Location = new System.Drawing.Point(41, 16);
-            this.textBoxURL.MaxLength = 256;
-            this.textBoxURL.Name = "textBoxURL";
-            this.textBoxURL.Size = new System.Drawing.Size(189, 20);
-            this.textBoxURL.TabIndex = 0;
-            // 
-            // textBoxPort
-            // 
-            this.textBoxPort.Location = new System.Drawing.Point(255, 16);
-            this.textBoxPort.MaxLength = 6;
-            this.textBoxPort.Name = "textBoxPort";
-            this.textBoxPort.Size = new System.Drawing.Size(50, 20);
-            this.textBoxPort.TabIndex = 1;
-            // 
-            // textBoxPassword
-            // 
-            this.textBoxPassword.Location = new System.Drawing.Point(41, 94);
-            this.textBoxPassword.MaxLength = 64;
-            this.textBoxPassword.Name = "textBoxPassword";
-            this.textBoxPassword.Size = new System.Drawing.Size(187, 20);
-            this.textBoxPassword.TabIndex = 4;
-            // 
-            // label4
-            // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(4, 97);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(30, 13);
-            this.label4.TabIndex = 104;
-            this.label4.Text = "Pass";
-            // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(4, 45);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(31, 13);
-            this.label3.TabIndex = 102;
-            this.label3.Text = "Base";
-            // 
-            // textBoxUser
-            // 
-            this.textBoxUser.Location = new System.Drawing.Point(41, 68);
-            this.textBoxUser.MaxLength = 256;
-            this.textBoxUser.Name = "textBoxUser";
-            this.textBoxUser.Size = new System.Drawing.Size(187, 20);
-            this.textBoxUser.TabIndex = 3;
-            // 
-            // label5
-            // 
-            this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(4, 71);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(29, 13);
-            this.label5.TabIndex = 103;
-            this.label5.Text = "User";
-            // 
-            // textBoxBaseName
-            // 
-            this.textBoxBaseName.Location = new System.Drawing.Point(41, 42);
-            this.textBoxBaseName.MaxLength = 256;
-            this.textBoxBaseName.Name = "textBoxBaseName";
-            this.textBoxBaseName.Size = new System.Drawing.Size(187, 20);
-            this.textBoxBaseName.TabIndex = 2;
-            // 
             // tabControl1
             // 
             this.tabControl1.Controls.Add(this.tabPageDisplay);
             this.tabControl1.Controls.Add(this.tabPageScripts);
             this.tabControl1.Controls.Add(this.tabPageVehicles);
             this.tabControl1.Controls.Add(this.tabPageDeployables);
+            this.tabControl1.Controls.Add(this.tabPagePlayers);
             this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControl1.Location = new System.Drawing.Point(0, 0);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(259, 491);
+            this.tabControl1.Size = new System.Drawing.Size(312, 378);
             this.tabControl1.TabIndex = 4;
             // 
             // tabPageDisplay
@@ -979,7 +1195,7 @@
             this.tabPageDisplay.Location = new System.Drawing.Point(4, 22);
             this.tabPageDisplay.Name = "tabPageDisplay";
             this.tabPageDisplay.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageDisplay.Size = new System.Drawing.Size(251, 465);
+            this.tabPageDisplay.Size = new System.Drawing.Size(304, 352);
             this.tabPageDisplay.TabIndex = 1;
             this.tabPageDisplay.Text = "Display";
             // 
@@ -1040,7 +1256,7 @@
             this.groupBoxInfo.Controls.Add(this.propertyGrid1);
             this.groupBoxInfo.Location = new System.Drawing.Point(3, 60);
             this.groupBoxInfo.Name = "groupBoxInfo";
-            this.groupBoxInfo.Size = new System.Drawing.Size(242, 404);
+            this.groupBoxInfo.Size = new System.Drawing.Size(295, 285);
             this.groupBoxInfo.TabIndex = 3;
             this.groupBoxInfo.TabStop = false;
             this.groupBoxInfo.Text = "Info";
@@ -1052,7 +1268,7 @@
             this.propertyGrid1.Location = new System.Drawing.Point(3, 16);
             this.propertyGrid1.Name = "propertyGrid1";
             this.propertyGrid1.PropertySort = System.Windows.Forms.PropertySort.Categorized;
-            this.propertyGrid1.Size = new System.Drawing.Size(236, 385);
+            this.propertyGrid1.Size = new System.Drawing.Size(289, 266);
             this.propertyGrid1.TabIndex = 0;
             this.propertyGrid1.ToolbarVisible = false;
             this.propertyGrid1.ViewBackColor = System.Drawing.SystemColors.Control;
@@ -1078,7 +1294,7 @@
             this.tabPageScripts.Location = new System.Drawing.Point(4, 22);
             this.tabPageScripts.Name = "tabPageScripts";
             this.tabPageScripts.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageScripts.Size = new System.Drawing.Size(251, 465);
+            this.tabPageScripts.Size = new System.Drawing.Size(304, 352);
             this.tabPageScripts.TabIndex = 2;
             this.tabPageScripts.Text = "Scripts";
             // 
@@ -1182,7 +1398,7 @@
             this.textBoxCmdStatus.Name = "textBoxCmdStatus";
             this.textBoxCmdStatus.ReadOnly = true;
             this.textBoxCmdStatus.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.textBoxCmdStatus.Size = new System.Drawing.Size(238, 215);
+            this.textBoxCmdStatus.Size = new System.Drawing.Size(291, 119);
             this.textBoxCmdStatus.TabIndex = 8;
             // 
             // textBoxOldBodyLimit
@@ -1254,7 +1470,7 @@
             this.tabPageVehicles.Location = new System.Drawing.Point(4, 22);
             this.tabPageVehicles.Name = "tabPageVehicles";
             this.tabPageVehicles.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageVehicles.Size = new System.Drawing.Size(251, 465);
+            this.tabPageVehicles.Size = new System.Drawing.Size(304, 352);
             this.tabPageVehicles.TabIndex = 4;
             this.tabPageVehicles.Text = "Vehicles";
             // 
@@ -1275,7 +1491,7 @@
             this.dataGridViewVehicleTypes.Name = "dataGridViewVehicleTypes";
             this.dataGridViewVehicleTypes.RowHeadersVisible = false;
             this.dataGridViewVehicleTypes.ShowEditingIcon = false;
-            this.dataGridViewVehicleTypes.Size = new System.Drawing.Size(245, 459);
+            this.dataGridViewVehicleTypes.Size = new System.Drawing.Size(298, 346);
             this.dataGridViewVehicleTypes.TabIndex = 0;
             this.dataGridViewVehicleTypes.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewVehicleTypes_CellContentClick);
             this.dataGridViewVehicleTypes.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewVehicleTypes_CellValueChanged);
@@ -1322,7 +1538,7 @@
             this.tabPageDeployables.Location = new System.Drawing.Point(4, 22);
             this.tabPageDeployables.Name = "tabPageDeployables";
             this.tabPageDeployables.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageDeployables.Size = new System.Drawing.Size(251, 465);
+            this.tabPageDeployables.Size = new System.Drawing.Size(304, 352);
             this.tabPageDeployables.TabIndex = 5;
             this.tabPageDeployables.Text = "Deployables";
             // 
@@ -1345,7 +1561,7 @@
             this.dataGridViewDeployableTypes.RowHeadersVisible = false;
             this.dataGridViewDeployableTypes.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
             this.dataGridViewDeployableTypes.ShowEditingIcon = false;
-            this.dataGridViewDeployableTypes.Size = new System.Drawing.Size(245, 459);
+            this.dataGridViewDeployableTypes.Size = new System.Drawing.Size(298, 346);
             this.dataGridViewDeployableTypes.TabIndex = 0;
             this.dataGridViewDeployableTypes.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewDeployableTypes_CellContentClick);
             this.dataGridViewDeployableTypes.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewDeployableTypes_CellValueChanged);
@@ -1379,33 +1595,71 @@
             this.ColGVDTType.Name = "ColGVDTType";
             this.ColGVDTType.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
             // 
-            // Form1
+            // tabPagePlayers
+            // 
+            this.tabPagePlayers.Controls.Add(this.dataGridViewPlayers);
+            this.tabPagePlayers.Location = new System.Drawing.Point(4, 22);
+            this.tabPagePlayers.Name = "tabPagePlayers";
+            this.tabPagePlayers.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPagePlayers.Size = new System.Drawing.Size(304, 352);
+            this.tabPagePlayers.TabIndex = 6;
+            this.tabPagePlayers.Text = "Players";
+            this.tabPagePlayers.UseVisualStyleBackColor = true;
+            // 
+            // dataGridViewPlayers
+            // 
+            this.dataGridViewPlayers.AllowUserToAddRows = false;
+            this.dataGridViewPlayers.AllowUserToDeleteRows = false;
+            this.dataGridViewPlayers.AllowUserToResizeRows = false;
+            this.dataGridViewPlayers.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this.dataGridViewPlayers.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+            this.dataGridViewPlayers.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dataGridViewPlayers.Location = new System.Drawing.Point(3, 3);
+            this.dataGridViewPlayers.MultiSelect = false;
+            this.dataGridViewPlayers.Name = "dataGridViewPlayers";
+            this.dataGridViewPlayers.ReadOnly = true;
+            this.dataGridViewPlayers.RowHeadersVisible = false;
+            this.dataGridViewPlayers.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
+            this.dataGridViewPlayers.RowTemplate.ContextMenuStrip = this.contextMenuPlayersOnline;
+            this.dataGridViewPlayers.ShowEditingIcon = false;
+            this.dataGridViewPlayers.Size = new System.Drawing.Size(298, 346);
+            this.dataGridViewPlayers.TabIndex = 0;
+            // 
+            // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 522);
+            this.ClientSize = new System.Drawing.Size(955, 524);
             this.Controls.Add(this.toolStripContainer3);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.MinimumSize = new System.Drawing.Size(628, 497);
-            this.Name = "Form1";
+            this.MinimumSize = new System.Drawing.Size(623, 481);
+            this.Name = "MainWindow";
             this.Text = "Form1";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
             this.Resize += new System.EventHandler(this.Form1Resize);
-            this.contextMenuStripAddVehicle.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dataSetBindingSource)).EndInit();
             this.contextMenuStripResetTypes.ResumeLayout(false);
             this.contextMenuStripSpawn.ResumeLayout(false);
             this.contextMenuStripVehicle.ResumeLayout(false);
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
-            this.toolStripContainer1.ContentPanel.ResumeLayout(false);
-            this.toolStripContainer1.ResumeLayout(false);
-            this.toolStripContainer1.PerformLayout();
             this.toolStripContainer2.ContentPanel.ResumeLayout(false);
             this.toolStripContainer2.ResumeLayout(false);
             this.toolStripContainer2.PerformLayout();
+            this.toolStripContainer1.ContentPanel.ResumeLayout(false);
+            this.toolStripContainer1.ResumeLayout(false);
+            this.toolStripContainer1.PerformLayout();
+            this.splitContainerGlobal.Panel1.ResumeLayout(false);
+            this.splitContainerGlobal.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainerGlobal)).EndInit();
+            this.splitContainerGlobal.ResumeLayout(false);
+            this.contextMenuPlayersOnline.ResumeLayout(false);
+            this.splitContainerChat.Panel1.ResumeLayout(false);
+            this.splitContainerChat.Panel2.ResumeLayout(false);
+            this.splitContainerChat.Panel2.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainerChat)).EndInit();
+            this.splitContainerChat.ResumeLayout(false);
             this.toolStripContainer3.BottomToolStripPanel.ResumeLayout(false);
-            this.toolStripContainer3.BottomToolStripPanel.PerformLayout();
             this.toolStripContainer3.ContentPanel.ResumeLayout(false);
             this.toolStripContainer3.ResumeLayout(false);
             this.toolStripContainer3.PerformLayout();
@@ -1413,10 +1667,13 @@
             this.splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewMaps)).EndInit();
-            this.groupBoxCnx.ResumeLayout(false);
-            this.groupBoxCnx.PerformLayout();
+            this.panelCnx.ResumeLayout(false);
+            this.groupBoxrCon.ResumeLayout(false);
+            this.groupBoxrCon.PerformLayout();
+            this.groupBoxDB.ResumeLayout(false);
+            this.groupBoxDB.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownInstanceId)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewMaps)).EndInit();
             this.tabControl1.ResumeLayout(false);
             this.tabPageDisplay.ResumeLayout(false);
             this.tabPageDisplay.PerformLayout();
@@ -1428,6 +1685,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewVehicleTypes)).EndInit();
             this.tabPageDeployables.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewDeployableTypes)).EndInit();
+            this.tabPagePlayers.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewPlayers)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -1436,14 +1695,14 @@
 
         private MySplitContainer splitContainer1;
         private System.Windows.Forms.Button buttonConnect;
-        private System.Windows.Forms.TextBox textBoxPassword;
+        private System.Windows.Forms.TextBox textBoxDBPassword;
         private System.Windows.Forms.Label label4;
-        private System.Windows.Forms.TextBox textBoxPort;
-        private System.Windows.Forms.TextBox textBoxBaseName;
-        private System.Windows.Forms.TextBox textBoxURL;
+        private System.Windows.Forms.TextBox textBoxDBPort;
+        private System.Windows.Forms.TextBox textBoxDBBaseName;
+        private System.Windows.Forms.TextBox textBoxDBURL;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.TextBox textBoxUser;
+        private System.Windows.Forms.TextBox textBoxDBUser;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.ToolStripPanel BottomToolStripPanel;
         private System.Windows.Forms.ToolStripPanel TopToolStripPanel;
@@ -1455,7 +1714,7 @@
         private System.Windows.Forms.TabControl tabControl1;
         private System.Windows.Forms.TabPage tabPageDisplay;
         private System.Windows.Forms.PropertyGrid propertyGrid1;
-        private System.Windows.Forms.GroupBox groupBoxCnx;
+        private System.Windows.Forms.GroupBox groupBoxDB;
         private System.Windows.Forms.Label label10;
         private System.Windows.Forms.TabPage tabPageScripts;
         private System.Windows.Forms.TextBox textBoxOldBodyLimit;
@@ -1517,8 +1776,9 @@
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusCoordMapL;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusCoordDBL;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusDeployableL;
-        private System.Windows.Forms.ContextMenuStrip contextMenuStripAddVehicle;
-        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemAddVehicle;
+        private System.Windows.Forms.ContextMenuStrip contextMenuStripMapMenu;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuMapAddVehicle;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuMapTeleportPlayer;
         private System.Windows.Forms.TrackBar trackBarLastUpdated;
         private System.Windows.Forms.Label labelLastUpdate;
         private System.Windows.Forms.ToolStripMenuItem ttootToolStripMenuItem;
@@ -1548,7 +1808,7 @@
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusWorld;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusTrail;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusDeployable;
-        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusHelp;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusChat;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusCoordMap;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusCoordDB;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusMapHelper;
@@ -1557,6 +1817,24 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.ToolStripMenuItem repairRefuelVehicleToolStripMenuItem;
         private System.ComponentModel.BackgroundWorker bgWorkerLoadTiles;
+        private System.Windows.Forms.TabPage tabPagePlayers;
+        private System.Windows.Forms.DataGridView dataGridViewPlayers;
+        private System.Windows.Forms.ContextMenuStrip contextMenuPlayersOnline;
+        private System.Windows.Forms.ToolStripMenuItem messageToPlayerToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem kickPlayerToolStripMenuItem;
+        private System.Windows.Forms.SplitContainer splitContainerGlobal;
+        private System.Windows.Forms.RichTextBox richTextBoxChat;
+        private System.Windows.Forms.TextBox textBoxChatInput;
+        private System.Windows.Forms.SplitContainer splitContainerChat;
+        private System.Windows.Forms.Panel panelCnx;
+        private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.GroupBox groupBoxrCon;
+        private System.Windows.Forms.TextBox textBoxrConPassword;
+        private System.Windows.Forms.Label label8;
+        private System.Windows.Forms.TextBox textBoxrConUser;
+        private System.Windows.Forms.Label label9;
+        private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.TextBox textBoxrConPort;
     }
 }
 

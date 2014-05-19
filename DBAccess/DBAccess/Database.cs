@@ -28,8 +28,7 @@ namespace DBAccess
         public DataSet DeployableTypes { get { return dsDeployableTypes; } }
         public DataSet Instances { get { return dsInstances; } }
         public DataSet Deployables { get { return dsDeployables; } }
-        public DataSet AlivePlayers { get { return dsAlivePlayers; } }
-        public DataSet OnlinePlayers { get { return dsOnlinePlayers; } }
+        public DataSet PlayersAlive { get { return dsAlivePlayers; } }
         public DataSet Vehicles { get { return dsVehicles; } }
         public DataSet SpawnPoints { get { return dsSpawnPoints; } }
 
@@ -111,7 +110,6 @@ namespace DBAccess
 
             this.bConnected = false;
 
-            dsOnlinePlayers.Clear();
             dsAlivePlayers.Clear();
             dsVehicles.Clear();
             dsSpawnPoints.Clear();
@@ -332,7 +330,7 @@ namespace DBAccess
         public bool AddVehicle(bool instanceOrSpawn, string classname, int vehicle_id, Tool.Point position)
         {
             int res;
-            string worldspace = "\"[0,[" + position.X.ToString() + "," + position.Y.ToString() + ",0.0015]]\"";
+            string worldspace = "\"[0,[" + position.X.ToString(CultureInfo.InvariantCulture.NumberFormat) + "," + position.Y.ToString(CultureInfo.InvariantCulture.NumberFormat) + ",0.0015]]\"";
 
             if (instanceOrSpawn == false /* instance */)
             {
@@ -358,6 +356,22 @@ namespace DBAccess
             /*else spawn point */
             res = ExecuteSqlNonQuery("INSERT INTO world_vehicle (`vehicle_id`, `world_id`, `worldspace`, `description`, `chance`) VALUES(" + vehicle_id + "," + WorldId + "," + worldspace + ",\"" + classname + "\", 0.7);");
             return (res != 0);
+        }
+        public bool TeleportPlayer(string uid, Tool.Point position)
+        {
+            int res;
+            string worldspace = "\"[0,[" + position.X.ToString(CultureInfo.InvariantCulture.NumberFormat) + "," + position.Y.ToString(CultureInfo.InvariantCulture.NumberFormat) + ",0.0015]]\"";
+
+            switch (GameType)
+            {
+                case "Epoch":
+                    res = ExecuteSqlNonQuery("UPDATE `character_data` SET Worldspace=" + worldspace + " WHERE (PlayerUID=" + uid + " AND Alive=1) ORDER BY CharacterID DESC LIMIT 1");
+                    break;
+                default:
+                    res = ExecuteSqlNonQuery("UPDATE `survivor` SET worldspace=" + worldspace + " WHERE (world_id=" + WorldId + " AND unique_id=" + uid + " AND is_dead=0) ORDER BY id DESC LIMIT 1");
+                    break;
+            }
+            return (res == 1);
         }
         public bool RepairAndRefuelVehicle(string uid)
         {
@@ -487,7 +501,7 @@ namespace DBAccess
             return sResult;
         }
 
-        private MySqlConnection sqlCnx;
+        internal MySqlConnection sqlCnx;
         private bool bConnected = false;
         private int instanceId;
         private int worldId;
@@ -501,7 +515,6 @@ namespace DBAccess
         private DataSet dsInstances = new DataSet();
         private DataSet dsDeployables = new DataSet();
         private DataSet dsAlivePlayers = new DataSet();
-        private DataSet dsOnlinePlayers = new DataSet();
         private DataSet dsVehicles = new DataSet();
         private DataSet dsSpawnPoints = new DataSet();
 
@@ -620,7 +633,6 @@ namespace DBAccess
             if (bConnected)
             {
                 DataSet _dsAlivePlayers = new DataSet();
-                DataSet _dsOnlinePlayers = new DataSet();
                 DataSet _dsDeployables = new DataSet();
                 DataSet _dsVehicles = new DataSet();
                 DataSet _dsVehicleSpawnPoints = new DataSet();
@@ -643,16 +655,9 @@ namespace DBAccess
                         cmd.CommandText += " AND s.last_updated > now() - interval " + FilterLastUpdated + " day";
                         _dsAlivePlayers.Clear();
                         adapter.Fill(_dsAlivePlayers);
-
-                        //
-                        //  Players online
-                        //
-                        cmd.CommandText = "SELECT s.id id, s.unique_id unique_id, p.name name, p.humanity humanity, s.worldspace worldspace,"
-                                        + " s.inventory inventory, s.backpack backpack, s.medical medical, s.state state, s.last_updated last_updated"
-                                        + " FROM survivor as s, profile as p WHERE s.unique_id=p.unique_id AND s.world_id=" + WorldId + " AND s.is_dead=0"
-                                        + " AND s.last_updated > now() - interval " + OnlineTimeLimit + " minute";
-                        _dsOnlinePlayers.Clear();
-                        adapter.Fill(_dsOnlinePlayers);
+                        DataColumn[] keys = new DataColumn[1];
+                        keys[0] = _dsAlivePlayers.Tables[0].Columns[1];
+                        _dsAlivePlayers.Tables[0].PrimaryKey = keys;
 
                         //
                         //  Vehicles
@@ -706,7 +711,6 @@ namespace DBAccess
 
                 dsDeployables = _dsDeployables.Copy();
                 dsAlivePlayers = _dsAlivePlayers.Copy();
-                dsOnlinePlayers = _dsOnlinePlayers.Copy();
                 dsVehicles = _dsVehicles.Copy();
                 dsSpawnPoints = _dsVehicleSpawnPoints.Copy();
 
@@ -767,7 +771,6 @@ namespace DBAccess
             if (bConnected)
             {
                 DataSet _dsAlivePlayers = new DataSet();
-                DataSet _dsOnlinePlayers = new DataSet();
                 DataSet _dsDeployables = new DataSet();
                 DataSet _dsVehicles = new DataSet();
 
@@ -790,17 +793,9 @@ namespace DBAccess
                         cmd.CommandText += " AND cd.LastLogin > now() - interval " + FilterLastUpdated + " day";
                         _dsAlivePlayers.Clear();
                         adapter.Fill(_dsAlivePlayers);
-
-                        //
-                        //  Players online
-                        //
-                        cmd.CommandText = "SELECT cd.CharacterID id, pd.PlayerUID unique_id, pd.PlayerName name, cd.Humanity humanity, cd.worldspace worldspace,"
-                                        + " cd.inventory inventory, cd.backpack backpack, cd.medical medical, cd.CurrentState state, cd.DateStamp last_updated"
-                                        + " FROM character_data as cd, player_data as pd"
-                                        + " WHERE cd.PlayerUID=pd.PlayerUID AND cd.Alive=1";
-                        cmd.CommandText += " AND cd.LastLogin > now() - interval " + OnlineTimeLimit + " minute";
-                        _dsOnlinePlayers.Clear();
-                        adapter.Fill(_dsOnlinePlayers);
+                        DataColumn[] keys = new DataColumn[1];
+                        keys[0] = _dsAlivePlayers.Tables[0].Columns[1];
+                        _dsAlivePlayers.Tables[0].PrimaryKey = keys;
 
                         //
                         //  Vehicles
@@ -840,7 +835,6 @@ namespace DBAccess
 
                 dsDeployables = _dsDeployables.Copy();
                 dsAlivePlayers = _dsAlivePlayers.Copy();
-                dsOnlinePlayers = _dsOnlinePlayers.Copy();
                 dsVehicles = _dsVehicles.Copy();
 
                 worldId = 1;

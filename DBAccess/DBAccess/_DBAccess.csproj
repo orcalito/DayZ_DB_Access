@@ -137,7 +137,6 @@
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <SubType>Designer</SubType>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <None Include="ClassDiagram1.cd" />
     <None Include="DBAccess_TemporaryKey.pfx" />
@@ -146,11 +145,6 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
-    <Compile Include="Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
     <Compile Include="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Settings.settings</DependentUpon>
@@ -218,6 +212,47 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Application.ico" />
+    <Content Include="Resources\air.png" />
+    <Content Include="Resources\atv.png" />
+    <Content Include="Resources\atv_crashed.png" />
+    <Content Include="Resources\bike.png" />
+    <Content Include="Resources\bike_crashed.png" />
+    <Content Include="Resources\boat.png" />
+    <Content Include="Resources\boat_crashed.png" />
+    <Content Include="Resources\bus.png" />
+    <Content Include="Resources\bus_crashed.png" />
+    <Content Include="Resources\car.png" />
+    <Content Include="Resources\car_crashed.png" />
+    <Content Include="Resources\close.png" />
+    <Content Include="Resources\DB.png" />
+    <Content Include="Resources\deployable.png" />
+    <Content Include="Resources\Flag.png" />
+    <Content Include="Resources\helicopter.png" />
+    <Content Include="Resources\helicopter_crashed.png" />
+    <Content Include="Resources\help.png" />
+    <Content Include="Resources\iconAlive.png" />
+    <Content Include="Resources\iconLobby.png" />
+    <Content Include="Resources\iconOnline.png" />
+    <Content Include="Resources\large_build.png" />
+    <Content Include="Resources\Mag.png" />
+    <Content Include="Resources\Map.png" />
+    <Content Include="Resources\motorcycle.png" />
+    <Content Include="Resources\motorcycle_crashed.png" />
+    <Content Include="Resources\rCon.png" />
+    <Content Include="Resources\small_build.png" />
+    <Content Include="Resources\stach.png" />
+    <Content Include="Resources\Tent.png" />
+    <Content Include="Resources\Tool.png" />
+    <Content Include="Resources\tractor.png" />
+    <Content Include="Resources\tractor_crashed.png" />
+    <Content Include="Resources\Trail.png" />
+    <Content Include="Resources\truck.png" />
+    <Content Include="Resources\truck_crashed.png" />
+    <Content Include="Resources\uaz.png" />
+    <Content Include="Resources\uaz_crashed.png" />
+    <Content Include="Resources\unknown.png" />
+    <Content Include="Resources\Vehicle.png" />
+    <Content Include="Resources\World.png" />
     <None Include="Resources\world64.png" />
     <None Include="Resources\tools64.png" />
     <None Include="Resources\tent64.png" />

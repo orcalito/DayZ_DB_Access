@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -55,7 +56,7 @@ namespace DBAccess
                 return false;
             }
             public override int GetHashCode() { return ((int)(X * 16777216) ^ ((int)(Y * 16777216)) << 8); }
-            public override string ToString() { return "(" + X + "," + Y + ")"; }
+            public override string ToString() { return "(" + X.ToString(CultureInfo.InvariantCulture.NumberFormat) + "," + Y.ToString(CultureInfo.InvariantCulture.NumberFormat) + ")"; }
             public string ToStringInt() { return "(" + (int)X + "," + (int)Y + ")"; }
 
             public float X;
@@ -99,7 +100,7 @@ namespace DBAccess
                 return false;
             }
             public override int GetHashCode() { return ((int)(Width * 16777216) ^ ((int)(Height * 16777216)) << 8); }
-            public override string ToString() { return "(" + Width + "," + Height + ")"; }
+            public override string ToString() { return "(" + Width.ToString(CultureInfo.InvariantCulture.NumberFormat) + "," + Height.ToString(CultureInfo.InvariantCulture.NumberFormat) + ")"; }
 
             public float Width;
             public float Height;

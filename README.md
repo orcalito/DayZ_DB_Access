@@ -58,6 +58,9 @@ You can edit the config file, or delete all files to restore an empty configurat
 
 History
 =======
+ - v2.8.7
+	- support for non squared aspect ratio for input bitmaps
+
  - v2.8.6
 	- added automatic selection of DB schema (GameType must be reset to "Auto")
  
