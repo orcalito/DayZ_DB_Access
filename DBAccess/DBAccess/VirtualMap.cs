@@ -15,7 +15,7 @@ namespace DBAccess
             Size = new Tool.Size(400, 400);
         }
 
-        public bool Enabled { get { return nfo.depth > 0; } }
+        public bool Enabled { get { return nfo.max_depth > 0; } }
 
         public Tool.Point Position;
         public Tool.Size Size
@@ -34,6 +34,10 @@ namespace DBAccess
         {
             return new Rectangle(Position + p * _tileSize, _tileSize);
         }
+        public Rectangle TileRectangleEx(Tool.Point p, Tool.Size sz)
+        {
+            return new Rectangle(Position + p * _tileSize, sz);
+        }
         public Tool.Point UnitToPanel(Tool.Point from)
         {
             //                return Position + from * SizeCorrected;
@@ -47,7 +51,7 @@ namespace DBAccess
             Tool.Size ratio = this.nfo.dbMapSize / this.nfo.dbRefMapSize;
             Tool.Point unitPos = from.pos * ratio + this.nfo.dbMapOffsetUnit;
 
-            return this.Position + unitPos * this.SizeCorrected - from.icon.Size * 0.5f;
+            return this.Position + (unitPos * this.SizeCorrected) - (from.icon.Size * 0.5f);
         }
         public Tool.Point PanelToUnit(Tool.Point from)
         {
@@ -74,8 +78,8 @@ namespace DBAccess
         {
             Tool.Size minSize = nfo.defTileSize * (float)Math.Pow(2, nfo.min_depth);
 
-            Tool.Size maxSize = new Tool.Size((int)nfo.defTileSize.Width << (nfo.depth - 1),
-                                              (int)nfo.defTileSize.Height << (nfo.depth - 1));
+            Tool.Size maxSize = new Tool.Size((int)nfo.defTileSize.Width << (nfo.mag_depth - 1),
+                                              (int)nfo.defTileSize.Height << (nfo.mag_depth - 1));
 
             Tool.Size temp = nfo.defTileSize * zoom;
 
@@ -103,7 +107,7 @@ namespace DBAccess
             _depth = Math.Max(_depth, nfo.min_depth); 
 
             // Clamp to max depth
-            _depth = Math.Min(_depth, nfo.depth - 1);
+            _depth = Math.Min(_depth, nfo.mag_depth - 1);
 
             // Clamp tile count
             Tool.Size maxSize = new Tool.Size(1 << _depth, 1 << _depth);
@@ -120,14 +124,17 @@ namespace DBAccess
         public void Calibrate()
         {
             nfo.min_depth = 0;
-            while (Directory.Exists(nfo.tileBasePath + nfo.min_depth) == false)
+            while ((Directory.Exists(nfo.tileBasePath + nfo.min_depth) == false) && (nfo.min_depth<20))
                 nfo.min_depth++;
+
+
         }
 
         public class BitmapNfo
         {
             public string tileBasePath = "";
-            public int depth = 0;
+            public int mag_depth = 0;
+            public int max_depth = 0;
             public int min_depth = 0;
             public Tool.Size defTileSize = new Tool.Size(1, 1);
             public Tool.Size dbMapSize = new Tool.Size(1, 1);

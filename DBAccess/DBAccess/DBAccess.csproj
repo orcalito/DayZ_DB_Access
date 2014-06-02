@@ -28,8 +28,8 @@
     <CreateWebPageOnPublish>true</CreateWebPageOnPublish>
     <WebPage>publish.htm</WebPage>
     <OpenBrowserOnPublish>false</OpenBrowserOnPublish>
-    <ApplicationRevision>1</ApplicationRevision>
-    <ApplicationVersion>2.8.6.%2a</ApplicationVersion>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>2.9.0.%2a</ApplicationVersion>
     <UseApplicationTrust>true</UseApplicationTrust>
     <CreateDesktopShortcut>true</CreateDesktopShortcut>
     <PublishWizardCompleted>true</PublishWizardCompleted>
@@ -74,9 +74,6 @@
     <ApplicationIcon>Application.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="BattleNET">
-      <HintPath>bin\Release\BattleNET.dll</HintPath>
-    </Reference>
     <Reference Include="MySql.Data, Version=6.7.4.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL">
       <HintPath>bin\Release\MySql.Data.dll</HintPath>
     </Reference>
@@ -96,6 +93,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BattleEyeLoginCredentials.cs" />
+    <Compile Include="BattlEyeClient.cs" />
+    <Compile Include="BattlEyeCommand.cs" />
+    <Compile Include="BattlEyeCommandResult.cs" />
+    <Compile Include="BattlEyeConnectionResult.cs" />
+    <Compile Include="BattlEyeDisconnectEventArgs.cs" />
+    <Compile Include="BattlEyeDisconnectionType.cs" />
+    <Compile Include="BattlEyeMessageEventArgs.cs" />
+    <Compile Include="BattlEyePacketType.cs" />
+    <Compile Include="BE_Helpers.cs" />
+    <Compile Include="CRC32.cs" />
     <Compile Include="Database.cs" />
     <Compile Include="MapHelper.cs" />
     <Compile Include="MapPan.cs" />
@@ -108,6 +116,11 @@
     </Compile>
     <Compile Include="propDeployable.cs" />
     <Compile Include="propBase.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="PropertyGridHelpers.cs" />
     <Compile Include="propSpawn.cs" />
     <Compile Include="propVehicle.cs" />
@@ -146,11 +159,6 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
-    <Compile Include="Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
     <Compile Include="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Settings.settings</DependentUpon>
@@ -218,14 +226,19 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Application.ico" />
-    <None Include="Resources\world64.png" />
-    <None Include="Resources\tools64.png" />
-    <None Include="Resources\tent64.png" />
-    <None Include="Resources\player64.png" />
-    <None Include="Resources\globe64.png" />
-    <None Include="Resources\flag64.png" />
-    <None Include="Resources\chat64.png" />
-    <None Include="Resources\car64.png" />
+    <None Include="Resources\air_crashed.png" />
+    <None Include="Resources\air.png" />
+    <None Include="Properties\Tool_World.png" />
+    <None Include="Properties\Tool_Vehicle.png" />
+    <None Include="Properties\Tool_Trail.png" />
+    <None Include="Properties\Tool_Spawn.png" />
+    <None Include="Properties\Tool_Online.png" />
+    <None Include="Properties\Tool_MapHelper.png" />
+    <None Include="Properties\Tool_Map.png" />
+    <None Include="Properties\Tool_Deployable.png" />
+    <None Include="Properties\Tool_DB.png" />
+    <None Include="Properties\Tool_Chat.png" />
+    <None Include="Properties\Tool_Alive.png" />
     <None Include="Properties\iconLobby.png" />
     <None Include="Properties\rCon.png" />
     <None Include="Properties\Trail.png" />

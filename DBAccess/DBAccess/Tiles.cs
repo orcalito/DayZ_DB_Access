@@ -10,12 +10,15 @@ namespace DBAccess
 {
     public class tileReq
     {
-        public tileReq(int x, int y, int depth, bool bKeepLoaded)
+        public static int max_depth;
+
+        public tileReq(int x, int y, int depth, bool bKeepLoaded, bool bDontDisplay)
         {
             this.x = x;
             this.y = y;
             this.depth = depth;
             this.bKeepLoaded = bKeepLoaded;
+            this.bDontDisplay = bDontDisplay;
         }
 
         public string path;
@@ -24,6 +27,15 @@ namespace DBAccess
         public int y;
         public int depth;
         public bool bKeepLoaded;
+        public bool bDontDisplay;
+
+        public int Key
+        {
+            get
+            {
+                return (x << 0 | y << 12 | depth << 24);
+            }
+        }
     }
     class tileNfo
     {
@@ -40,6 +52,7 @@ namespace DBAccess
                 }
             }
             ticks = DateTime.Now.Ticks;
+            timeOut = (tileReq.max_depth - req.depth) * 10000000L;  // lowest level = smallest timeOut
         }
         ~tileNfo()
         {
@@ -50,6 +63,7 @@ namespace DBAccess
         public string path;
         public Bitmap bitmap;
         public long ticks;
+        public long timeOut;
         public bool bKeepLoaded = false;
     }
 }

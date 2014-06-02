@@ -40,14 +40,14 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.textBoxMsgToPlayer.Location = new System.Drawing.Point(8, 8);
             this.textBoxMsgToPlayer.Name = "textBoxMsgToPlayer";
-            this.textBoxMsgToPlayer.Size = new System.Drawing.Size(210, 20);
+            this.textBoxMsgToPlayer.Size = new System.Drawing.Size(198, 20);
             this.textBoxMsgToPlayer.TabIndex = 0;
             // 
             // buttonSend
             // 
             this.buttonSend.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.buttonSend.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.buttonSend.Location = new System.Drawing.Point(111, 35);
+            this.buttonSend.Location = new System.Drawing.Point(99, 64);
             this.buttonSend.Name = "buttonSend";
             this.buttonSend.Size = new System.Drawing.Size(48, 28);
             this.buttonSend.TabIndex = 1;
@@ -58,7 +58,7 @@
             // 
             this.buttonCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.buttonCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.buttonCancel.Location = new System.Drawing.Point(170, 35);
+            this.buttonCancel.Location = new System.Drawing.Point(158, 64);
             this.buttonCancel.Margin = new System.Windows.Forms.Padding(8);
             this.buttonCancel.Name = "buttonCancel";
             this.buttonCancel.Size = new System.Drawing.Size(48, 28);
@@ -72,13 +72,12 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.buttonCancel;
-            this.ClientSize = new System.Drawing.Size(226, 72);
+            this.ClientSize = new System.Drawing.Size(214, 104);
             this.ControlBox = false;
             this.Controls.Add(this.buttonCancel);
             this.Controls.Add(this.buttonSend);
             this.Controls.Add(this.textBoxMsgToPlayer);
-            this.MaximumSize = new System.Drawing.Size(900, 110);
-            this.MinimumSize = new System.Drawing.Size(138, 110);
+            this.MinimumSize = new System.Drawing.Size(138, 120);
             this.Name = "MessageToPlayer";
             this.Text = "MessageToPlayer";
             this.ResumeLayout(false);

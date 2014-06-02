@@ -5,11 +5,12 @@ DayZ DB Access
 
  - Supporting classic & Epoch DayZ databases.
  - Show on map:
-	- players online (1)
+	- players online
 	- players alive
 	- vehicles
 	- vehicle spawn points
 	- deployables
+ - Show connected players & rCon admins
  - Filter items by class
  - Filter items by time
  - Show players/vehicles/deployables inventory.
@@ -20,14 +21,13 @@ DayZ DB Access
  - Deployables Tab: associate an icon to each deployable's class.
  - Scripts Tab:
 	- backup database
-	- remove destroyed vehicles (2)
-	- spawn new vehicles (2)
-	- remove old bodies (2)
-	- remove old tents (2)
+	- remove destroyed vehicles
+	- spawn new vehicles (1)
+	- remove old bodies (1)
+	- remove old tents (1)
 	- 3 custom SQL or BAT scripts can be set & called.
 
-[1] : not available with Epoch's DB, due to lack of useable data.
-[2] : disabled with Epoch's DB because useless.
+(1) : disabled with Epoch's DB because useless.
 
 Executable (ClickOnce) can be found here:
 http://82.67.37.43/publish
@@ -58,8 +58,10 @@ You can edit the config file, or delete all files to restore an empty configurat
 
 History
 =======
- - v2.8.7
-	- support for non squared aspect ratio for input bitmaps
+ - v2.9.0
+	- added alpha implementation of rCon Chat & limited commands, using BattleNet library (Marcel de Vries / Robert van der Boorn)
+	- added customisable level of zoom for selected bitmap
+	- added codes & key values for Epoch constructs & vehicles
 
  - v2.8.6
 	- added automatic selection of DB schema (GameType must be reset to "Auto")

@@ -17,12 +17,12 @@ namespace DBAccess
         {
             this.centerUnit = center / map.SizeCorrected;
 
-            this.currDepth = Math.Min(Math.Max(this.currDepth, map.nfo.min_depth), map.nfo.depth - 1);
-            this.destDepth = Math.Min(Math.Max(this.destDepth, map.nfo.min_depth), map.nfo.depth - 1);
+            this.currDepth = Math.Min(Math.Max(this.currDepth, map.nfo.min_depth), map.nfo.mag_depth - 1);
+            this.destDepth = Math.Min(Math.Max(this.destDepth, map.nfo.min_depth), map.nfo.mag_depth - 1);
 
             int newDepth = this.destDepth + depthDir;
 
-            if ((newDepth >= map.nfo.min_depth) && (newDepth <= map.nfo.depth - 1))
+            if ((newDepth >= map.nfo.min_depth) && (newDepth <= map.nfo.mag_depth - 1))
             {
                 this.destDepth = newDepth;
                 this.evtHandle.Set();
@@ -32,13 +32,14 @@ namespace DBAccess
         internal bool Update(VirtualMap map)
         {
             Tool.Point center = (centerUnit * map.SizeCorrected).Truncate;
+            Tool.Point newPos;
 
             double deltaDepth = this.destDepth - this.currDepth;
             if (Math.Abs(deltaDepth) > depthSpeed)
             {
                 map.ResizeFromZoom((float)Math.Pow(2, currDepth));
 
-                Tool.Point newPos = (centerUnit * map.SizeCorrected).Truncate;
+                newPos = (centerUnit * map.SizeCorrected).Truncate;
 
                 map.Position = map.Position - (newPos - center);
 
@@ -46,15 +47,13 @@ namespace DBAccess
 
                 return true;
             }
-            else
-            {
-                this.currDepth = this.destDepth;
-                map.ResizeFromZoom((float)Math.Pow(2, currDepth));
 
-                Tool.Point newPos = (centerUnit * map.SizeCorrected).Truncate;
+            this.currDepth = this.destDepth;
+            map.ResizeFromZoom((float)Math.Pow(2, currDepth));
 
-                map.Position = map.Position - (newPos - center);
-            }
+            newPos = (centerUnit * map.SizeCorrected).Truncate;
+
+            map.Position = map.Position - (newPos - center);
 
             return false;
         }

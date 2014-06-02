@@ -189,6 +189,17 @@ namespace DBAccess
 
             return result;
         }
+        private class TableQueries
+        {
+            public TableQueries(string name)
+            {
+                this.Name = name;
+            }
+            public string Name = null;
+            public string dropQuery = null;
+            public string createQuery = null;
+            public string FillQuery = null;
+        }
         public string BackupToFile(string filename)
         {
             if (!Connected)
@@ -219,13 +230,17 @@ namespace DBAccess
 
                 reader.Close();
 
-                List<string> queries_tables = new List<string>();
+                List<TableQueries> queries = new List<TableQueries>(tables.Count);
+                List<string> comments = new List<string>();
                 foreach (string table in tables)
                 {
                     result += "\r\nReading table `" + table + "`...";
 
-                    bool bSerializeTable = true;
+                    TableQueries tableQueries = null;
 
+                    //
+                    //  Drop & Create table queries
+                    //
                     cmd.CommandText = "SHOW CREATE TABLE " + table;
                     reader = cmd.ExecuteReader();
                     while (reader.Read())
@@ -234,19 +249,24 @@ namespace DBAccess
 
                         if (!(str.Contains("VIEW") && str.Contains("ALGORITHM")))
                         {
-                            queries_tables.Add("\r\nDROP TABLE IF EXISTS `" + table + "`");
-                            queries_tables.Add(str);
+                            tableQueries = new TableQueries(table);
+                            tableQueries.dropQuery = "DROP TABLE IF EXISTS `" + table + "`;\r\n";
+                            tableQueries.createQuery = str + ";\r\n";
                         }
                         else
                         {
-                            queries_tables.Add("\r\n-- View `" + table + "` has been ignored. --");
-                            bSerializeTable = false;
+                            comments.Add("-- View `" + table + "` has been ignored. --\r\n");
                         }
                     }
                     reader.Close();
 
-                    if (bSerializeTable)
+                    //
+                    //  Fill table query
+                    //
+                    if (tableQueries != null)
                     {
+                        queries.Add(tableQueries);
+
                         cmd.CommandText = "SELECT * FROM " + table;
                         reader = cmd.ExecuteReader();
                         List<string> list_values = new List<string>();
@@ -296,9 +316,7 @@ namespace DBAccess
 
                         if (list_values.Count > 0)
                         {
-                            queries_tables.Add("LOCK TABLES `" + table + "` WRITE");
-                            queries_tables.Add("REPLACE INTO `" + table + "` VALUES " + all_values);
-                            queries_tables.Add("UNLOCK TABLES");
+                            tableQueries.FillQuery = "LOCK TABLES `" + table + "` WRITE;\r\nREPLACE INTO `" + table + "` VALUES " + all_values + ";\r\nUNLOCK TABLES;\r\n\r\n";
                         }
 
                         result += " done.";
@@ -309,9 +327,78 @@ namespace DBAccess
                     }
                 }
 
-                foreach (string query in queries_tables)
+                //
+                //  Reorder tables based on constraints between them
+                //
+
+                //
+                //  1st pass, No constraints at top, constraints at end of the array
+                //
+                TableQueries[] arrayQ = new TableQueries[queries.Count];
+                int headIdx=0;
+                int tailIdx=queries.Count-1;
+                for (int i = 0; i < queries.Count; i++)
                 {
-                    sw.Write(query + ";\r\n");
+                    TableQueries tq = queries[i];
+
+                    if (tq.createQuery.IndexOf("REFERENCES") >= 0)
+                        arrayQ[tailIdx--] = tq;
+                    else
+                        arrayQ[headIdx++] = tq;
+                }
+
+                //
+                //  2nd pass, Order from constraints between tables
+                //
+                for (int i = tailIdx+1; i < queries.Count; i++)
+                {
+                    TableQueries tq = arrayQ[i];
+
+                    bool bMoveToTail = false;
+
+                    int idx = tq.createQuery.IndexOf("REFERENCES");
+                    while (idx >= 0)
+                    {
+                        int idEnd = tq.createQuery.IndexOf('(', idx);
+                        string sub = tq.createQuery.Substring(idx, idEnd - idx + 1);
+                        string name = sub.Split('`')[1];
+
+                        //  subs[1] = table's name
+                        for (int j = tailIdx+1; j < queries.Count; j++)
+                            if ((arrayQ[j].Name == name) && (j >= i))
+                                bMoveToTail = true;
+
+                        idx = tq.createQuery.IndexOf("REFERENCES", idx + 1);
+                    }
+
+                    if (bMoveToTail)
+                    {
+                        for (int j = i; j < queries.Count - 1; j++)
+                            arrayQ[j] = arrayQ[j + 1];
+
+                        arrayQ[queries.Count - 1] = tq;
+
+                        i--;
+                    }
+                }
+
+                //
+                //
+                //
+                foreach(var q in comments)
+                    sw.Write(q);
+
+                sw.Write("\r\n");
+
+                for(int i=queries.Count-1; i>=0; i--)
+                    sw.Write(arrayQ[i].dropQuery);
+
+                sw.Write("\r\n");
+
+                foreach (var q in arrayQ)
+                {
+                    sw.Write(q.createQuery);
+                    sw.Write(q.FillQuery + "\r\n");
                 }
 
                 sw.Close();
@@ -682,7 +769,7 @@ namespace DBAccess
                         //
                         //  Deployables
                         //
-                        cmd.CommandText = "SELECT id.id id, d.class_name class_name, id.worldspace, id.inventory"
+                        cmd.CommandText = "SELECT id.id id, CAST(0 AS UNSIGNED) keycode, d.class_name class_name, id.worldspace, id.inventory"
                                         + " FROM instance_deployable as id, deployable as d"
                                         + " WHERE instance_id=" + InstanceId
                                         + " AND id.deployable_id=d.id"
@@ -734,7 +821,7 @@ namespace DBAccess
                 //
                 //  Vehicle types
                 //
-                cmd.CommandText = "SELECT ClassName class_name FROM object_data WHERE CharacterID=0";
+                cmd.CommandText = "SELECT Classname class_name FROM object_data WHERE CharacterID=0";
                 _dsVehicles.Clear();
                 adapter.Fill(_dsVehicles);
             }
@@ -809,7 +896,7 @@ namespace DBAccess
                         //
                         //  Deployables
                         //
-                        cmd.CommandText = "SELECT CAST(ObjectID AS UNSIGNED) id, Classname class_name, worldspace, inventory FROM object_data WHERE CharacterID!=0";
+                        cmd.CommandText = "SELECT CAST(ObjectID AS UNSIGNED) id, CharacterID keycode, Classname class_name, worldspace, inventory FROM object_data WHERE CharacterID!=0";
                         cmd.CommandText += " AND Datestamp > now() - interval " + FilterLastUpdated + " day";
                         _dsDeployables.Clear();
                         adapter.Fill(_dsDeployables);

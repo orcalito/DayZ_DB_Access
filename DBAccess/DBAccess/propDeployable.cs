@@ -20,7 +20,30 @@ namespace DBAccess
         [ReadOnlyAttribute(true)]
         public string name { get; set; }
         [ReadOnlyAttribute(true)]
+        public string epochKey { get; set; }
+        [ReadOnlyAttribute(true)]
         public Storage inventory { get; set; }
+
+        internal void ComputeEpochKey(uint key)
+        {
+            if (key == 0)
+            {
+                this.epochKey = "-";
+            }
+            else
+            {
+                this.epochKey = "code=" + key.ToString() + " or ";
+                
+                if (key <= 12500)
+                {
+                    if (key > 10000) this.epochKey += "KeyBlack=" + (key - 10000).ToString();
+                    else if (key > 7500) this.epochKey += "KeyYellow=" + (key - 7500).ToString();
+                    else if (key > 5000) this.epochKey += "KeyBlue=" + (key - 5000).ToString();
+                    else if (key > 2500) this.epochKey += "KeyRed=" + (key - 2500).ToString();
+                    else if (key > 0) this.epochKey += "KeyGreen=" + key.ToString();
+                }
+            }
+        }
         public override void Rebuild()
         {
             this.inventory.weapons.Clear();
@@ -28,6 +51,8 @@ namespace DBAccess
             this.inventory.bags.Clear();
 
             this.name = idb.row.Field<string>("class_name");
+            
+            ComputeEpochKey(idb.row.Field<uint>("keycode"));
 
             ArrayList arr = Tool.ParseInventoryString(idb.row.Field<string>("inventory"));
             ArrayList aItems;

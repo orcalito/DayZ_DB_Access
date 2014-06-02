@@ -11,6 +11,7 @@ using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
 using System.Xml.Serialization;
@@ -29,6 +30,17 @@ namespace DBAccess
         private DlgUpdateIcons dlgUpdateIcons;
         private DlgUpdateIcons dlgRefreshMap;
         //
+        private static Dictionary<Int32, bool> dicTileExistence = new Dictionary<Int32, bool>();
+        private static bool TileFileExists(tileReq req)
+        {
+            Int32 key = req.Key;
+            if (dicTileExistence.ContainsKey(key))
+                return dicTileExistence[key];
+
+            dicTileExistence[key] = File.Exists(req.path);
+            return dicTileExistence[key];
+        }
+        //
         private myConfig mycfg = new myConfig(curCfgVersion);
         private string configPath;
         private string configFilePath;
@@ -38,6 +50,7 @@ namespace DBAccess
         //
         internal BattlEyeClient rCon = null;
         private DataSet PlayersOnline = new DataSet("Players Online DS");
+        private DataSet AdminsOnline = new DataSet("Admins Online DS");
         //
         private MessageToPlayer diagMsgToPlayer = null;
         //
@@ -52,7 +65,7 @@ namespace DBAccess
         private MapHelper mapHelper;
         private UIDGraph cartographer = new UIDGraph(new Pen(Color.Black, 2));
         private Tool.Point positionInDB = new Tool.Point();
-
+        //
         private List<tileReq> tileRequests = new List<tileReq>();
         private List<tileNfo> tileCache = new List<tileNfo>();
         private bool bShowTrails = false;
@@ -128,6 +141,9 @@ namespace DBAccess
         }
         private iconDB selectedIcon;
 
+        private System.Drawing.Imaging.ImageAttributes attrSelected = new System.Drawing.Imaging.ImageAttributes();
+        private System.Drawing.Imaging.ImageAttributes attrUnselected = new System.Drawing.Imaging.ImageAttributes();
+
         #endregion
 
         public bool IsEpochSchema { get { return (mycfg.game_type == "Epoch") || (myDB.GameType == "Epoch"); } }
@@ -149,6 +165,28 @@ namespace DBAccess
             ModeButtons.Add(displayMode.ShowSpawn, toolStripStatusSpawn);
             ModeButtons.Add(displayMode.ShowDeployable, toolStripStatusDeployable);
             ModeButtons.Add(displayMode.MapHelper, toolStripStatusMapHelper);
+
+            //
+            float[][] colorMatrixUnselected =
+            { 
+                new float[] {1,  0,  0,  0,  0},
+                new float[] {0,  1,  0,  0,  0},
+                new float[] {0,  0,  1,  0,  0},
+                new float[] {0,  0,  0,  1,  0},
+                new float[] {0,  0,  0,  0,  1}  
+            };
+            attrUnselected.SetColorMatrix(new System.Drawing.Imaging.ColorMatrix(colorMatrixUnselected));
+            //
+            float[][] colorMatrixSelected =
+            { 
+                new float[] {1,  0,  0,  0,  0},
+                new float[] {0,  1,  0,  0,  0},
+                new float[] {0,  0,  1,  0,  0},
+                new float[] {0,  0,  0,  1,  0},
+                new float[] {-0.2f,  0.5f,  -0.2f,  0,  1}  
+            };
+            attrSelected.SetColorMatrix(new System.Drawing.Imaging.ColorMatrix(colorMatrixSelected));
+                        
 
             //
             configPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\DayZDBAccess";
@@ -180,16 +218,26 @@ namespace DBAccess
             LoadConfigFile();
 
             //
-            DataTable table = PlayersOnline.Tables.Add();
-            table.Columns.Add(new DataColumn("Id", typeof(string)));
-            table.Columns.Add(new DataColumn("Name", typeof(string)));
-            table.Columns.Add(new DataColumn("GUID", typeof(string)));
-            table.Columns.Add(new DataColumn("IP", typeof(string)));
-            table.Columns.Add(new DataColumn("Status", typeof(string)));
-            DataColumn[] keys = new DataColumn[1];
-            keys[0] = table.Columns[1];
-            table.PrimaryKey = keys;
+            DataTable tableP = PlayersOnline.Tables.Add();
+            tableP.Columns.Add(new DataColumn("Id", typeof(int)));
+            tableP.Columns.Add(new DataColumn("Name", typeof(string)));
+            tableP.Columns.Add(new DataColumn("GUID", typeof(string)));
+            tableP.Columns.Add(new DataColumn("IP", typeof(string)));
+            tableP.Columns.Add(new DataColumn("Status", typeof(string)));
+            DataColumn[] keysP = new DataColumn[1];   // Search by Name only
+            keysP[0] = tableP.Columns[1];
+            tableP.PrimaryKey = keysP;
             dataGridViewPlayers.DataSource = PlayersOnline.Tables[0];
+
+            //
+            DataTable tableA = AdminsOnline.Tables.Add();
+            tableA.Columns.Add(new DataColumn("Id", typeof(int)));
+            tableA.Columns.Add(new DataColumn("IP", typeof(string)));
+            tableA.Columns.Add(new DataColumn("Port", typeof(int)));
+            DataColumn[] keysA = new DataColumn[1];
+            keysA[0] = tableA.Columns[0];   // Search by ID only
+            tableA.PrimaryKey = keysA;
+            dataGridViewAdmins.DataSource = AdminsOnline.Tables[0];
 
             bgWorkerDatabase.RunWorkerAsync();
             bgWorkerFast.RunWorkerAsync();
@@ -277,6 +325,7 @@ namespace DBAccess
                     }
 
                     RefreshIcons();
+                    prevNearest = null;
                 }
                 catch (Exception ex)
                 {
@@ -286,6 +335,63 @@ namespace DBAccess
                 myDB.UseDS(false);
             }
         }
+        private void RecBuildReqTileList(int curDepth, int expDepth, int x, int y, Rectangle recPanel)
+        {
+            //  [x, y] are from [0, 0] to [tileCountX, tileCountY]
+            int ioff = (1 << (expDepth - curDepth)) / 2;
+            int tsize = (128 << (expDepth - curDepth));
+            Tool.Size size = new Tool.Size(tsize, tsize);
+
+            if (curDepth < expDepth)
+            {
+                //  Q00
+                if (recPanel.IntersectsWith(virtualMap.TileRectangleEx(new Tool.Point(x, y), size)))
+                    RecBuildReqTileList(curDepth + 1, expDepth, x, y, recPanel); 
+
+                //  Q01
+                if (recPanel.IntersectsWith(virtualMap.TileRectangleEx(new Tool.Point(x + ioff, y), size)))
+                    RecBuildReqTileList(curDepth + 1, expDepth, x + ioff, y, recPanel);
+
+                //  Q10
+                if (recPanel.IntersectsWith(virtualMap.TileRectangleEx(new Tool.Point(x, y + ioff), size)))
+                    RecBuildReqTileList(curDepth + 1, expDepth, x, y + ioff, recPanel); 
+
+                //  Q11
+                if (recPanel.IntersectsWith(virtualMap.TileRectangleEx(new Tool.Point(x + ioff, y + ioff), size)))
+                    RecBuildReqTileList(curDepth + 1, expDepth, x + ioff, y + ioff, recPanel);
+            }
+            else
+            {
+                bool keepLoaded = (curDepth == virtualMap.nfo.min_depth);
+                tileReq req;
+
+                req = new tileReq(x, y, curDepth, keepLoaded, false);
+                req.path = virtualMap.nfo.tileBasePath + curDepth + "\\Tile" + y.ToString("000") + x.ToString("000") + ".jpg";
+                req.rec = virtualMap.TileRectangle(new Tool.Point(x, y));
+                tileRequests.Add(req);
+
+                if (expDepth >= virtualMap.nfo.max_depth)
+                {
+                    int hpow = 1;
+                    while (expDepth > virtualMap.nfo.min_depth)
+                    {
+                        expDepth--;
+                        x /= 2;
+                        y /= 2;
+                        hpow *= 2;
+                        req = new tileReq(x, y, expDepth, false, true);
+                        req.path = virtualMap.nfo.tileBasePath + expDepth + "\\Tile" + y.ToString("000") + x.ToString("000") + ".jpg";
+                        if (TileFileExists(req))
+                        {
+                            if (tileRequests.Find(n => req.Key == n.Key) == null)
+                                tileRequests.Add(req);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
         private void RefreshIcons()
         {
             myDB.UseDS(true);
@@ -294,27 +400,14 @@ namespace DBAccess
             {
                 mtxTileRequest.WaitOne();
 
-                tileRequests.Clear();
-
                 Rectangle recPanel = new Rectangle(Point.Empty, splitContainer1.Panel1.Size);
                 int tileDepth = virtualMap.Depth;
                 Size tileCount = virtualMap.TileCount;
+                bool keepLoaded = (tileDepth == virtualMap.nfo.min_depth);
 
-                for (int x = 0; x < tileCount.Width; x++)
-                {
-                    for (int y = 0; y < tileCount.Height; y++)
-                    {
-                        Rectangle recTile = virtualMap.TileRectangle(new Tool.Point(x, y));
-
-                        if (recPanel.IntersectsWith(recTile))
-                        {
-                            tileReq req = new tileReq(x, y, tileDepth, (tileDepth==virtualMap.nfo.min_depth));
-                            req.path = virtualMap.nfo.tileBasePath + tileDepth + "\\Tile" + y.ToString("000") + x.ToString("000") + ".jpg";
-                            req.rec = recTile;
-                            tileRequests.Add(req);
-                        }
-                    }
-                }
+                tileRequests.Clear();
+                //  QuadTree-like handling of tile visibility
+                RecBuildReqTileList(0, tileDepth, 0, 0, recPanel);
 
                 mtxTileRequest.ReleaseMutex();
             }
@@ -353,7 +446,7 @@ namespace DBAccess
                     }
 
                     idb.icon = iconPlayers[idx];
-                    idb.icon.image = (rowOnline.Field<string>("Status") == "Ingame") ? global::DBAccess.Properties.Resources.iconOnline :global::DBAccess.Properties.Resources.iconLobby;
+                    idb.icon.image = (rowOnline.Field<string>("Status") == "Ingame") ? global::DBAccess.Properties.Resources.iconOnline : global::DBAccess.Properties.Resources.iconLobby;
                     idb.icon.Size = idb.icon.image.Size;
                     idb.icon.iconDB = idb;
 
@@ -458,7 +551,7 @@ namespace DBAccess
                         string classname = (rowT != null) ? rowT.Field<string>("Type") : "";
                         switch (classname)
                         {
-                            case "Air": idb.icon.image = global::DBAccess.Properties.Resources.helicopter_crashed; break;
+                            case "Air": idb.icon.image = global::DBAccess.Properties.Resources.air_crashed; break;
                             case "Atv": idb.icon.image = global::DBAccess.Properties.Resources.atv_crashed; break;
                             case "Bicycle": idb.icon.image = global::DBAccess.Properties.Resources.bike_crashed; break;
                             case "Boat": idb.icon.image = global::DBAccess.Properties.Resources.boat_crashed; break;
@@ -582,6 +675,11 @@ namespace DBAccess
                         case "Stach": idb.icon.image = global::DBAccess.Properties.Resources.stach; break;
                         case "SmallBuild": idb.icon.image = global::DBAccess.Properties.Resources.small_build; break;
                         case "LargeBuild": idb.icon.image = global::DBAccess.Properties.Resources.large_build; break;
+                        case "Car": idb.icon.image = global::DBAccess.Properties.Resources.car; break;
+                        case "Truck": idb.icon.image = global::DBAccess.Properties.Resources.truck; break;
+                        case "Helicopter": idb.icon.image = global::DBAccess.Properties.Resources.helicopter; break;
+                        case "Air": idb.icon.image = global::DBAccess.Properties.Resources.air; break;
+                        case "Boat": idb.icon.image = global::DBAccess.Properties.Resources.boat; break;
                         default: idb.icon.image = global::DBAccess.Properties.Resources.unknown; break;
                     }
 
@@ -611,7 +709,7 @@ namespace DBAccess
             //
             textBoxDBURL.Enabled = !bState;
             textBoxDBBaseName.Enabled = !bState;
-            textBoxDBPort.Enabled = !bState;
+            numericUpDownDBPort.Enabled = !bState;
             textBoxDBUser.Enabled = !bState;
             textBoxDBPassword.Enabled = !bState;
             comboBoxGameType.Enabled = !bState;
@@ -672,7 +770,11 @@ namespace DBAccess
             if (Tool.NullOrEmpty(mycfg.body_time_limit)) mycfg.body_time_limit = "7";
             if (Tool.NullOrEmpty(mycfg.tent_time_limit)) mycfg.tent_time_limit = "7";
             if (Tool.NullOrEmpty(mycfg.online_time_limit)) mycfg.online_time_limit = "5";
+            if (Tool.NullOrEmpty(mycfg.rcon_port)) mycfg.rcon_port = "2302";
+            if (Tool.NullOrEmpty(mycfg.rcon_url)) mycfg.rcon_url = "";
+            if (Tool.NullOrEmpty(mycfg.rcon_password)) mycfg.rcon_password = "";
             if (mycfg.filter_last_updated == 0) mycfg.filter_last_updated = 7;
+            if (mycfg.bitmap_mag_level == 0) mycfg.bitmap_mag_level = 4;
 
             // Custom scripts
             if (!Tool.NullOrEmpty(mycfg.customscript1))
@@ -789,16 +891,20 @@ namespace DBAccess
             try
             {
                 textBoxDBURL.Text = mycfg.url;
-                textBoxDBPort.Text = mycfg.port;
+                numericUpDownDBPort.Text = mycfg.port;
                 textBoxDBBaseName.Text = mycfg.basename;
                 textBoxDBUser.Text = mycfg.username;
                 textBoxDBPassword.Text = mycfg.password;
-                numericUpDownInstanceId.Value = Decimal.Parse(mycfg.instance_id);
+                numericUpDownInstanceId.Text = mycfg.instance_id;
                 comboBoxGameType.SelectedItem = mycfg.game_type;
                 textBoxVehicleMax.Text = mycfg.vehicle_limit;
                 textBoxOldBodyLimit.Text = mycfg.body_time_limit;
                 textBoxOldTentLimit.Text = mycfg.tent_time_limit;
+                numericUpDownrConPort.Text = mycfg.rcon_port;
+                textBoxrConURL.Text = mycfg.rcon_url;
+                textBoxrConPassword.Text = mycfg.rcon_password;
                 trackBarLastUpdated.Value = Math.Min(trackBarLastUpdated.Maximum, Math.Max(trackBarLastUpdated.Minimum, mycfg.filter_last_updated));
+                trackBarMagLevel.Value = Math.Min(trackBarMagLevel.Maximum, Math.Max(trackBarMagLevel.Minimum, mycfg.bitmap_mag_level));
 
                 dataGridViewMaps.Columns["ColGVMID"].DataPropertyName = "World ID";
                 dataGridViewMaps.Columns["ColGVMName"].DataPropertyName = "World Name";
@@ -828,16 +934,19 @@ namespace DBAccess
             try
             {
                 mycfg.url = textBoxDBURL.Text;
-                mycfg.port = textBoxDBPort.Text;
+                mycfg.port = numericUpDownDBPort.Text;
                 mycfg.basename = textBoxDBBaseName.Text;
                 mycfg.username = textBoxDBUser.Text;
                 mycfg.password = textBoxDBPassword.Text;
-                mycfg.instance_id = numericUpDownInstanceId.Value.ToString();
+                mycfg.instance_id = numericUpDownInstanceId.Text;
                 mycfg.cfgVersion = curCfgVersion;
                 mycfg.game_type = comboBoxGameType.SelectedItem as string;
                 mycfg.vehicle_limit = textBoxVehicleMax.Text;
                 mycfg.body_time_limit = textBoxOldBodyLimit.Text;
                 mycfg.tent_time_limit = textBoxOldTentLimit.Text;
+                mycfg.rcon_port = numericUpDownrConPort.Text;
+                mycfg.rcon_url = textBoxrConURL.Text;
+                mycfg.rcon_password = textBoxrConPassword.Text;
 
                 XmlSerializer xs = new XmlSerializer(typeof(myConfig));
                 using (StreamWriter wr = new StreamWriter(configFilePath))
@@ -884,7 +993,7 @@ namespace DBAccess
 
                     string filepath = rowW.Field<string>("Filepath");
 
-                    if (File.Exists(filepath))
+                    if (File.Exists(filepath) && Directory.Exists(configPath + "\\World" + mycfg.world_id))
                     {
                         virtualMap.nfo.tileBasePath = configPath + "\\World" + mycfg.world_id + "\\LOD";
                         virtualMap.Calibrate();
@@ -897,7 +1006,9 @@ namespace DBAccess
                     }
 
                     virtualMap.nfo.defTileSize = new Tool.Size(rowW.Field<int>("TileSizeX"), rowW.Field<int>("TileSizeY"));
-                    virtualMap.nfo.depth = rowW.Field<int>("TileDepth");
+                    virtualMap.nfo.max_depth = rowW.Field<int>("TileDepth");
+                    virtualMap.nfo.mag_depth = virtualMap.nfo.max_depth + mycfg.bitmap_mag_level;
+                    tileReq.max_depth = virtualMap.nfo.max_depth;
                     virtualMap.SetRatio(new Tool.Size(rowW.Field<float>("RatioX"), rowW.Field<float>("RatioY")));
                     virtualMap.nfo.dbMapSize = new Tool.Size(rowW.Field<UInt32>("DB_Width"), rowW.Field<UInt32>("DB_Height"));
                     virtualMap.nfo.dbRefMapSize = new Tool.Size(rowW.Field<UInt32>("DB_refWidth"), rowW.Field<UInt32>("DB_refHeight"));
@@ -1050,6 +1161,15 @@ namespace DBAccess
             mycfg.filter_last_updated = (track.Value == track.Maximum) ? 999 : track.Value;
             myDB.FilterLastUpdated = mycfg.filter_last_updated;
         }
+        private void trackBarMagLevel_ValueChanged(object sender, EventArgs e)
+        {
+            var track = sender as TrackBar;
+
+            labelMagLevel.Text = (1 << track.Value).ToString();
+
+            mycfg.bitmap_mag_level = track.Value;
+            virtualMap.nfo.mag_depth = virtualMap.nfo.max_depth + track.Value;
+        }
         private void toolStripStatusMapHelper_Click(object sender, EventArgs e)
         {
             currentMode = displayMode.MapHelper;
@@ -1146,45 +1266,49 @@ namespace DBAccess
                     e.Graphics.CompositingQuality = CompositingQuality.HighQuality;
                     e.Graphics.InterpolationMode = InterpolationMode.NearestNeighbor;
                     e.Graphics.PixelOffsetMode = PixelOffsetMode.Half;
-
+                    
                     mtxTileUpdate.WaitOne();
                     int nb_tilesDrawn = 0;
                     foreach (tileReq req in tileRequests)
                     {
-                        tileNfo nfo = tileCache.Find(x => req.path == x.path);
-
-                        if (nfo != null)
+                        if (req.bDontDisplay == false)
                         {
-                            //  Display tile
-                            e.Graphics.DrawImage(nfo.bitmap, req.rec);
-                            nb_tilesDrawn++;
-                        }
-                        else
-                        {
-                            //bool bDone = false;
-                            int hdepth = req.depth;
-                            int hx = req.x;
-                            int hy = req.y;
-                            int hpow = 1;
+                            tileNfo nfo = tileCache.Find(x => req.path == x.path);
 
-                            while (hdepth > virtualMap.nfo.min_depth)
+                            if (nfo != null)
                             {
-                                // Try to display the closest ancestor
-                                hdepth--;
-                                hx /= 2;
-                                hy /= 2;
-                                hpow *= 2;
-                                string fpath = virtualMap.nfo.tileBasePath + hdepth + "\\Tile" + hy.ToString("000") + hx.ToString("000") + ".jpg";
-                                nfo = tileCache.Find(x => fpath == x.path);
-                                if (nfo != null)
+                                //  Display tile
+                                e.Graphics.DrawImage(nfo.bitmap, req.rec);
+                                nb_tilesDrawn++;
+                            }
+                            else
+                            {
+                                // Display an ancestor instead
+                                int hdepth = req.depth;
+                                int hx = req.x;
+                                int hy = req.y;
+                                int hpow = 1;
+
+                                while (hdepth > virtualMap.nfo.min_depth)
                                 {
-                                    int width = nfo.bitmap.Width / hpow;
-                                    int height = nfo.bitmap.Height / hpow;
-                                    int x = (req.x % hpow) * width;
-                                    int y = (req.y % hpow) * height;
-                                    Rectangle recSrc = new Rectangle(x, y, width, height);
-                                    e.Graphics.DrawImage(nfo.bitmap, req.rec, recSrc, GraphicsUnit.Pixel);
-                                    break;
+                                    // Try to display the closest ancestor
+                                    hdepth--;
+                                    hx /= 2;
+                                    hy /= 2;
+                                    hpow *= 2;
+                                    string fpath = virtualMap.nfo.tileBasePath + hdepth + "\\Tile" + hy.ToString("000") + hx.ToString("000") + ".jpg";
+                                    nfo = tileCache.Find(x => fpath == x.path);
+                                    if (nfo != null)
+                                    {
+                                        nfo.ticks = DateTime.Now.Ticks;
+                                        int width = nfo.bitmap.Width / hpow;
+                                        int height = nfo.bitmap.Height / hpow;
+                                        int x = (req.x % hpow) * width;
+                                        int y = (req.y % hpow) * height;
+                                        Rectangle recSrc = new Rectangle(x, y, width, height);
+                                        e.Graphics.DrawImage(nfo.bitmap, req.rec, recSrc, GraphicsUnit.Pixel);
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -1207,13 +1331,13 @@ namespace DBAccess
 
                         e.Graphics.SmoothingMode = SmoothingMode.None;
                         Rectangle recPanel = new Rectangle(Point.Empty, splitContainer1.Panel1.Size);
-                        int nb_iconsDrawn = 0;
+
                         foreach (iconDB idb in listIcons)
                         {
                             if (recPanel.IntersectsWith(idb.icon.rectangle))
                             {
-                                e.Graphics.DrawImage(idb.icon.image, idb.icon.rectangle);
-                                nb_iconsDrawn++;
+                                System.Drawing.Imaging.ImageAttributes attrib = (selectedIcon == idb) ? attrSelected : attrUnselected;
+                                e.Graphics.DrawImage(idb.icon.image, idb.icon.rectangle, 0, 0, idb.icon.image.Width, idb.icon.image.Height, GraphicsUnit.Pixel, attrib);
                             }
                         }
                     }
@@ -1267,6 +1391,7 @@ namespace DBAccess
                         // Call Click event from icon
                         selectedIcon = idb;
                         idb.icon.OnClick(this, e);
+                        splitContainer1.Panel1.Invalidate();
                         break;
                     }
                 }
@@ -1311,6 +1436,8 @@ namespace DBAccess
                 mapPan.Start(virtualMap.Position);
             }
         }
+        private iconDB prevNearest = null;
+
         private void Panel1_MouseMove(object sender, MouseEventArgs e)
         {
             Rectangle recPanel = new Rectangle(Point.Empty, splitContainer1.Panel1.Size);
@@ -1362,16 +1489,53 @@ namespace DBAccess
             }
             else
             {
-                if (mapHelper != null)
+                if (IsMapHelperEnabled)
                 {
                     Tool.Point mousePos = (Tool.Point)(e.Location - virtualMap.Position);
                     mapHelper.isDraggingCtrlPoint = mapHelper.IntersectControl(mousePos, 5);
                     splitContainer1.Panel1.Invalidate();
                 }
+                else
+                {
+                    if(listIcons.Count > 0)
+                    {
+                        Tool.Point mouseUnit = virtualMap.PanelToUnit(e.Location);
+                        mouseUnit.Y = 1 - mouseUnit.Y;
+
+                        iconDB nearest = null;
+                        float nearestLength = float.MaxValue;
+                        foreach (iconDB idb in listIcons)
+                        {
+                            float length = (mouseUnit - idb.pos).Lenght;
+                            if ((nearest == null) || (nearestLength > length))
+                            {
+                                nearest = idb;
+                                nearestLength = length;
+                            }
+                        }
+
+                        if (nearestLength*1000 > (50/(float)(Math.Pow(2,virtualMap.Depth))))
+                            nearest = null;
+
+                        if (prevNearest != nearest)
+                        {
+                            if (prevNearest != null)
+                                prevNearest.icon.rectangle = new Rectangle(prevNearest.icon.rectangle.Location + (Tool.Size)prevNearest.icon.image.Size * 0.5f,
+                                                                           (Tool.Size)prevNearest.icon.image.Size);
+
+                            if (nearest != null)
+                                nearest.icon.rectangle = new Rectangle(nearest.icon.rectangle.Location - (Tool.Size)nearest.icon.image.Size * 0.5f,
+                                                                       (Tool.Size)nearest.icon.image.Size * 2);
+
+                            splitContainer1.Panel1.Invalidate();
+                            prevNearest = nearest;
+                        }
+                    }
+                }
 
                 mapPan.Stop();
             }
-
+/*
             if (!IsMapHelperEnabled && bCartographer)
             {
                 string pathstr = "public static Point[] ptsXXX = new Point[]\r\n{";
@@ -1389,7 +1553,7 @@ namespace DBAccess
                 pathstr += "\r\n};";
                 textBoxCmdStatus.Text = pathstr;
             }
-
+*/
             // Database coordinates
             positionInDB = virtualMap.UnitToDB(virtualMap.PanelToUnit(e.Location));
             // Map coordinates
@@ -1500,7 +1664,7 @@ namespace DBAccess
             this.Cursor = Cursors.WaitCursor;
 
             myDB.Connect(textBoxDBURL.Text,
-                         int.Parse(textBoxDBPort.Text),
+                         int.Parse(numericUpDownDBPort.Text),
                          textBoxDBBaseName.Text,
                          textBoxDBUser.Text,
                          textBoxDBPassword.Text,
@@ -1523,18 +1687,37 @@ namespace DBAccess
                 panelCnx.Visible = false;
             }
 
-            if((textBoxrConPort.Text != "") && (textBoxrConPassword.Text != ""))
+            if ((int.Parse(numericUpDownrConPort.Text) != 0) && (textBoxrConPassword.Text != ""))
             {
-                var hostEntry = Dns.GetHostEntry(textBoxDBURL.Text);
-                IPAddress ip = hostEntry.AddressList[0];
-                int port = int.Parse(textBoxrConPort.Text);
+                IPAddress ip = null;
+                IPHostEntry hostEntry;
+
+                if (textBoxrConURL.Text != "")
+                {
+                    hostEntry = Dns.GetHostEntry(textBoxrConURL.Text);
+                }
+                else
+                {
+                    hostEntry = Dns.GetHostEntry(textBoxDBURL.Text);
+                }
+
+                foreach (IPAddress iph in hostEntry.AddressList)
+                    if (iph.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                        ip = iph; 
+
+                int port = int.Parse(numericUpDownrConPort.Text);
                 string pass = textBoxrConPassword.Text;
                 rCon = new BattlEyeClient(new BattlEyeLoginCredentials(ip, port, pass));
                 rCon.BattlEyeMessageReceived += BattlEyeMessageReceived;
                 rCon.BattlEyeConnected += BattlEyeConnected;
                 rCon.BattlEyeDisconnected += BattlEyeDisconnected;
                 rCon.ReconnectOnPacketLoss = true;
-                rCon.Connect();
+                BattlEyeConnectionResult res = rCon.Connect();
+                
+                if(res != BattlEyeConnectionResult.Success)
+                {
+                    MessageBox.Show(res.ToString(), "rCon Connection error");
+                }
             }
 
             this.Cursor = Cursors.Arrow;
@@ -1549,53 +1732,195 @@ namespace DBAccess
             richTextBoxChat.Invoke((System.Threading.ThreadStart)(delegate { richTextBoxChat.Text += args.Message + "\n"; }));
         }
 
-        private List<string> players = new List<string>();
+        public class PlayerData
+        {
+            public int Id { get; set; }
+            public string Ip { get; set; }
+            public string Guid { get; set; }
+            public string Name { get; set; }
+            public string Status { get; set; }
+            public bool Processed = false;
+        }
+
+        public class AdminData
+        {
+            public int Id { get; set; }
+            public string Ip { get; set; }
+            public int Port { get; set; }
+            public bool Processed = false;
+        }
+
+        private List<PlayerData> players = new List<PlayerData>();
+        private List<AdminData> admins = new List<AdminData>();
         private void BattlEyeMessageReceived(BattlEyeMessageEventArgs args)
         {
-            if (args.Message.StartsWith("Players"))
+            try
             {
-                // Player list
-                //  format [#] [IP Address]:[Port] [Ping] [GUID] [Name]
-                StringReader sr = new StringReader(args.Message);
-                
-                string line;
-                do
-	            {
-	                line = sr.ReadLine();
-	            } while (line.EndsWith("----") == false);
-
-                do
+                if (args.Message.StartsWith("Players on server"))
                 {
-                    line = sr.ReadLine();
-                    line = ((line.Replace("  ", " ")).Replace("  ", " ")).Replace("  ", " ");
+                    // Player list
+                    //  format [#] [IP Address]:[Port] [Ping] [GUID] [Name]
+                    StringReader sr = new StringReader(args.Message);
 
-                    if (line.StartsWith("(") == false)
+                    string line;
+                    do
                     {
-                        string[] items = line.Split(' ', ':');
+                        line = sr.ReadLine();
+                    } while (line.EndsWith("----") == false);
 
-                        players.Add(items[0]);
-                        players.Add(items[5]);
-                        players.Add(items[4].Split('(')[0]);
-                        players.Add(items[1]);
-                        players.Add((items.GetLength(0) > 6) ? "Lobby" : "Ingame");
+                    do
+                    {
+                        line = sr.ReadLine();
+                        if (line != null)
+                        {
+                            if (line.Length>0 && line.StartsWith("(") == false)
+                            {
+                                line = ((line.Replace("  ", " ")).Replace("  ", " ")).Replace("  ", " ");
+                                string[] items = line.Split(' ', ':');
+
+                                PlayerData entry = new PlayerData();
+                                    entry.Id = int.Parse(items[0]);
+                                    entry.Name = items[5];
+                                    entry.Guid = items[4].Split('(')[0];
+                                    entry.Ip = items[1];
+                                    entry.Status = (items.GetLength(0) > 6) ? "Lobby" : "Ingame";
+
+                                players.Add(entry);
+                            }
+                        }
+                    } while (line!=null && line.StartsWith("(") == false);
+
+                    this.Invoke((System.Threading.ThreadStart)(delegate { UpdatePlayersOnline(); }));
+                }
+                else if (args.Message.StartsWith("Connected RCon admins"))
+                {
+                    // Admin list
+                    //  format [#] [IP Address]:[Port]\n
+                    StringReader sr = new StringReader(args.Message);
+
+                    string line;
+                    do
+                    {
+                        line = sr.ReadLine();
+                    } while (line.EndsWith("----") == false);
+
+                    line = sr.ReadLine();
+
+                    // http://www.txt2re.com/
+                    string re1 = "(\\d+)";	// Id
+                    string re2 = "(\\s+)";
+                    string re3 = "((?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))(?![\\d])";	// IPv4 IP Address 1
+                    string re4 = "(:)";
+                    string re5 = "(\\d+)";	// Port number
+                    Regex r = new Regex(re1 + re2 + re3 + re4 + re5, RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
+                    while (line != null && line.StartsWith("(") == false)
+                    {
+                        Match m = r.Match(line);
+                        if (m.Success)
+                        {
+                            AdminData entry = new AdminData();
+                            entry.Id = int.Parse(m.Groups[1].ToString());
+                            entry.Ip = m.Groups[3].ToString();
+                            entry.Port = int.Parse(m.Groups[5].ToString());
+
+                            admins.Add(entry);
+                        }
+
+                        line = sr.ReadLine();
                     }
-                } while (line.StartsWith("(") == false);
-            
-                this.Invoke((System.Threading.ThreadStart)(delegate { UpdatePlayersOnline(); }));
+
+                    this.Invoke((System.Threading.ThreadStart)(delegate { UpdateAdminsOnline(); }));
+                }
+                else
+                {
+                    richTextBoxChat.Invoke((System.Threading.ThreadStart)(delegate { richTextBoxChat.Text += args.Message + "\n"; }));
+                }
             }
-            else
+            catch
             {
-                richTextBoxChat.Invoke((System.Threading.ThreadStart)(delegate { richTextBoxChat.Text += args.Message + "\n"; } ));
+                richTextBoxChat.Invoke((System.Threading.ThreadStart)(delegate { richTextBoxChat.Text += "Error retrieving players.\n"; }));
             }
         }
         private void UpdatePlayersOnline()
         {
-            PlayersOnline.Tables[0].Rows.Clear();
-            while (players.Count > 0)
+            List<DataRow> toRemove = new List<DataRow>();
+            foreach (DataRow row in PlayersOnline.Tables[0].Rows)
             {
-                PlayersOnline.Tables[0].Rows.Add(players[0], players[1], players[2], players[3], players[4]);
-                players.RemoveRange(0, 5);
+                PlayerData found = players.Find(
+                    delegate(PlayerData data)
+                    {
+                        return (data.Id == row.Field<int>("Id"));
+                    } );
+                if (found != null)
+                {
+                    if (row.Field<string>("Name") != found.Name)
+                        row.SetField<string>("Name", found.Name);
+
+                    if (row.Field<string>("GUID") != found.Guid)
+                        row.SetField<string>("GUID", found.Guid);
+
+                    if (row.Field<string>("IP") != found.Ip)
+                        row.SetField<string>("IP", found.Ip);
+
+                    if (row.Field<string>("Status") != found.Status)
+                        row.SetField<string>("Status", found.Status);
+
+                    found.Processed = true;
+                }
+                else
+                {
+                    toRemove.Add(row);
+                }
             }
+            foreach(DataRow row in toRemove)
+                PlayersOnline.Tables[0].Rows.Remove(row);
+            
+            foreach (PlayerData player in players)
+            {
+                if(player.Processed == false)
+                {
+                    PlayersOnline.Tables[0].Rows.Add(player.Id, player.Name, player.Guid, player.Ip, player.Status);
+                }
+            }
+            players.Clear();
+        }
+        private void UpdateAdminsOnline()
+        {
+            List<DataRow> toRemove = new List<DataRow>();
+            foreach (DataRow row in AdminsOnline.Tables[0].Rows)
+            {
+                AdminData found = admins.Find(
+                    delegate(AdminData data)
+                    {
+                        return (data.Id == row.Field<int>("Id"));
+                    });
+                if (found != null)
+                {
+                    if (row.Field<string>("IP") != found.Ip)
+                        row.SetField<string>("IP", found.Ip);
+
+                    if (row.Field<int>("Port") != found.Port)
+                        row.SetField<int>("Port", found.Port);
+
+                    found.Processed = true;
+                }
+                else
+                {
+                    toRemove.Add(row);
+                }
+            }
+            foreach (DataRow row in toRemove)
+                AdminsOnline.Tables[0].Rows.Remove(row);
+
+            foreach (AdminData admin in admins)
+            {
+                if (admin.Processed == false)
+                {
+                    AdminsOnline.Tables[0].Rows.Add(admin.Id, admin.Ip, admin.Port);
+                }
+            }
+            admins.Clear();
         }
         private void toolStripMenuItemResetTypes_Click(object sender, EventArgs e)
         {
@@ -1946,7 +2271,10 @@ namespace DBAccess
                 myDB.Refresh();
 
                 if ((rCon != null) && rCon.Connected)
+                {
                     rCon.SendCommand(BattlEyeCommand.Players);
+                    rCon.SendCommand("Admins");
+                }
 
                 if (System.Threading.Interlocked.CompareExchange(ref bUserAction, 1, 0) == 0)
                 {
@@ -2008,11 +2336,14 @@ namespace DBAccess
 
                 foreach (tileReq req in toCheck)
                 {
-                    tileNfo nfo = tileCache.Find(x => req.path == x.path);
-                    if (nfo == null)
-                        toLoad.Add(req);
-                    else
-                        nfo.ticks = now_ticks;
+                    if (TileFileExists(req))
+                    {
+                        tileNfo nfo = tileCache.Find(x => req.path == x.path);
+                        if (nfo == null)
+                            toLoad.Add(req);
+                        else
+                            nfo.ticks = now_ticks;
+                    }
                 }
 
                 bCacheChanged = (toLoad.Count != 0);
@@ -2025,12 +2356,13 @@ namespace DBAccess
                 //
                 foreach (tileReq req in toLoad)
                 {
+                    // Don't try to load a inexistent tile (2nd test, should be useless)
                     tileNfo nfo = new tileNfo(req);
 
                     // each tile loaded is immediately inserted in cache
                     mtxTileUpdate.WaitOne();
                     tileCache.Add(nfo);
-                    //Thread.Sleep(25);
+                    dicTileExistence[req.Key] = true;
                     mtxTileUpdate.ReleaseMutex();
                 }
 
@@ -2039,12 +2371,16 @@ namespace DBAccess
                 //
                 mtxTileUpdate.WaitOne();
 
-                tileCache.RemoveAll(x => (now_ticks - x.ticks > 10 * 10000000L) && !x.bKeepLoaded);
+                int cacheSizeBefore = tileCache.Count;
+                tileCache.RemoveAll(x => (now_ticks - x.ticks > x.timeOut) && !x.bKeepLoaded);
 
                 mtxTileUpdate.ReleaseMutex();
 
                 if (bCacheChanged)
                     this.Invoke((System.Threading.ThreadStart)(delegate { splitContainer1.Panel1.Invalidate(); }));
+
+                // DEBUGGING STUFF
+                //this.Invoke((System.Threading.ThreadStart)(delegate { textBoxCmdStatus.Text = "TileCache.Count = " + tileCache.Count; }));
 
                 Thread.Sleep(5);
             }

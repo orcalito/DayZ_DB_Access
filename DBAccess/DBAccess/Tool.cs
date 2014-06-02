@@ -200,13 +200,17 @@ namespace DBAccess
 
             img.Save(path, jpegCodec, encoderParams);
         }
-        public static Bitmap ResizeImage(Bitmap imgToResize, Size size)
+        public static Bitmap ResizeImage(Bitmap imgToResize, Size size, bool keepRatio)
         {
             Size sourceSize = imgToResize.Size;
-            Size nPercentSize = size / sourceSize;
-            float nPercent = Math.Min(nPercentSize.Width, nPercentSize.Height);
+            Size destSize = size;
 
-            Size destSize = sourceSize * nPercent;
+            if (keepRatio)
+            {
+                Size nPercentSize = size / sourceSize;
+                float nPercent = Math.Min(nPercentSize.Width, nPercentSize.Height);
+                destSize = sourceSize * nPercent;
+            }
 
             Bitmap b = new Bitmap((int)destSize.Width, (int)destSize.Height);
             Graphics g = Graphics.FromImage((Image)b);
@@ -234,7 +238,6 @@ namespace DBAccess
 
             return b;
         }
-
         public static void CreateBitmapFromTiles(string dstFilePath, string srcDirPath, int tileCountX, int tileCountY, Tool.Size tileSize)
         {
             Bitmap result = new Bitmap((int)tileSize.Width * tileCountX,
@@ -256,11 +259,18 @@ namespace DBAccess
             SaveJpeg(dstFilePath, result, 90);
             result.Dispose();
         }
-
         public static int maxSize = 8192;
         public static Tuple<Size, Size, Size> CreateTiles(string filepath, string basepath, int limit)
         {
             Bitmap input = new Bitmap(filepath);
+            
+            float ratio = (input.VerticalResolution / input.HorizontalResolution);
+            if( Math.Abs(1.0f - ratio) > 0.01f )
+            {
+                // Ratio isn't squared
+                Bitmap input2 = ResizeImage(input, new Size(input.Width * ratio, input.Height), false);
+                input = input2;
+            }
 
             Size inSize = input.Size;
             Size sqSize = inSize.UpperPowerOf2;
@@ -357,10 +367,7 @@ namespace DBAccess
         {
             Point pos = father + child;
 
-            if (Directory.Exists(basepath + recCnt) == false)
-                Directory.CreateDirectory(basepath + recCnt);
-
-            Bitmap resized = ResizeImage(input, limits);
+            Bitmap resized = ResizeImage(input, limits, true);
             //  TEST
             bool bReject = true;
             {
@@ -375,9 +382,13 @@ namespace DBAccess
                 byte[] rgbValues = new byte[numBytes];
                 Marshal.Copy(ptr, rgbValues, 0, numBytes);
 
+                float fError = 0;
                 for (int i = 0; i < numBytes; i++)
-                    if (rgbValues[i] != 255)
-                        bReject = false;
+                    fError += 255 - rgbValues[i];
+
+                fError /= numBytes;
+                if(fError >= 0.5)
+                    bReject = false;
 
                 // Unlock the bits.
                 b.UnlockBits(data);
@@ -385,8 +396,14 @@ namespace DBAccess
             }
             if (!bReject)
             {
-                SaveJpeg(basepath + recCnt + "\\" + name + pos.Y.ToString("000") + pos.X.ToString("000") + ".jpg", resized, 90);
-                resized.Dispose();
+                if (recCnt >= 0)
+                {
+                    if (Directory.Exists(basepath + recCnt) == false)
+                        Directory.CreateDirectory(basepath + recCnt);
+
+                    SaveJpeg(basepath + recCnt + "\\" + name + pos.Y.ToString("000") + pos.X.ToString("000") + ".jpg", resized, 90);
+                    resized.Dispose();
+                }
 
                 bool bSplitH = (input.Width > limits.Width);
                 bool bSplitV = (input.Height > limits.Height);

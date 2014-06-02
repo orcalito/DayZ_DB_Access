@@ -73,6 +73,10 @@ namespace DBAccess
         public string customscript2;
         public string customscript3;
         public int filter_last_updated;
+        public int bitmap_mag_level;
+        public string rcon_port;
+        public string rcon_url;
+        public string rcon_password;
         public ModuleVersion cfgVersion { get; set; }
         public DataSet worlds_def { get; set; }
         public DataSet vehicle_types { get; set; }
