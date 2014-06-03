@@ -164,6 +164,7 @@
             this.textBoxChatInput = new System.Windows.Forms.TextBox();
             this.toolStripContainer3 = new System.Windows.Forms.ToolStripContainer();
             this.bgWorkerLoadTiles = new System.ComponentModel.BackgroundWorker();
+            this.toolStripStatusDead = new System.Windows.Forms.ToolStripStatusLabel();
             ((System.ComponentModel.ISupportInitialize)(this.dataSetBindingSource)).BeginInit();
             this.contextMenuStripResetTypes.SuspendLayout();
             this.contextMenuStripSpawn.SuspendLayout();
@@ -530,6 +531,7 @@
             this.toolStripStatusWorld,
             this.toolStripStatusOnline,
             this.toolStripStatusAlive,
+            this.toolStripStatusDead,
             this.toolStripStatusVehicle,
             this.toolStripStatusSpawn,
             this.toolStripStatusDeployable,
@@ -1501,17 +1503,16 @@
             this.ColGVDTType.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.ColGVDTType.HeaderText = "Type";
             this.ColGVDTType.Items.AddRange(new object[] {
-                "Unknown",
-                "Tent",
-                "Stach",
-                "SmallBuild",
-                "LargeBuild",
-                "Car",
-                "Truck",
-                "Helicopter",
-                "Air",
-                "Boat"
-            });
+            "Unknown",
+            "Tent",
+            "Stach",
+            "SmallBuild",
+            "LargeBuild",
+            "Car",
+            "Truck",
+            "Helicopter",
+            "Air",
+            "Boat"});
             this.ColGVDTType.Name = "ColGVDTType";
             this.ColGVDTType.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
             // 
@@ -1671,6 +1672,19 @@
             // 
             this.bgWorkerLoadTiles.WorkerSupportsCancellation = true;
             this.bgWorkerLoadTiles.DoWork += new System.ComponentModel.DoWorkEventHandler(this.bgWorkerLoadTiles_DoWork);
+            // 
+            // toolStripStatusDead
+            // 
+            this.toolStripStatusDead.AutoSize = false;
+            this.toolStripStatusDead.AutoToolTip = true;
+            this.toolStripStatusDead.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
+            this.toolStripStatusDead.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
+            this.toolStripStatusDead.Image = global::DBAccess.Properties.Resources.Dead;
+            this.toolStripStatusDead.Name = "toolStripStatusDead";
+            this.toolStripStatusDead.Size = new System.Drawing.Size(57, 36);
+            this.toolStripStatusDead.Text = "888";
+            this.toolStripStatusDead.ToolTipText = "Show dead players";
+            this.toolStripStatusDead.Click += new System.EventHandler(this.toolStripStatusDead_Click);
             // 
             // MainWindow
             // 
@@ -1886,6 +1900,7 @@
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.Label labelMagLevel;
         private System.Windows.Forms.TrackBar trackBarMagLevel;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusDead;
     }
 }
 

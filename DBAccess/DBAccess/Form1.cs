@@ -109,6 +109,7 @@ namespace DBAccess
 
                         case displayMode.ShowOnline:
                         case displayMode.ShowAlive:
+                        case displayMode.ShowDead:
                         case displayMode.ShowVehicle:
                         case displayMode.ShowSpawn:
                         case displayMode.ShowDeployable:
@@ -143,6 +144,7 @@ namespace DBAccess
 
         private System.Drawing.Imaging.ImageAttributes attrSelected = new System.Drawing.Imaging.ImageAttributes();
         private System.Drawing.Imaging.ImageAttributes attrUnselected = new System.Drawing.Imaging.ImageAttributes();
+        internal InterpolationMode gfxIntplMode = InterpolationMode.NearestNeighbor;
 
         #endregion
 
@@ -161,6 +163,7 @@ namespace DBAccess
             ModeButtons.Add(displayMode.SetMaps, toolStripStatusWorld);
             ModeButtons.Add(displayMode.ShowOnline, toolStripStatusOnline);
             ModeButtons.Add(displayMode.ShowAlive, toolStripStatusAlive);
+            ModeButtons.Add(displayMode.ShowDead, toolStripStatusDead);
             ModeButtons.Add(displayMode.ShowVehicle, toolStripStatusVehicle);
             ModeButtons.Add(displayMode.ShowSpawn, toolStripStatusSpawn);
             ModeButtons.Add(displayMode.ShowDeployable, toolStripStatusDeployable);
@@ -293,6 +296,7 @@ namespace DBAccess
                 {
                     toolStripStatusOnline.Text = (PlayersOnline.Tables.Count > 0) ? PlayersOnline.Tables[0].Rows.Count.ToString() : "-";
                     toolStripStatusAlive.Text = (myDB.PlayersAlive.Tables.Count > 0) ? myDB.PlayersAlive.Tables[0].Rows.Count.ToString() : "-";
+                    toolStripStatusDead.Text = (myDB.PlayersDead.Tables.Count > 0) ? myDB.PlayersDead.Tables[0].Rows.Count.ToString() : "-";
                     toolStripStatusVehicle.Text = (myDB.Vehicles.Tables.Count > 0) ? myDB.Vehicles.Tables[0].Rows.Count.ToString() : "-";
                     toolStripStatusSpawn.Text = (myDB.SpawnPoints.Tables.Count > 0) ? myDB.SpawnPoints.Tables[0].Rows.Count.ToString() : "-";
                     toolStripStatusDeployable.Text = (myDB.Deployables.Tables.Count > 0) ? myDB.Deployables.Tables[0].Rows.Count.ToString() : "-";
@@ -319,6 +323,7 @@ namespace DBAccess
                     {
                         case displayMode.ShowOnline: BuildOnlineIcons(); break;
                         case displayMode.ShowAlive: BuildAliveIcons(); break;
+                        case displayMode.ShowDead: BuildDeadIcons(); break;
                         case displayMode.ShowVehicle: BuildVehicleIcons(); break;
                         case displayMode.ShowSpawn: BuildSpawnIcons(); break;
                         case displayMode.ShowDeployable: BuildDeployableIcons(); break;
@@ -494,6 +499,38 @@ namespace DBAccess
 
                 if (bShowTrails == true)
                     GetUIDGraph(idb.uid).AddPoint(idb.pos);
+
+                idx++;
+            }
+        }
+        private void BuildDeadIcons()
+        {
+            int idx = 0;
+            foreach (DataRow row in myDB.PlayersDead.Tables[0].Rows)
+            {
+                if (idx >= iconsDB.Count)
+                    iconsDB.Add(new iconDB());
+
+                iconDB idb = iconsDB[idx];
+
+                idb.uid = row.Field<string>("unique_id");
+                idb.type = UIDType.TypePlayer;
+                idb.row = row;
+                idb.pos = GetUnitPosFromString(row.Field<string>("worldspace"));
+
+                if (idx >= iconPlayers.Count)
+                {
+                    myIcon icon = new myIcon();
+                    icon.Click += OnPlayerClick;
+                    iconPlayers.Add(icon);
+                }
+
+                idb.icon = iconPlayers[idx];
+                idb.icon.image = global::DBAccess.Properties.Resources.iconDead;
+                idb.icon.Size = idb.icon.image.Size;
+                idb.icon.iconDB = idb;
+
+                listIcons.Add(idb);
 
                 idx++;
             }
@@ -699,6 +736,7 @@ namespace DBAccess
             toolStripStatusWorld.Enabled = bState;
             toolStripStatusOnline.Enabled = bState;
             toolStripStatusAlive.Enabled = bState;
+            toolStripStatusDead.Enabled = bState;
             toolStripStatusVehicle.Enabled = bState;
             toolStripStatusSpawn.Enabled = bState && !bEpochGameType;
             toolStripStatusDeployable.Enabled = bState;
@@ -733,6 +771,7 @@ namespace DBAccess
             if (!bState)
             {
                 toolStripStatusAlive.Text = "-";
+                toolStripStatusDead.Text = "-";
                 toolStripStatusOnline.Text = "-";
                 toolStripStatusVehicle.Text = "-";
                 toolStripStatusSpawn.Text = "-";
@@ -1190,6 +1229,10 @@ namespace DBAccess
         {
             currentMode = displayMode.ShowAlive;
         }
+        private void toolStripStatusDead_Click(object sender, EventArgs e)
+        {
+            currentMode = displayMode.ShowDead;
+        }
         private void toolStripStatusOnline_Click(object sender, EventArgs e)
         {
             currentMode = displayMode.ShowOnline;
@@ -1217,6 +1260,7 @@ namespace DBAccess
             SetMaps,
 	        ShowOnline,
             ShowAlive,
+            ShowDead,
             ShowVehicle,
             ShowSpawn,
             ShowDeployable,
@@ -1263,10 +1307,10 @@ namespace DBAccess
                 if (virtualMap.Enabled)
                 {
                     e.Graphics.CompositingMode = CompositingMode.SourceCopy;
-                    e.Graphics.CompositingQuality = CompositingQuality.HighQuality;
-                    e.Graphics.InterpolationMode = InterpolationMode.NearestNeighbor;
+                    //e.Graphics.CompositingQuality = CompositingQuality.HighQuality;
+                    e.Graphics.InterpolationMode = gfxIntplMode;
                     e.Graphics.PixelOffsetMode = PixelOffsetMode.Half;
-                    
+
                     mtxTileUpdate.WaitOne();
                     int nb_tilesDrawn = 0;
                     foreach (tileReq req in tileRequests)
@@ -1776,7 +1820,7 @@ namespace DBAccess
                             if (line.Length>0 && line.StartsWith("(") == false)
                             {
                                 line = ((line.Replace("  ", " ")).Replace("  ", " ")).Replace("  ", " ");
-                                string[] items = line.Split(' ', ':');
+                                string[] items = line.Trim().Split(' ', ':');
 
                                 PlayerData entry = new PlayerData();
                                     entry.Id = int.Parse(items[0]);

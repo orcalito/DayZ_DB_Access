@@ -61,6 +61,7 @@ namespace DBAccess
         public Tool.Point centerUnit;
         public double currDepth = 0;
         public int destDepth = 0;
+        public bool IsZooming { get { return Math.Abs(this.destDepth - this.currDepth) > depthSpeed; } }
 
         private EventWaitHandle evtHandle;
         private static float depthSpeed = 0.08f;

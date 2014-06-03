@@ -7,6 +7,7 @@ DayZ DB Access
  - Show on map:
 	- players online
 	- players alive
+	- players dead
 	- vehicles
 	- vehicle spawn points
 	- deployables
@@ -58,6 +59,9 @@ You can edit the config file, or delete all files to restore an empty configurat
 
 History
 =======
+ - v2.9.1
+	- added dead players
+
  - v2.9.0
 	- added alpha implementation of rCon Chat & limited commands, using BattleNet library (Marcel de Vries / Robert van der Boorn)
 	- added customisable level of zoom for selected bitmap

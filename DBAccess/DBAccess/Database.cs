@@ -29,6 +29,7 @@ namespace DBAccess
         public DataSet Instances { get { return dsInstances; } }
         public DataSet Deployables { get { return dsDeployables; } }
         public DataSet PlayersAlive { get { return dsAlivePlayers; } }
+        public DataSet PlayersDead { get { return dsDeadPlayers; } }
         public DataSet Vehicles { get { return dsVehicles; } }
         public DataSet SpawnPoints { get { return dsSpawnPoints; } }
 
@@ -602,6 +603,7 @@ namespace DBAccess
         private DataSet dsInstances = new DataSet();
         private DataSet dsDeployables = new DataSet();
         private DataSet dsAlivePlayers = new DataSet();
+        private DataSet dsDeadPlayers = new DataSet();
         private DataSet dsVehicles = new DataSet();
         private DataSet dsSpawnPoints = new DataSet();
 
@@ -720,6 +722,7 @@ namespace DBAccess
             if (bConnected)
             {
                 DataSet _dsAlivePlayers = new DataSet();
+                DataSet _dsDeadPlayers = new DataSet();
                 DataSet _dsDeployables = new DataSet();
                 DataSet _dsVehicles = new DataSet();
                 DataSet _dsVehicleSpawnPoints = new DataSet();
@@ -736,15 +739,32 @@ namespace DBAccess
                         //
                         //  Players alive
                         //
-                        cmd.CommandText = "SELECT s.id id, s.unique_id unique_id, p.name name, p.humanity humanity, s.worldspace worldspace,"
-                                        + " s.inventory inventory, s.backpack backpack, s.medical medical, s.state state, s.last_updated last_updated"
-                                        + " FROM survivor as s, profile as p WHERE s.unique_id=p.unique_id AND s.world_id=" + WorldId + " AND s.is_dead=0";
-                        cmd.CommandText += " AND s.last_updated > now() - interval " + FilterLastUpdated + " day";
-                        _dsAlivePlayers.Clear();
-                        adapter.Fill(_dsAlivePlayers);
-                        DataColumn[] keys = new DataColumn[1];
-                        keys[0] = _dsAlivePlayers.Tables[0].Columns[1];
-                        _dsAlivePlayers.Tables[0].PrimaryKey = keys;
+                        {
+                            cmd.CommandText = "SELECT s.id id, s.unique_id unique_id, p.name name, p.humanity humanity, s.worldspace worldspace,"
+                                            + " s.inventory inventory, s.backpack backpack, s.medical medical, s.state state, s.last_updated last_updated"
+                                            + " FROM survivor as s, profile as p WHERE s.unique_id=p.unique_id AND s.world_id=" + WorldId + " AND s.is_dead=0";
+                            cmd.CommandText += " AND s.last_updated > now() - interval " + FilterLastUpdated + " day";
+                            _dsAlivePlayers.Clear();
+                            adapter.Fill(_dsAlivePlayers);
+                            DataColumn[] keys = new DataColumn[1];
+                            keys[0] = _dsAlivePlayers.Tables[0].Columns[1];
+                            _dsAlivePlayers.Tables[0].PrimaryKey = keys;
+                        }
+
+                        //
+                        //  Players dead
+                        //
+                        {
+                            cmd.CommandText = "SELECT s.id id, s.unique_id unique_id, p.name name, p.humanity humanity, s.worldspace worldspace,"
+                                            + " s.inventory inventory, s.backpack backpack, s.medical medical, s.state state, s.last_updated last_updated"
+                                            + " FROM survivor as s, profile as p WHERE s.unique_id=p.unique_id AND s.world_id=" + WorldId + " AND s.is_dead=1";
+                            cmd.CommandText += " AND s.last_updated > now() - interval " + FilterLastUpdated + " day";
+                            _dsDeadPlayers.Clear();
+                            adapter.Fill(_dsDeadPlayers);
+                            DataColumn[] keys = new DataColumn[1];
+                            keys[0] = _dsDeadPlayers.Tables[0].Columns[0];
+                            _dsDeadPlayers.Tables[0].PrimaryKey = keys;
+                        }
 
                         //
                         //  Vehicles
@@ -798,6 +818,7 @@ namespace DBAccess
 
                 dsDeployables = _dsDeployables.Copy();
                 dsAlivePlayers = _dsAlivePlayers.Copy();
+                dsDeadPlayers = _dsDeadPlayers.Copy();
                 dsVehicles = _dsVehicles.Copy();
                 dsSpawnPoints = _dsVehicleSpawnPoints.Copy();
 
@@ -858,6 +879,7 @@ namespace DBAccess
             if (bConnected)
             {
                 DataSet _dsAlivePlayers = new DataSet();
+                DataSet _dsDeadPlayers = new DataSet();
                 DataSet _dsDeployables = new DataSet();
                 DataSet _dsVehicles = new DataSet();
 
@@ -873,16 +895,34 @@ namespace DBAccess
                         //
                         //  Players alive
                         //
-                        cmd.CommandText = "SELECT cd.CharacterID id, pd.PlayerUID unique_id, pd.PlayerName name, cd.Humanity humanity, cd.worldspace worldspace,"
-                                        + " cd.inventory inventory, cd.backpack backpack, cd.medical medical, cd.CurrentState state, cd.DateStamp last_updated"
-                                        + " FROM character_data as cd, player_data as pd"
-                                        + " WHERE cd.PlayerUID=pd.PlayerUID AND cd.Alive=1";
-                        cmd.CommandText += " AND cd.LastLogin > now() - interval " + FilterLastUpdated + " day";
-                        _dsAlivePlayers.Clear();
-                        adapter.Fill(_dsAlivePlayers);
-                        DataColumn[] keys = new DataColumn[1];
-                        keys[0] = _dsAlivePlayers.Tables[0].Columns[1];
-                        _dsAlivePlayers.Tables[0].PrimaryKey = keys;
+                        {
+                            cmd.CommandText = "SELECT cd.CharacterID id, pd.PlayerUID unique_id, pd.PlayerName name, cd.Humanity humanity, cd.worldspace worldspace,"
+                                            + " cd.inventory inventory, cd.backpack backpack, cd.medical medical, cd.CurrentState state, cd.DateStamp last_updated"
+                                            + " FROM character_data as cd, player_data as pd"
+                                            + " WHERE cd.PlayerUID=pd.PlayerUID AND cd.Alive=1";
+                            cmd.CommandText += " AND cd.LastLogin > now() - interval " + FilterLastUpdated + " day";
+                            _dsAlivePlayers.Clear();
+                            adapter.Fill(_dsAlivePlayers);
+                            DataColumn[] keys = new DataColumn[1];
+                            keys[0] = _dsAlivePlayers.Tables[0].Columns[1];
+                            _dsAlivePlayers.Tables[0].PrimaryKey = keys;
+                        }
+
+                        //
+                        //  Players dead
+                        //
+                        {
+                            cmd.CommandText = "SELECT cd.CharacterID id, pd.PlayerUID unique_id, pd.PlayerName name, cd.Humanity humanity, cd.worldspace worldspace,"
+                                            + " cd.inventory inventory, cd.backpack backpack, cd.medical medical, cd.CurrentState state, cd.DateStamp last_updated"
+                                            + " FROM character_data as cd, player_data as pd"
+                                            + " WHERE cd.PlayerUID=pd.PlayerUID AND cd.Alive=0";
+                            cmd.CommandText += " AND cd.LastLogin > now() - interval " + FilterLastUpdated + " day";
+                            _dsDeadPlayers.Clear();
+                            adapter.Fill(_dsDeadPlayers);
+                            DataColumn[] keys = new DataColumn[1];
+                            keys[0] = _dsDeadPlayers.Tables[0].Columns[0];
+                            _dsDeadPlayers.Tables[0].PrimaryKey = keys;
+                        }
 
                         //
                         //  Vehicles
@@ -922,6 +962,7 @@ namespace DBAccess
 
                 dsDeployables = _dsDeployables.Copy();
                 dsAlivePlayers = _dsAlivePlayers.Copy();
+                dsDeadPlayers = _dsDeadPlayers.Copy();
                 dsVehicles = _dsVehicles.Copy();
 
                 worldId = 1;
