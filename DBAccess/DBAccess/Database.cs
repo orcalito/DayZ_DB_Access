@@ -19,7 +19,7 @@ namespace DBAccess
         public int OnlineTimeLimit;
 
         public bool Connected { get { return bConnected;  } }
-        public int InstanceId { get { return instanceId; } }
+        public int InstanceId { get; set; }
         public int WorldId { get { return worldId; } }
         public string WorldName { get { return worldName; } }
         public string GameType { get { return gameType; } }
@@ -32,6 +32,29 @@ namespace DBAccess
         public DataSet PlayersDead { get { return dsDeadPlayers; } }
         public DataSet Vehicles { get { return dsVehicles; } }
         public DataSet SpawnPoints { get { return dsSpawnPoints; } }
+        public List<int> GetInstanceList()
+        {
+            List<int> listIDs = new List<int>();
+
+            MySqlCommand cmd = sqlCnx.CreateCommand();
+
+            switch (GameType)
+            {
+                case "Epoch":   cmd.CommandText = "SELECT Instance, COUNT(*) FROM " + epochObjectTable + " GROUP BY Instance"; break;
+                default:        cmd.CommandText = "SELECT id, COUNT(*) FROM instance GROUP BY Instance"; break;
+            }
+            
+            MySqlDataReader reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                string instance = reader.GetString(0);
+
+                listIDs.Add(int.Parse(instance));
+            }
+            reader.Close();
+
+            return listIDs;
+        }
 
         public void UseDS(bool state)
         {
@@ -57,7 +80,7 @@ namespace DBAccess
                 this.FilterLastUpdated = cfg.filter_last_updated;
                 this.OnlineTimeLimit = int.Parse(cfg.online_time_limit);
                 this.gameType = cfg.game_type;
-                this.instanceId = instance_id;
+                this.InstanceId = instance_id;
 
                 dsWorldDefs = cfg.worlds_def;
                 dsVehicleTypes = cfg.vehicle_types;
@@ -453,10 +476,24 @@ namespace DBAccess
             switch (GameType)
             {
                 case "Epoch":
-                    res = ExecuteSqlNonQuery("UPDATE `character_data` SET Worldspace=" + worldspace + " WHERE (PlayerUID=" + uid + " AND Alive=1) ORDER BY CharacterID DESC LIMIT 1");
+                    res = ExecuteSqlNonQuery("UPDATE " + epochCharacterTable + " SET Worldspace=" + worldspace + " WHERE (PlayerUID=" + uid + " AND Alive=1 AND InstanceID=" + InstanceId + ") ORDER BY CharacterID DESC LIMIT 1");
                     break;
                 default:
                     res = ExecuteSqlNonQuery("UPDATE `survivor` SET worldspace=" + worldspace + " WHERE (world_id=" + WorldId + " AND unique_id=" + uid + " AND is_dead=0) ORDER BY id DESC LIMIT 1");
+                    break;
+            }
+            return (res == 1);
+        }
+        public bool HealPlayer(string uid)
+        {
+            int res;
+            switch (GameType)
+            {
+                case "Epoch":
+                    res = ExecuteSqlNonQuery("UPDATE " + epochCharacterTable + " SET Medical='[false,false,false,false,false,false,true,12000,[],[0,0],0,[0,0]]' WHERE (PlayerUID=" + uid + " AND Alive=1 AND InstanceID=" + InstanceId + ")");
+                    break;
+                default:
+                    res = ExecuteSqlNonQuery("UPDATE survivor SET medical='[false,false,false,false,false,false,true,12000,[],[0,0],0,[0,0]]' WHERE (unique_id=" + uid + " AND is_dead=0)");
                     break;
             }
             return (res == 1);
@@ -467,7 +504,7 @@ namespace DBAccess
             switch (GameType)
             {
                 case "Epoch":
-                    res = ExecuteSqlNonQuery("UPDATE object_data SET Hitpoints='[]',Fuel='1',Damage='0' WHERE (ObjectID=" + uid + ")");
+                    res = ExecuteSqlNonQuery("UPDATE " + epochObjectTable + " SET Hitpoints='[]',Fuel='1',Damage='0' WHERE (ObjectID=" + uid + " AND Instance=" + InstanceId + ")");
                     break;
                 default:
                     res = ExecuteSqlNonQuery("UPDATE instance_vehicle SET parts='[]',fuel='1',damage='0' WHERE (id=" + uid + ")");
@@ -481,7 +518,7 @@ namespace DBAccess
             switch (GameType)
             {
                 case "Epoch":
-                    res = ExecuteSqlNonQuery("DELETE FROM object_data WHERE ObjectID=" + uid);
+                    res = ExecuteSqlNonQuery("DELETE FROM " + epochObjectTable + " WHERE (ObjectID=" + uid + " AND Instance=" + InstanceId + ")");
                     break;
                 default:
                     res = ExecuteSqlNonQuery("DELETE FROM instance_vehicle WHERE id=" + uid + " AND instance_id=" + InstanceId);
@@ -591,7 +628,6 @@ namespace DBAccess
 
         internal MySqlConnection sqlCnx;
         private bool bConnected = false;
-        private int instanceId;
         private int worldId;
         private string worldName;
         private string gameType;
@@ -842,7 +878,7 @@ namespace DBAccess
                 //
                 //  Vehicle types
                 //
-                cmd.CommandText = "SELECT Classname class_name FROM object_data WHERE CharacterID=0";
+                cmd.CommandText = "SELECT Classname class_name FROM " + epochObjectTable + " WHERE CharacterID=0 AND Instance=" + InstanceId;
                 _dsVehicles.Clear();
                 adapter.Fill(_dsVehicles);
             }
@@ -898,9 +934,10 @@ namespace DBAccess
                         {
                             cmd.CommandText = "SELECT cd.CharacterID id, pd.PlayerUID unique_id, pd.PlayerName name, cd.Humanity humanity, cd.worldspace worldspace,"
                                             + " cd.inventory inventory, cd.backpack backpack, cd.medical medical, cd.CurrentState state, cd.DateStamp last_updated"
-                                            + " FROM character_data as cd, player_data as pd"
-                                            + " WHERE cd.PlayerUID=pd.PlayerUID AND cd.Alive=1";
-                            cmd.CommandText += " AND cd.LastLogin > now() - interval " + FilterLastUpdated + " day";
+                                            + " FROM " + epochCharacterTable + " as cd, " + epochPlayerTable + " as pd"
+                                            + " WHERE cd.PlayerUID=pd.PlayerUID AND cd.Alive=1"
+                                            + " AND cd.InstanceID=" + InstanceId
+                                            + " AND cd.LastLogin > now() - interval " + FilterLastUpdated + " day";
                             _dsAlivePlayers.Clear();
                             adapter.Fill(_dsAlivePlayers);
                             DataColumn[] keys = new DataColumn[1];
@@ -914,9 +951,10 @@ namespace DBAccess
                         {
                             cmd.CommandText = "SELECT cd.CharacterID id, pd.PlayerUID unique_id, pd.PlayerName name, cd.Humanity humanity, cd.worldspace worldspace,"
                                             + " cd.inventory inventory, cd.backpack backpack, cd.medical medical, cd.CurrentState state, cd.DateStamp last_updated"
-                                            + " FROM character_data as cd, player_data as pd"
-                                            + " WHERE cd.PlayerUID=pd.PlayerUID AND cd.Alive=0";
-                            cmd.CommandText += " AND cd.LastLogin > now() - interval " + FilterLastUpdated + " day";
+                                            + " FROM " + epochCharacterTable + " as cd, " + epochPlayerTable + " as pd"
+                                            + " WHERE cd.PlayerUID=pd.PlayerUID AND cd.Alive=0"
+                                            + " AND cd.InstanceID=" + InstanceId
+                                            + " AND cd.LastLogin > now() - interval " + FilterLastUpdated + " day";
                             _dsDeadPlayers.Clear();
                             adapter.Fill(_dsDeadPlayers);
                             DataColumn[] keys = new DataColumn[1];
@@ -928,16 +966,18 @@ namespace DBAccess
                         //  Vehicles
                         cmd.CommandText = "SELECT CAST(ObjectID AS UNSIGNED) id, CAST(0 AS UNSIGNED) spawn_id, ClassName class_name, worldspace, inventory, Hitpoints parts,"
                                         + " fuel, damage, DateStamp last_updated"
-                                        + " FROM object_data WHERE CharacterID=0";
-                        cmd.CommandText += " AND Datestamp > now() - interval " + FilterLastUpdated + " day";
+                                        + " FROM " + epochObjectTable + " WHERE CharacterID=0"
+                                        + " AND Instance=" + InstanceId
+                                        + " AND Datestamp > now() - interval " + FilterLastUpdated + " day";
                         _dsVehicles.Clear();
                         adapter.Fill(_dsVehicles);
 
                         //
                         //  Deployables
                         //
-                        cmd.CommandText = "SELECT CAST(ObjectID AS UNSIGNED) id, CharacterID keycode, Classname class_name, worldspace, inventory FROM object_data WHERE CharacterID!=0";
-                        cmd.CommandText += " AND Datestamp > now() - interval " + FilterLastUpdated + " day";
+                        cmd.CommandText = "SELECT CAST(ObjectID AS UNSIGNED) id, CharacterID keycode, Classname class_name, worldspace, inventory FROM " + epochObjectTable + " WHERE CharacterID!=0"
+                                        + " AND Instance=" + InstanceId
+                                        + " AND Datestamp > now() - interval " + FilterLastUpdated + " day";
                         _dsDeployables.Clear();
                         adapter.Fill(_dsDeployables);
                     }
@@ -974,5 +1014,10 @@ namespace DBAccess
         {
             MessageBox.Show(args.Exception.Message, "Script error");
         }
+
+        internal string epochCharacterTable = "character_data";
+        internal string epochObjectTable = "object_data";
+        internal string epochPlayerTable = "player_data";
+        internal string epochTraderTable = "traders_data";
     }
 }

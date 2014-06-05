@@ -45,31 +45,17 @@
             this.toolStripMenuItemDeleteSpawn = new System.Windows.Forms.ToolStripMenuItem();
             this.bgWorkerDatabase = new System.ComponentModel.BackgroundWorker();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
-            this.textBoxrConURL = new System.Windows.Forms.TextBox();
-            this.trackBarMagLevel = new System.Windows.Forms.TrackBar();
-            this.trackBarLastUpdated = new System.Windows.Forms.TrackBar();
-            this.cbCartographer = new System.Windows.Forms.CheckBox();
-            this.buttonSelectCustom3 = new System.Windows.Forms.Button();
-            this.buttonSelectCustom2 = new System.Windows.Forms.Button();
-            this.buttonSelectCustom1 = new System.Windows.Forms.Button();
-            this.buttonCustom3 = new System.Windows.Forms.Button();
-            this.buttonCustom2 = new System.Windows.Forms.Button();
-            this.buttonCustom1 = new System.Windows.Forms.Button();
-            this.textBoxOldTentLimit = new System.Windows.Forms.TextBox();
-            this.buttonRemoveTents = new System.Windows.Forms.Button();
-            this.textBoxOldBodyLimit = new System.Windows.Forms.TextBox();
-            this.textBoxVehicleMax = new System.Windows.Forms.TextBox();
-            this.buttonRemoveBodies = new System.Windows.Forms.Button();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.contextMenuStripVehicle = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.repairRefuelVehicleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItemDeleteVehicle = new System.Windows.Forms.ToolStripMenuItem();
-            this.bgWorkerFast = new System.ComponentModel.BackgroundWorker();
+            this.bgWorkerMapZoom = new System.ComponentModel.BackgroundWorker();
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusWorld = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusOnline = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusAlive = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusDead = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusVehicle = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusSpawn = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusDeployable = new System.Windows.Forms.ToolStripStatusLabel();
@@ -78,6 +64,7 @@
             this.toolStripStatusChat = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusCoordMap = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusCoordDB = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusNews = new System.Windows.Forms.ToolStripStatusLabel();
             this.ttootToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.showPlayersAliveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.showVehiclesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -99,6 +86,14 @@
             this.toolStripStatusLabelCnx = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripContainer2 = new System.Windows.Forms.ToolStripContainer();
             this.toolStripContainer1 = new System.Windows.Forms.ToolStripContainer();
+            this.contextMenuPlayersOnline = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.messageToPlayerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.kickPlayerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripContainer3 = new System.Windows.Forms.ToolStripContainer();
+            this.bgWorkerLoadTiles = new System.ComponentModel.BackgroundWorker();
+            this.contextMenuStripPlayerMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.toolStripMenuItemHeal = new System.Windows.Forms.ToolStripMenuItem();
+            this.bgWorkerFocus = new System.ComponentModel.BackgroundWorker();
             this.splitContainerGlobal = new System.Windows.Forms.SplitContainer();
             this.splitContainer1 = new DBAccess.MySplitContainer();
             this.panelCnx = new System.Windows.Forms.Panel();
@@ -106,6 +101,7 @@
             this.numericUpDownrConPort = new System.Windows.Forms.NumericUpDown();
             this.textBoxrConPassword = new System.Windows.Forms.TextBox();
             this.label8 = new System.Windows.Forms.Label();
+            this.textBoxrConURL = new System.Windows.Forms.TextBox();
             this.label9 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
             this.groupBoxDB = new System.Windows.Forms.GroupBox();
@@ -133,12 +129,25 @@
             this.tabPageDisplay = new System.Windows.Forms.TabPage();
             this.label11 = new System.Windows.Forms.Label();
             this.labelMagLevel = new System.Windows.Forms.Label();
+            this.trackBarMagLevel = new System.Windows.Forms.TrackBar();
             this.label2 = new System.Windows.Forms.Label();
             this.labelLastUpdate = new System.Windows.Forms.Label();
+            this.trackBarLastUpdated = new System.Windows.Forms.TrackBar();
             this.groupBoxInfo = new System.Windows.Forms.GroupBox();
             this.propertyGrid1 = new System.Windows.Forms.PropertyGrid();
             this.tabPageScripts = new System.Windows.Forms.TabPage();
+            this.buttonSelectCustom3 = new System.Windows.Forms.Button();
+            this.buttonSelectCustom2 = new System.Windows.Forms.Button();
+            this.buttonSelectCustom1 = new System.Windows.Forms.Button();
+            this.buttonCustom3 = new System.Windows.Forms.Button();
+            this.buttonCustom2 = new System.Windows.Forms.Button();
+            this.buttonCustom1 = new System.Windows.Forms.Button();
+            this.textBoxOldTentLimit = new System.Windows.Forms.TextBox();
+            this.buttonRemoveTents = new System.Windows.Forms.Button();
             this.textBoxCmdStatus = new System.Windows.Forms.TextBox();
+            this.textBoxOldBodyLimit = new System.Windows.Forms.TextBox();
+            this.textBoxVehicleMax = new System.Windows.Forms.TextBox();
+            this.buttonRemoveBodies = new System.Windows.Forms.Button();
             this.buttonSpawnNew = new System.Windows.Forms.Button();
             this.buttonBackup = new System.Windows.Forms.Button();
             this.buttonRemoveDestroyed = new System.Windows.Forms.Button();
@@ -155,27 +164,36 @@
             this.tabPagePlayers = new System.Windows.Forms.TabPage();
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
             this.dataGridViewPlayers = new System.Windows.Forms.DataGridView();
-            this.contextMenuPlayersOnline = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.messageToPlayerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.kickPlayerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.dataGridViewAdmins = new System.Windows.Forms.DataGridView();
+            this.tabPageSetup = new System.Windows.Forms.TabPage();
+            this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.buttonReconnectrCon = new System.Windows.Forms.Button();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.numericDBRefreshRate = new System.Windows.Forms.NumericUpDown();
+            this.label15 = new System.Windows.Forms.Label();
+            this.label12 = new System.Windows.Forms.Label();
+            this.comboSelectInstance = new System.Windows.Forms.ComboBox();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.comboSelectEpochWorld = new System.Windows.Forms.ComboBox();
+            this.label14 = new System.Windows.Forms.Label();
+            this.cbCartographer = new System.Windows.Forms.CheckBox();
             this.splitContainerChat = new System.Windows.Forms.SplitContainer();
             this.richTextBoxChat = new System.Windows.Forms.RichTextBox();
             this.textBoxChatInput = new System.Windows.Forms.TextBox();
-            this.toolStripContainer3 = new System.Windows.Forms.ToolStripContainer();
-            this.bgWorkerLoadTiles = new System.ComponentModel.BackgroundWorker();
-            this.toolStripStatusDead = new System.Windows.Forms.ToolStripStatusLabel();
             ((System.ComponentModel.ISupportInitialize)(this.dataSetBindingSource)).BeginInit();
             this.contextMenuStripResetTypes.SuspendLayout();
             this.contextMenuStripSpawn.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.trackBarMagLevel)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.trackBarLastUpdated)).BeginInit();
             this.contextMenuStripVehicle.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             this.toolStripContainer2.ContentPanel.SuspendLayout();
             this.toolStripContainer2.SuspendLayout();
             this.toolStripContainer1.ContentPanel.SuspendLayout();
             this.toolStripContainer1.SuspendLayout();
+            this.contextMenuPlayersOnline.SuspendLayout();
+            this.toolStripContainer3.BottomToolStripPanel.SuspendLayout();
+            this.toolStripContainer3.ContentPanel.SuspendLayout();
+            this.toolStripContainer3.SuspendLayout();
+            this.contextMenuStripPlayerMenu.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainerGlobal)).BeginInit();
             this.splitContainerGlobal.Panel1.SuspendLayout();
             this.splitContainerGlobal.Panel2.SuspendLayout();
@@ -193,6 +211,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewMaps)).BeginInit();
             this.tabControl1.SuspendLayout();
             this.tabPageDisplay.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.trackBarMagLevel)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.trackBarLastUpdated)).BeginInit();
             this.groupBoxInfo.SuspendLayout();
             this.tabPageScripts.SuspendLayout();
             this.tabPageVehicles.SuspendLayout();
@@ -205,15 +225,16 @@
             this.splitContainer2.Panel2.SuspendLayout();
             this.splitContainer2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewPlayers)).BeginInit();
-            this.contextMenuPlayersOnline.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewAdmins)).BeginInit();
+            this.tabPageSetup.SuspendLayout();
+            this.groupBox3.SuspendLayout();
+            this.groupBox2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numericDBRefreshRate)).BeginInit();
+            this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainerChat)).BeginInit();
             this.splitContainerChat.Panel1.SuspendLayout();
             this.splitContainerChat.Panel2.SuspendLayout();
             this.splitContainerChat.SuspendLayout();
-            this.toolStripContainer3.BottomToolStripPanel.SuspendLayout();
-            this.toolStripContainer3.ContentPanel.SuspendLayout();
-            this.toolStripContainer3.SuspendLayout();
             this.SuspendLayout();
             // 
             // BottomToolStripPanel
@@ -315,179 +336,6 @@
             // 
             this.toolTip1.AutomaticDelay = 250;
             // 
-            // textBoxrConURL
-            // 
-            this.textBoxrConURL.Location = new System.Drawing.Point(41, 41);
-            this.textBoxrConURL.MaxLength = 256;
-            this.textBoxrConURL.Name = "textBoxrConURL";
-            this.textBoxrConURL.Size = new System.Drawing.Size(130, 20);
-            this.textBoxrConURL.TabIndex = 8;
-            this.toolTip1.SetToolTip(this.textBoxrConURL, "optional URL for simulation purpose");
-            // 
-            // trackBarMagLevel
-            // 
-            this.trackBarMagLevel.LargeChange = 1;
-            this.trackBarMagLevel.Location = new System.Drawing.Point(82, 37);
-            this.trackBarMagLevel.Maximum = 6;
-            this.trackBarMagLevel.Name = "trackBarMagLevel";
-            this.trackBarMagLevel.RightToLeft = System.Windows.Forms.RightToLeft.No;
-            this.trackBarMagLevel.Size = new System.Drawing.Size(144, 45);
-            this.trackBarMagLevel.TabIndex = 11;
-            this.trackBarMagLevel.TickFrequency = 5;
-            this.trackBarMagLevel.TickStyle = System.Windows.Forms.TickStyle.TopLeft;
-            this.toolTip1.SetToolTip(this.trackBarMagLevel, "Map maximal level of zoom");
-            this.trackBarMagLevel.Value = this.trackBarMagLevel.Maximum;
-            this.trackBarMagLevel.ValueChanged += new System.EventHandler(this.trackBarMagLevel_ValueChanged);
-            // 
-            // trackBarLastUpdated
-            // 
-            this.trackBarLastUpdated.LargeChange = 7;
-            this.trackBarLastUpdated.Location = new System.Drawing.Point(82, 7);
-            this.trackBarLastUpdated.Maximum = 30;
-            this.trackBarLastUpdated.Minimum = 1;
-            this.trackBarLastUpdated.Name = "trackBarLastUpdated";
-            this.trackBarLastUpdated.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.trackBarLastUpdated.Size = new System.Drawing.Size(144, 45);
-            this.trackBarLastUpdated.TabIndex = 8;
-            this.trackBarLastUpdated.TickFrequency = 5;
-            this.trackBarLastUpdated.TickStyle = System.Windows.Forms.TickStyle.TopLeft;
-            this.toolTip1.SetToolTip(this.trackBarLastUpdated, "Filters items not updated since X days");
-            this.trackBarLastUpdated.Value = this.trackBarLastUpdated.Maximum;
-            this.trackBarLastUpdated.ValueChanged += new System.EventHandler(this.trackBarLastUpdated_ValueChanged);
-            // 
-            // cbCartographer
-            // 
-            this.cbCartographer.AutoSize = true;
-            this.cbCartographer.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cbCartographer.ForeColor = System.Drawing.Color.Black;
-            this.cbCartographer.Location = new System.Drawing.Point(6, 77);
-            this.cbCartographer.Name = "cbCartographer";
-            this.cbCartographer.Size = new System.Drawing.Size(78, 17);
-            this.cbCartographer.TabIndex = 7;
-            this.cbCartographer.Text = "Cartograph";
-            this.toolTip1.SetToolTip(this.cbCartographer, "internal use, will be removed later");
-            this.cbCartographer.UseVisualStyleBackColor = true;
-            this.cbCartographer.CheckedChanged += new System.EventHandler(this.cbCartographer_CheckedChanged);
-            // 
-            // buttonSelectCustom3
-            // 
-            this.buttonSelectCustom3.Location = new System.Drawing.Point(161, 209);
-            this.buttonSelectCustom3.Name = "buttonSelectCustom3";
-            this.buttonSelectCustom3.Size = new System.Drawing.Size(32, 23);
-            this.buttonSelectCustom3.TabIndex = 12;
-            this.buttonSelectCustom3.Text = "...";
-            this.toolTip1.SetToolTip(this.buttonSelectCustom3, "Change association");
-            this.buttonSelectCustom3.UseVisualStyleBackColor = true;
-            this.buttonSelectCustom3.Click += new System.EventHandler(this.buttonSelectCustom_Click);
-            // 
-            // buttonSelectCustom2
-            // 
-            this.buttonSelectCustom2.Location = new System.Drawing.Point(161, 180);
-            this.buttonSelectCustom2.Name = "buttonSelectCustom2";
-            this.buttonSelectCustom2.Size = new System.Drawing.Size(32, 23);
-            this.buttonSelectCustom2.TabIndex = 12;
-            this.buttonSelectCustom2.Text = "...";
-            this.toolTip1.SetToolTip(this.buttonSelectCustom2, "Change association");
-            this.buttonSelectCustom2.UseVisualStyleBackColor = true;
-            this.buttonSelectCustom2.Click += new System.EventHandler(this.buttonSelectCustom_Click);
-            // 
-            // buttonSelectCustom1
-            // 
-            this.buttonSelectCustom1.Location = new System.Drawing.Point(161, 151);
-            this.buttonSelectCustom1.Name = "buttonSelectCustom1";
-            this.buttonSelectCustom1.Size = new System.Drawing.Size(32, 23);
-            this.buttonSelectCustom1.TabIndex = 12;
-            this.buttonSelectCustom1.Text = "...";
-            this.toolTip1.SetToolTip(this.buttonSelectCustom1, "Change association");
-            this.buttonSelectCustom1.UseVisualStyleBackColor = true;
-            this.buttonSelectCustom1.Click += new System.EventHandler(this.buttonSelectCustom_Click);
-            // 
-            // buttonCustom3
-            // 
-            this.buttonCustom3.Location = new System.Drawing.Point(7, 209);
-            this.buttonCustom3.Name = "buttonCustom3";
-            this.buttonCustom3.Size = new System.Drawing.Size(148, 23);
-            this.buttonCustom3.TabIndex = 11;
-            this.buttonCustom3.Text = "<Custom 3>";
-            this.toolTip1.SetToolTip(this.buttonCustom3, "Custom SQL or BAT file");
-            this.buttonCustom3.UseVisualStyleBackColor = true;
-            this.buttonCustom3.Click += new System.EventHandler(this.buttonCustom_Click);
-            // 
-            // buttonCustom2
-            // 
-            this.buttonCustom2.Location = new System.Drawing.Point(7, 180);
-            this.buttonCustom2.Name = "buttonCustom2";
-            this.buttonCustom2.Size = new System.Drawing.Size(148, 23);
-            this.buttonCustom2.TabIndex = 10;
-            this.buttonCustom2.Text = "<Custom 2>";
-            this.toolTip1.SetToolTip(this.buttonCustom2, "Custom SQL or BAT file");
-            this.buttonCustom2.UseVisualStyleBackColor = true;
-            this.buttonCustom2.Click += new System.EventHandler(this.buttonCustom_Click);
-            // 
-            // buttonCustom1
-            // 
-            this.buttonCustom1.Location = new System.Drawing.Point(7, 151);
-            this.buttonCustom1.Name = "buttonCustom1";
-            this.buttonCustom1.Size = new System.Drawing.Size(148, 23);
-            this.buttonCustom1.TabIndex = 9;
-            this.buttonCustom1.Text = "<Custom 1>";
-            this.toolTip1.SetToolTip(this.buttonCustom1, "Custom SQL or BAT file");
-            this.buttonCustom1.UseVisualStyleBackColor = true;
-            this.buttonCustom1.Click += new System.EventHandler(this.buttonCustom_Click);
-            // 
-            // textBoxOldTentLimit
-            // 
-            this.textBoxOldTentLimit.Location = new System.Drawing.Point(160, 124);
-            this.textBoxOldTentLimit.MaxLength = 4;
-            this.textBoxOldTentLimit.Name = "textBoxOldTentLimit";
-            this.textBoxOldTentLimit.Size = new System.Drawing.Size(47, 20);
-            this.textBoxOldTentLimit.TabIndex = 7;
-            this.textBoxOldTentLimit.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.toolTip1.SetToolTip(this.textBoxOldTentLimit, "Day limit");
-            // 
-            // buttonRemoveTents
-            // 
-            this.buttonRemoveTents.Location = new System.Drawing.Point(6, 122);
-            this.buttonRemoveTents.Name = "buttonRemoveTents";
-            this.buttonRemoveTents.Size = new System.Drawing.Size(148, 23);
-            this.buttonRemoveTents.TabIndex = 4;
-            this.buttonRemoveTents.Text = "Remove old tents";
-            this.toolTip1.SetToolTip(this.buttonRemoveTents, "Remove tents from DB\r\nolder than X days");
-            this.buttonRemoveTents.UseVisualStyleBackColor = true;
-            this.buttonRemoveTents.Click += new System.EventHandler(this.buttonRemoveTents_Click);
-            // 
-            // textBoxOldBodyLimit
-            // 
-            this.textBoxOldBodyLimit.Location = new System.Drawing.Point(160, 95);
-            this.textBoxOldBodyLimit.MaxLength = 4;
-            this.textBoxOldBodyLimit.Name = "textBoxOldBodyLimit";
-            this.textBoxOldBodyLimit.Size = new System.Drawing.Size(47, 20);
-            this.textBoxOldBodyLimit.TabIndex = 6;
-            this.textBoxOldBodyLimit.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.toolTip1.SetToolTip(this.textBoxOldBodyLimit, "Day limit");
-            // 
-            // textBoxVehicleMax
-            // 
-            this.textBoxVehicleMax.ImeMode = System.Windows.Forms.ImeMode.On;
-            this.textBoxVehicleMax.Location = new System.Drawing.Point(160, 66);
-            this.textBoxVehicleMax.MaxLength = 4;
-            this.textBoxVehicleMax.Name = "textBoxVehicleMax";
-            this.textBoxVehicleMax.Size = new System.Drawing.Size(47, 20);
-            this.textBoxVehicleMax.TabIndex = 5;
-            this.textBoxVehicleMax.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.toolTip1.SetToolTip(this.textBoxVehicleMax, "Expected vehicle count");
-            // 
-            // buttonRemoveBodies
-            // 
-            this.buttonRemoveBodies.Location = new System.Drawing.Point(6, 93);
-            this.buttonRemoveBodies.Name = "buttonRemoveBodies";
-            this.buttonRemoveBodies.Size = new System.Drawing.Size(148, 23);
-            this.buttonRemoveBodies.TabIndex = 3;
-            this.buttonRemoveBodies.Text = "Remove old bodies";
-            this.toolTip1.SetToolTip(this.buttonRemoveBodies, "Remove dead survivors from the DB\r\nolder than X days.");
-            this.buttonRemoveBodies.UseVisualStyleBackColor = true;
-            this.buttonRemoveBodies.Click += new System.EventHandler(this.buttonRemoveBodies_Click);
-            // 
             // openFileDialog1
             // 
             this.openFileDialog1.FileName = "openFileDialog1";
@@ -514,9 +362,10 @@
             this.toolStripMenuItemDeleteVehicle.Text = "Delete vehicle";
             this.toolStripMenuItemDeleteVehicle.Click += new System.EventHandler(this.toolStripMenuItemDelete_Click);
             // 
-            // bgWorkerFast
+            // bgWorkerMapZoom
             // 
-            this.bgWorkerFast.DoWork += new System.ComponentModel.DoWorkEventHandler(this.bgWorkerFast_DoWork);
+            this.bgWorkerMapZoom.WorkerSupportsCancellation = true;
+            this.bgWorkerMapZoom.DoWork += new System.ComponentModel.DoWorkEventHandler(this.bgWorkerMapZoom_DoWork);
             // 
             // saveFileDialog1
             // 
@@ -539,11 +388,12 @@
             this.toolStripStatusTrail,
             this.toolStripStatusChat,
             this.toolStripStatusCoordMap,
-            this.toolStripStatusCoordDB});
+            this.toolStripStatusCoordDB,
+            this.toolStripStatusNews});
             this.statusStrip1.Location = new System.Drawing.Point(0, 0);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.ShowItemToolTips = true;
-            this.statusStrip1.Size = new System.Drawing.Size(754, 41);
+            this.statusStrip1.Size = new System.Drawing.Size(879, 41);
             this.statusStrip1.TabIndex = 1;
             this.statusStrip1.Text = "statusStrip1";
             // 
@@ -584,6 +434,19 @@
             this.toolStripStatusAlive.Text = "888";
             this.toolStripStatusAlive.ToolTipText = "Show alive players";
             this.toolStripStatusAlive.Click += new System.EventHandler(this.toolStripStatusAlive_Click);
+            // 
+            // toolStripStatusDead
+            // 
+            this.toolStripStatusDead.AutoSize = false;
+            this.toolStripStatusDead.AutoToolTip = true;
+            this.toolStripStatusDead.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
+            this.toolStripStatusDead.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
+            this.toolStripStatusDead.Image = global::DBAccess.Properties.Resources.Dead;
+            this.toolStripStatusDead.Name = "toolStripStatusDead";
+            this.toolStripStatusDead.Size = new System.Drawing.Size(64, 36);
+            this.toolStripStatusDead.Text = "888";
+            this.toolStripStatusDead.ToolTipText = "Show dead players";
+            this.toolStripStatusDead.Click += new System.EventHandler(this.toolStripStatusDead_Click);
             // 
             // toolStripStatusVehicle
             // 
@@ -690,6 +553,17 @@
             this.toolStripStatusCoordDB.Size = new System.Drawing.Size(120, 36);
             this.toolStripStatusCoordDB.Text = "-";
             this.toolStripStatusCoordDB.ToolTipText = "DB coordinates";
+            // 
+            // toolStripStatusNews
+            // 
+            this.toolStripStatusNews.AutoSize = false;
+            this.toolStripStatusNews.AutoToolTip = true;
+            this.toolStripStatusNews.Image = global::DBAccess.Properties.Resources.Tool_About;
+            this.toolStripStatusNews.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            this.toolStripStatusNews.Name = "toolStripStatusNews";
+            this.toolStripStatusNews.Size = new System.Drawing.Size(48, 36);
+            this.toolStripStatusNews.ToolTipText = "What\'s new...";
+            this.toolStripStatusNews.Click += new System.EventHandler(this.toolStripStatusNews_Click);
             // 
             // ttootToolStripMenuItem
             // 
@@ -813,13 +687,13 @@
             // 
             this.toolStripContainer2.ContentPanel.AutoScroll = true;
             this.toolStripContainer2.ContentPanel.Controls.Add(this.toolStripContainer1);
-            this.toolStripContainer2.ContentPanel.Size = new System.Drawing.Size(754, 401);
+            this.toolStripContainer2.ContentPanel.Size = new System.Drawing.Size(879, 401);
             this.toolStripContainer2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.toolStripContainer2.LeftToolStripPanelVisible = false;
             this.toolStripContainer2.Location = new System.Drawing.Point(0, 0);
             this.toolStripContainer2.Name = "toolStripContainer2";
             this.toolStripContainer2.RightToolStripPanelVisible = false;
-            this.toolStripContainer2.Size = new System.Drawing.Size(754, 401);
+            this.toolStripContainer2.Size = new System.Drawing.Size(879, 401);
             this.toolStripContainer2.TabIndex = 4;
             this.toolStripContainer2.Text = "toolStripContainer2";
             this.toolStripContainer2.TopToolStripPanelVisible = false;
@@ -831,16 +705,85 @@
             // 
             this.toolStripContainer1.ContentPanel.AutoScroll = true;
             this.toolStripContainer1.ContentPanel.Controls.Add(this.splitContainerGlobal);
-            this.toolStripContainer1.ContentPanel.Size = new System.Drawing.Size(754, 401);
+            this.toolStripContainer1.ContentPanel.Size = new System.Drawing.Size(879, 401);
             this.toolStripContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.toolStripContainer1.LeftToolStripPanelVisible = false;
             this.toolStripContainer1.Location = new System.Drawing.Point(0, 0);
             this.toolStripContainer1.Name = "toolStripContainer1";
             this.toolStripContainer1.RightToolStripPanelVisible = false;
-            this.toolStripContainer1.Size = new System.Drawing.Size(754, 401);
+            this.toolStripContainer1.Size = new System.Drawing.Size(879, 401);
             this.toolStripContainer1.TabIndex = 3;
             this.toolStripContainer1.Text = "toolStripContainer1";
             this.toolStripContainer1.TopToolStripPanelVisible = false;
+            // 
+            // contextMenuPlayersOnline
+            // 
+            this.contextMenuPlayersOnline.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.messageToPlayerToolStripMenuItem,
+            this.kickPlayerToolStripMenuItem});
+            this.contextMenuPlayersOnline.Name = "contextMenuPlayersOnline";
+            this.contextMenuPlayersOnline.Size = new System.Drawing.Size(170, 48);
+            // 
+            // messageToPlayerToolStripMenuItem
+            // 
+            this.messageToPlayerToolStripMenuItem.Name = "messageToPlayerToolStripMenuItem";
+            this.messageToPlayerToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
+            this.messageToPlayerToolStripMenuItem.Text = "Message to player";
+            this.messageToPlayerToolStripMenuItem.Click += new System.EventHandler(this.messageToPlayerToolStripMenuItem_Click);
+            // 
+            // kickPlayerToolStripMenuItem
+            // 
+            this.kickPlayerToolStripMenuItem.Name = "kickPlayerToolStripMenuItem";
+            this.kickPlayerToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
+            this.kickPlayerToolStripMenuItem.Text = "Kick player";
+            this.kickPlayerToolStripMenuItem.Click += new System.EventHandler(this.kickPlayerToolStripMenuItem_Click);
+            // 
+            // toolStripContainer3
+            // 
+            // 
+            // toolStripContainer3.BottomToolStripPanel
+            // 
+            this.toolStripContainer3.BottomToolStripPanel.Controls.Add(this.statusStrip1);
+            // 
+            // toolStripContainer3.ContentPanel
+            // 
+            this.toolStripContainer3.ContentPanel.AutoScroll = true;
+            this.toolStripContainer3.ContentPanel.Controls.Add(this.toolStripContainer2);
+            this.toolStripContainer3.ContentPanel.Size = new System.Drawing.Size(879, 401);
+            this.toolStripContainer3.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.toolStripContainer3.LeftToolStripPanelVisible = false;
+            this.toolStripContainer3.Location = new System.Drawing.Point(0, 0);
+            this.toolStripContainer3.Name = "toolStripContainer3";
+            this.toolStripContainer3.RightToolStripPanelVisible = false;
+            this.toolStripContainer3.Size = new System.Drawing.Size(879, 442);
+            this.toolStripContainer3.TabIndex = 5;
+            this.toolStripContainer3.Text = "toolStripContainer3";
+            this.toolStripContainer3.TopToolStripPanelVisible = false;
+            // 
+            // bgWorkerLoadTiles
+            // 
+            this.bgWorkerLoadTiles.WorkerSupportsCancellation = true;
+            this.bgWorkerLoadTiles.DoWork += new System.ComponentModel.DoWorkEventHandler(this.bgWorkerLoadTiles_DoWork);
+            // 
+            // contextMenuStripPlayerMenu
+            // 
+            this.contextMenuStripPlayerMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripMenuItemHeal});
+            this.contextMenuStripPlayerMenu.Name = "contextMenuStripPlayer";
+            this.contextMenuStripPlayerMenu.Size = new System.Drawing.Size(134, 26);
+            this.contextMenuStripPlayerMenu.Opening += new System.ComponentModel.CancelEventHandler(this.contextMenuStripItemPlayerMenu_Opening);
+            // 
+            // toolStripMenuItemHeal
+            // 
+            this.toolStripMenuItemHeal.Name = "toolStripMenuItemHeal";
+            this.toolStripMenuItemHeal.Size = new System.Drawing.Size(133, 22);
+            this.toolStripMenuItemHeal.Text = "Heal player";
+            this.toolStripMenuItemHeal.Click += new System.EventHandler(this.toolStripMenuItemHealPlayer_Click);
+            // 
+            // bgWorkerFocus
+            // 
+            this.bgWorkerFocus.WorkerSupportsCancellation = true;
+            this.bgWorkerFocus.DoWork += new System.ComponentModel.DoWorkEventHandler(this.bgWorkerFocus_DoWork);
             // 
             // splitContainerGlobal
             // 
@@ -856,7 +799,7 @@
             // splitContainerGlobal.Panel2
             // 
             this.splitContainerGlobal.Panel2.Controls.Add(this.splitContainerChat);
-            this.splitContainerGlobal.Size = new System.Drawing.Size(754, 401);
+            this.splitContainerGlobal.Size = new System.Drawing.Size(879, 401);
             this.splitContainerGlobal.SplitterDistance = 313;
             this.splitContainerGlobal.TabIndex = 2;
             // 
@@ -883,8 +826,8 @@
             // 
             this.splitContainer1.Panel2.Controls.Add(this.tabControl1);
             this.splitContainer1.Panel2MinSize = 220;
-            this.splitContainer1.Size = new System.Drawing.Size(754, 313);
-            this.splitContainer1.SplitterDistance = 480;
+            this.splitContainer1.Size = new System.Drawing.Size(879, 313);
+            this.splitContainer1.SplitterDistance = 558;
             this.splitContainer1.TabIndex = 1;
             // 
             // panelCnx
@@ -950,6 +893,15 @@
             this.label8.Size = new System.Drawing.Size(30, 13);
             this.label8.TabIndex = 114;
             this.label8.Text = "Pass";
+            // 
+            // textBoxrConURL
+            // 
+            this.textBoxrConURL.Location = new System.Drawing.Point(41, 41);
+            this.textBoxrConURL.MaxLength = 256;
+            this.textBoxrConURL.Name = "textBoxrConURL";
+            this.textBoxrConURL.Size = new System.Drawing.Size(130, 20);
+            this.textBoxrConURL.TabIndex = 8;
+            this.toolTip1.SetToolTip(this.textBoxrConURL, "optional URL for simulation purpose");
             // 
             // label9
             // 
@@ -1148,9 +1100,11 @@
             this.textBoxDBBaseName.Name = "textBoxDBBaseName";
             this.textBoxDBBaseName.Size = new System.Drawing.Size(162, 20);
             this.textBoxDBBaseName.TabIndex = 2;
+            this.toolTip1.SetToolTip(this.textBoxDBBaseName, "Base name in mySQL");
             // 
             // buttonConnect
             // 
+            this.buttonConnect.DialogResult = System.Windows.Forms.DialogResult.OK;
             this.buttonConnect.Location = new System.Drawing.Point(160, 216);
             this.buttonConnect.Name = "buttonConnect";
             this.buttonConnect.Size = new System.Drawing.Size(70, 23);
@@ -1179,7 +1133,7 @@
             this.dataGridViewMaps.MultiSelect = false;
             this.dataGridViewMaps.Name = "dataGridViewMaps";
             this.dataGridViewMaps.RowHeadersVisible = false;
-            this.dataGridViewMaps.Size = new System.Drawing.Size(476, 309);
+            this.dataGridViewMaps.Size = new System.Drawing.Size(554, 309);
             this.dataGridViewMaps.TabIndex = 0;
             this.dataGridViewMaps.Visible = false;
             this.dataGridViewMaps.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewMaps_CellClick);
@@ -1220,11 +1174,12 @@
             this.tabControl1.Controls.Add(this.tabPageVehicles);
             this.tabControl1.Controls.Add(this.tabPageDeployables);
             this.tabControl1.Controls.Add(this.tabPagePlayers);
+            this.tabControl1.Controls.Add(this.tabPageSetup);
             this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControl1.Location = new System.Drawing.Point(0, 0);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(266, 309);
+            this.tabControl1.Size = new System.Drawing.Size(313, 309);
             this.tabControl1.TabIndex = 4;
             // 
             // tabPageDisplay
@@ -1236,12 +1191,11 @@
             this.tabPageDisplay.Controls.Add(this.label2);
             this.tabPageDisplay.Controls.Add(this.labelLastUpdate);
             this.tabPageDisplay.Controls.Add(this.trackBarLastUpdated);
-            this.tabPageDisplay.Controls.Add(this.cbCartographer);
             this.tabPageDisplay.Controls.Add(this.groupBoxInfo);
             this.tabPageDisplay.Location = new System.Drawing.Point(4, 22);
             this.tabPageDisplay.Name = "tabPageDisplay";
             this.tabPageDisplay.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageDisplay.Size = new System.Drawing.Size(258, 283);
+            this.tabPageDisplay.Size = new System.Drawing.Size(305, 283);
             this.tabPageDisplay.TabIndex = 1;
             this.tabPageDisplay.Text = "Display";
             // 
@@ -1264,6 +1218,21 @@
             this.labelMagLevel.Text = "-";
             this.labelMagLevel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
+            // trackBarMagLevel
+            // 
+            this.trackBarMagLevel.LargeChange = 1;
+            this.trackBarMagLevel.Location = new System.Drawing.Point(82, 37);
+            this.trackBarMagLevel.Maximum = 6;
+            this.trackBarMagLevel.Name = "trackBarMagLevel";
+            this.trackBarMagLevel.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.trackBarMagLevel.Size = new System.Drawing.Size(144, 45);
+            this.trackBarMagLevel.TabIndex = 11;
+            this.trackBarMagLevel.TickFrequency = 5;
+            this.trackBarMagLevel.TickStyle = System.Windows.Forms.TickStyle.TopLeft;
+            this.toolTip1.SetToolTip(this.trackBarMagLevel, "Map maximal level of zoom");
+            this.trackBarMagLevel.Value = this.trackBarMagLevel.Maximum;
+            this.trackBarMagLevel.ValueChanged += new System.EventHandler(this.trackBarMagLevel_ValueChanged);
+            // 
             // label2
             // 
             this.label2.AutoSize = true;
@@ -1283,15 +1252,31 @@
             this.labelLastUpdate.Text = "-";
             this.labelLastUpdate.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
+            // trackBarLastUpdated
+            // 
+            this.trackBarLastUpdated.LargeChange = 7;
+            this.trackBarLastUpdated.Location = new System.Drawing.Point(82, 7);
+            this.trackBarLastUpdated.Maximum = 30;
+            this.trackBarLastUpdated.Minimum = 1;
+            this.trackBarLastUpdated.Name = "trackBarLastUpdated";
+            this.trackBarLastUpdated.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.trackBarLastUpdated.Size = new System.Drawing.Size(144, 45);
+            this.trackBarLastUpdated.TabIndex = 8;
+            this.trackBarLastUpdated.TickFrequency = 5;
+            this.trackBarLastUpdated.TickStyle = System.Windows.Forms.TickStyle.TopLeft;
+            this.toolTip1.SetToolTip(this.trackBarLastUpdated, "Filters items not updated since X days");
+            this.trackBarLastUpdated.Value = this.trackBarLastUpdated.Maximum;
+            this.trackBarLastUpdated.ValueChanged += new System.EventHandler(this.trackBarLastUpdated_ValueChanged);
+            // 
             // groupBoxInfo
             // 
             this.groupBoxInfo.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBoxInfo.Controls.Add(this.propertyGrid1);
-            this.groupBoxInfo.Location = new System.Drawing.Point(3, 100);
+            this.groupBoxInfo.Location = new System.Drawing.Point(3, 79);
             this.groupBoxInfo.Name = "groupBoxInfo";
-            this.groupBoxInfo.Size = new System.Drawing.Size(249, 176);
+            this.groupBoxInfo.Size = new System.Drawing.Size(296, 197);
             this.groupBoxInfo.TabIndex = 3;
             this.groupBoxInfo.TabStop = false;
             this.groupBoxInfo.Text = "Info";
@@ -1303,7 +1288,7 @@
             this.propertyGrid1.Location = new System.Drawing.Point(3, 16);
             this.propertyGrid1.Name = "propertyGrid1";
             this.propertyGrid1.PropertySort = System.Windows.Forms.PropertySort.Categorized;
-            this.propertyGrid1.Size = new System.Drawing.Size(243, 157);
+            this.propertyGrid1.Size = new System.Drawing.Size(290, 178);
             this.propertyGrid1.TabIndex = 0;
             this.propertyGrid1.ToolbarVisible = false;
             this.propertyGrid1.ViewBackColor = System.Drawing.SystemColors.Control;
@@ -1329,9 +1314,96 @@
             this.tabPageScripts.Location = new System.Drawing.Point(4, 22);
             this.tabPageScripts.Name = "tabPageScripts";
             this.tabPageScripts.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageScripts.Size = new System.Drawing.Size(258, 283);
+            this.tabPageScripts.Size = new System.Drawing.Size(305, 283);
             this.tabPageScripts.TabIndex = 2;
             this.tabPageScripts.Text = "Scripts";
+            // 
+            // buttonSelectCustom3
+            // 
+            this.buttonSelectCustom3.Location = new System.Drawing.Point(161, 209);
+            this.buttonSelectCustom3.Name = "buttonSelectCustom3";
+            this.buttonSelectCustom3.Size = new System.Drawing.Size(32, 23);
+            this.buttonSelectCustom3.TabIndex = 12;
+            this.buttonSelectCustom3.Text = "...";
+            this.toolTip1.SetToolTip(this.buttonSelectCustom3, "Change association");
+            this.buttonSelectCustom3.UseVisualStyleBackColor = true;
+            this.buttonSelectCustom3.Click += new System.EventHandler(this.buttonSelectCustom_Click);
+            // 
+            // buttonSelectCustom2
+            // 
+            this.buttonSelectCustom2.Location = new System.Drawing.Point(161, 180);
+            this.buttonSelectCustom2.Name = "buttonSelectCustom2";
+            this.buttonSelectCustom2.Size = new System.Drawing.Size(32, 23);
+            this.buttonSelectCustom2.TabIndex = 12;
+            this.buttonSelectCustom2.Text = "...";
+            this.toolTip1.SetToolTip(this.buttonSelectCustom2, "Change association");
+            this.buttonSelectCustom2.UseVisualStyleBackColor = true;
+            this.buttonSelectCustom2.Click += new System.EventHandler(this.buttonSelectCustom_Click);
+            // 
+            // buttonSelectCustom1
+            // 
+            this.buttonSelectCustom1.Location = new System.Drawing.Point(161, 151);
+            this.buttonSelectCustom1.Name = "buttonSelectCustom1";
+            this.buttonSelectCustom1.Size = new System.Drawing.Size(32, 23);
+            this.buttonSelectCustom1.TabIndex = 12;
+            this.buttonSelectCustom1.Text = "...";
+            this.toolTip1.SetToolTip(this.buttonSelectCustom1, "Change association");
+            this.buttonSelectCustom1.UseVisualStyleBackColor = true;
+            this.buttonSelectCustom1.Click += new System.EventHandler(this.buttonSelectCustom_Click);
+            // 
+            // buttonCustom3
+            // 
+            this.buttonCustom3.Location = new System.Drawing.Point(7, 209);
+            this.buttonCustom3.Name = "buttonCustom3";
+            this.buttonCustom3.Size = new System.Drawing.Size(148, 23);
+            this.buttonCustom3.TabIndex = 11;
+            this.buttonCustom3.Text = "<Custom 3>";
+            this.toolTip1.SetToolTip(this.buttonCustom3, "Custom SQL or BAT file");
+            this.buttonCustom3.UseVisualStyleBackColor = true;
+            this.buttonCustom3.Click += new System.EventHandler(this.buttonCustom_Click);
+            // 
+            // buttonCustom2
+            // 
+            this.buttonCustom2.Location = new System.Drawing.Point(7, 180);
+            this.buttonCustom2.Name = "buttonCustom2";
+            this.buttonCustom2.Size = new System.Drawing.Size(148, 23);
+            this.buttonCustom2.TabIndex = 10;
+            this.buttonCustom2.Text = "<Custom 2>";
+            this.toolTip1.SetToolTip(this.buttonCustom2, "Custom SQL or BAT file");
+            this.buttonCustom2.UseVisualStyleBackColor = true;
+            this.buttonCustom2.Click += new System.EventHandler(this.buttonCustom_Click);
+            // 
+            // buttonCustom1
+            // 
+            this.buttonCustom1.Location = new System.Drawing.Point(7, 151);
+            this.buttonCustom1.Name = "buttonCustom1";
+            this.buttonCustom1.Size = new System.Drawing.Size(148, 23);
+            this.buttonCustom1.TabIndex = 9;
+            this.buttonCustom1.Text = "<Custom 1>";
+            this.toolTip1.SetToolTip(this.buttonCustom1, "Custom SQL or BAT file");
+            this.buttonCustom1.UseVisualStyleBackColor = true;
+            this.buttonCustom1.Click += new System.EventHandler(this.buttonCustom_Click);
+            // 
+            // textBoxOldTentLimit
+            // 
+            this.textBoxOldTentLimit.Location = new System.Drawing.Point(160, 124);
+            this.textBoxOldTentLimit.MaxLength = 4;
+            this.textBoxOldTentLimit.Name = "textBoxOldTentLimit";
+            this.textBoxOldTentLimit.Size = new System.Drawing.Size(47, 20);
+            this.textBoxOldTentLimit.TabIndex = 7;
+            this.textBoxOldTentLimit.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.toolTip1.SetToolTip(this.textBoxOldTentLimit, "Day limit");
+            // 
+            // buttonRemoveTents
+            // 
+            this.buttonRemoveTents.Location = new System.Drawing.Point(6, 122);
+            this.buttonRemoveTents.Name = "buttonRemoveTents";
+            this.buttonRemoveTents.Size = new System.Drawing.Size(148, 23);
+            this.buttonRemoveTents.TabIndex = 4;
+            this.buttonRemoveTents.Text = "Remove old tents";
+            this.toolTip1.SetToolTip(this.buttonRemoveTents, "Remove tents from DB\r\nolder than X days");
+            this.buttonRemoveTents.UseVisualStyleBackColor = true;
+            this.buttonRemoveTents.Click += new System.EventHandler(this.buttonRemoveTents_Click);
             // 
             // textBoxCmdStatus
             // 
@@ -1346,8 +1418,40 @@
             this.textBoxCmdStatus.Name = "textBoxCmdStatus";
             this.textBoxCmdStatus.ReadOnly = true;
             this.textBoxCmdStatus.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.textBoxCmdStatus.Size = new System.Drawing.Size(245, 51);
+            this.textBoxCmdStatus.Size = new System.Drawing.Size(292, 51);
             this.textBoxCmdStatus.TabIndex = 8;
+            // 
+            // textBoxOldBodyLimit
+            // 
+            this.textBoxOldBodyLimit.Location = new System.Drawing.Point(160, 95);
+            this.textBoxOldBodyLimit.MaxLength = 4;
+            this.textBoxOldBodyLimit.Name = "textBoxOldBodyLimit";
+            this.textBoxOldBodyLimit.Size = new System.Drawing.Size(47, 20);
+            this.textBoxOldBodyLimit.TabIndex = 6;
+            this.textBoxOldBodyLimit.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.toolTip1.SetToolTip(this.textBoxOldBodyLimit, "Day limit");
+            // 
+            // textBoxVehicleMax
+            // 
+            this.textBoxVehicleMax.ImeMode = System.Windows.Forms.ImeMode.On;
+            this.textBoxVehicleMax.Location = new System.Drawing.Point(160, 66);
+            this.textBoxVehicleMax.MaxLength = 4;
+            this.textBoxVehicleMax.Name = "textBoxVehicleMax";
+            this.textBoxVehicleMax.Size = new System.Drawing.Size(47, 20);
+            this.textBoxVehicleMax.TabIndex = 5;
+            this.textBoxVehicleMax.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.toolTip1.SetToolTip(this.textBoxVehicleMax, "Expected vehicle count");
+            // 
+            // buttonRemoveBodies
+            // 
+            this.buttonRemoveBodies.Location = new System.Drawing.Point(6, 93);
+            this.buttonRemoveBodies.Name = "buttonRemoveBodies";
+            this.buttonRemoveBodies.Size = new System.Drawing.Size(148, 23);
+            this.buttonRemoveBodies.TabIndex = 3;
+            this.buttonRemoveBodies.Text = "Remove old bodies";
+            this.toolTip1.SetToolTip(this.buttonRemoveBodies, "Remove dead survivors from the DB\r\nolder than X days.");
+            this.buttonRemoveBodies.UseVisualStyleBackColor = true;
+            this.buttonRemoveBodies.Click += new System.EventHandler(this.buttonRemoveBodies_Click);
             // 
             // buttonSpawnNew
             // 
@@ -1386,7 +1490,7 @@
             this.tabPageVehicles.Location = new System.Drawing.Point(4, 22);
             this.tabPageVehicles.Name = "tabPageVehicles";
             this.tabPageVehicles.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageVehicles.Size = new System.Drawing.Size(258, 283);
+            this.tabPageVehicles.Size = new System.Drawing.Size(305, 283);
             this.tabPageVehicles.TabIndex = 4;
             this.tabPageVehicles.Text = "Vehicles";
             // 
@@ -1407,7 +1511,7 @@
             this.dataGridViewVehicleTypes.Name = "dataGridViewVehicleTypes";
             this.dataGridViewVehicleTypes.RowHeadersVisible = false;
             this.dataGridViewVehicleTypes.ShowEditingIcon = false;
-            this.dataGridViewVehicleTypes.Size = new System.Drawing.Size(252, 277);
+            this.dataGridViewVehicleTypes.Size = new System.Drawing.Size(299, 277);
             this.dataGridViewVehicleTypes.TabIndex = 0;
             this.dataGridViewVehicleTypes.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewVehicleTypes_CellContentClick);
             this.dataGridViewVehicleTypes.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewVehicleTypes_CellValueChanged);
@@ -1454,7 +1558,7 @@
             this.tabPageDeployables.Location = new System.Drawing.Point(4, 22);
             this.tabPageDeployables.Name = "tabPageDeployables";
             this.tabPageDeployables.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageDeployables.Size = new System.Drawing.Size(258, 283);
+            this.tabPageDeployables.Size = new System.Drawing.Size(305, 283);
             this.tabPageDeployables.TabIndex = 5;
             this.tabPageDeployables.Text = "Deployables";
             // 
@@ -1477,7 +1581,7 @@
             this.dataGridViewDeployableTypes.RowHeadersVisible = false;
             this.dataGridViewDeployableTypes.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
             this.dataGridViewDeployableTypes.ShowEditingIcon = false;
-            this.dataGridViewDeployableTypes.Size = new System.Drawing.Size(252, 277);
+            this.dataGridViewDeployableTypes.Size = new System.Drawing.Size(299, 277);
             this.dataGridViewDeployableTypes.TabIndex = 0;
             this.dataGridViewDeployableTypes.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewDeployableTypes_CellContentClick);
             this.dataGridViewDeployableTypes.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewDeployableTypes_CellValueChanged);
@@ -1522,7 +1626,7 @@
             this.tabPagePlayers.Location = new System.Drawing.Point(4, 22);
             this.tabPagePlayers.Name = "tabPagePlayers";
             this.tabPagePlayers.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPagePlayers.Size = new System.Drawing.Size(258, 283);
+            this.tabPagePlayers.Size = new System.Drawing.Size(305, 283);
             this.tabPagePlayers.TabIndex = 6;
             this.tabPagePlayers.Text = "Online";
             this.tabPagePlayers.UseVisualStyleBackColor = true;
@@ -1541,7 +1645,7 @@
             // splitContainer2.Panel2
             // 
             this.splitContainer2.Panel2.Controls.Add(this.dataGridViewAdmins);
-            this.splitContainer2.Size = new System.Drawing.Size(252, 277);
+            this.splitContainer2.Size = new System.Drawing.Size(299, 277);
             this.splitContainer2.SplitterDistance = 200;
             this.splitContainer2.TabIndex = 0;
             // 
@@ -1561,30 +1665,8 @@
             this.dataGridViewPlayers.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
             this.dataGridViewPlayers.RowTemplate.ContextMenuStrip = this.contextMenuPlayersOnline;
             this.dataGridViewPlayers.ShowEditingIcon = false;
-            this.dataGridViewPlayers.Size = new System.Drawing.Size(252, 200);
+            this.dataGridViewPlayers.Size = new System.Drawing.Size(299, 200);
             this.dataGridViewPlayers.TabIndex = 0;
-            // 
-            // contextMenuPlayersOnline
-            // 
-            this.contextMenuPlayersOnline.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.messageToPlayerToolStripMenuItem,
-            this.kickPlayerToolStripMenuItem});
-            this.contextMenuPlayersOnline.Name = "contextMenuPlayersOnline";
-            this.contextMenuPlayersOnline.Size = new System.Drawing.Size(170, 48);
-            // 
-            // messageToPlayerToolStripMenuItem
-            // 
-            this.messageToPlayerToolStripMenuItem.Name = "messageToPlayerToolStripMenuItem";
-            this.messageToPlayerToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
-            this.messageToPlayerToolStripMenuItem.Text = "Message to player";
-            this.messageToPlayerToolStripMenuItem.Click += new System.EventHandler(this.messageToPlayerToolStripMenuItem_Click);
-            // 
-            // kickPlayerToolStripMenuItem
-            // 
-            this.kickPlayerToolStripMenuItem.Name = "kickPlayerToolStripMenuItem";
-            this.kickPlayerToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
-            this.kickPlayerToolStripMenuItem.Text = "Kick player";
-            this.kickPlayerToolStripMenuItem.Click += new System.EventHandler(this.kickPlayerToolStripMenuItem_Click);
             // 
             // dataGridViewAdmins
             // 
@@ -1600,8 +1682,154 @@
             this.dataGridViewAdmins.RowHeadersVisible = false;
             this.dataGridViewAdmins.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
             this.dataGridViewAdmins.ShowEditingIcon = false;
-            this.dataGridViewAdmins.Size = new System.Drawing.Size(252, 73);
+            this.dataGridViewAdmins.Size = new System.Drawing.Size(299, 73);
             this.dataGridViewAdmins.TabIndex = 0;
+            // 
+            // tabPageSetup
+            // 
+            this.tabPageSetup.Controls.Add(this.groupBox3);
+            this.tabPageSetup.Controls.Add(this.groupBox2);
+            this.tabPageSetup.Controls.Add(this.groupBox1);
+            this.tabPageSetup.Controls.Add(this.cbCartographer);
+            this.tabPageSetup.Location = new System.Drawing.Point(4, 22);
+            this.tabPageSetup.Name = "tabPageSetup";
+            this.tabPageSetup.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPageSetup.Size = new System.Drawing.Size(305, 283);
+            this.tabPageSetup.TabIndex = 7;
+            this.tabPageSetup.Text = "Setup";
+            // 
+            // groupBox3
+            // 
+            this.groupBox3.Controls.Add(this.buttonReconnectrCon);
+            this.groupBox3.Location = new System.Drawing.Point(6, 176);
+            this.groupBox3.Name = "groupBox3";
+            this.groupBox3.Size = new System.Drawing.Size(180, 51);
+            this.groupBox3.TabIndex = 113;
+            this.groupBox3.TabStop = false;
+            this.groupBox3.Text = "rCon";
+            // 
+            // buttonReconnectrCon
+            // 
+            this.buttonReconnectrCon.DialogResult = System.Windows.Forms.DialogResult.OK;
+            this.buttonReconnectrCon.Enabled = false;
+            this.buttonReconnectrCon.Location = new System.Drawing.Point(40, 19);
+            this.buttonReconnectrCon.Name = "buttonReconnectrCon";
+            this.buttonReconnectrCon.Size = new System.Drawing.Size(100, 23);
+            this.buttonReconnectrCon.TabIndex = 108;
+            this.buttonReconnectrCon.Text = "Reconnect";
+            this.buttonReconnectrCon.UseVisualStyleBackColor = true;
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.numericDBRefreshRate);
+            this.groupBox2.Controls.Add(this.label15);
+            this.groupBox2.Controls.Add(this.label12);
+            this.groupBox2.Controls.Add(this.comboSelectInstance);
+            this.groupBox2.Location = new System.Drawing.Point(6, 29);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(180, 78);
+            this.groupBox2.TabIndex = 112;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "Database";
+            // 
+            // numericDBRefreshRate
+            // 
+            this.numericDBRefreshRate.DecimalPlaces = 1;
+            this.numericDBRefreshRate.Location = new System.Drawing.Point(109, 45);
+            this.numericDBRefreshRate.Maximum = new decimal(new int[] {
+            60,
+            0,
+            0,
+            0});
+            this.numericDBRefreshRate.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.numericDBRefreshRate.Name = "numericDBRefreshRate";
+            this.numericDBRefreshRate.Size = new System.Drawing.Size(57, 20);
+            this.numericDBRefreshRate.TabIndex = 108;
+            this.numericDBRefreshRate.Value = new decimal(new int[] {
+            5,
+            0,
+            0,
+            0});
+            this.numericDBRefreshRate.ValueChanged += new System.EventHandler(this.numericDBRefreshRate_ValueChanged);
+            // 
+            // label15
+            // 
+            this.label15.AutoSize = true;
+            this.label15.Location = new System.Drawing.Point(38, 47);
+            this.label15.Name = "label15";
+            this.label15.Size = new System.Drawing.Size(65, 13);
+            this.label15.TabIndex = 109;
+            this.label15.Text = "Refresh rate";
+            // 
+            // label12
+            // 
+            this.label12.AutoSize = true;
+            this.label12.Location = new System.Drawing.Point(10, 21);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(93, 13);
+            this.label12.TabIndex = 106;
+            this.label12.Text = "Select Instance Id";
+            // 
+            // comboSelectInstance
+            // 
+            this.comboSelectInstance.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboSelectInstance.Enabled = false;
+            this.comboSelectInstance.FormattingEnabled = true;
+            this.comboSelectInstance.Location = new System.Drawing.Point(109, 18);
+            this.comboSelectInstance.Name = "comboSelectInstance";
+            this.comboSelectInstance.Size = new System.Drawing.Size(57, 21);
+            this.comboSelectInstance.TabIndex = 107;
+            this.toolTip1.SetToolTip(this.comboSelectInstance, "Instance IDs found in DB");
+            this.comboSelectInstance.SelectedValueChanged += new System.EventHandler(this.comboSelectInstance_SelectedValueChanged);
+            // 
+            // groupBox1
+            // 
+            this.groupBox1.Controls.Add(this.comboSelectEpochWorld);
+            this.groupBox1.Controls.Add(this.label14);
+            this.groupBox1.Location = new System.Drawing.Point(6, 116);
+            this.groupBox1.Margin = new System.Windows.Forms.Padding(6);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(180, 51);
+            this.groupBox1.TabIndex = 111;
+            this.groupBox1.TabStop = false;
+            this.groupBox1.Text = "Epoch";
+            // 
+            // comboSelectEpochWorld
+            // 
+            this.comboSelectEpochWorld.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboSelectEpochWorld.Enabled = false;
+            this.comboSelectEpochWorld.FormattingEnabled = true;
+            this.comboSelectEpochWorld.Location = new System.Drawing.Point(109, 18);
+            this.comboSelectEpochWorld.Name = "comboSelectEpochWorld";
+            this.comboSelectEpochWorld.Size = new System.Drawing.Size(57, 21);
+            this.comboSelectEpochWorld.TabIndex = 110;
+            this.toolTip1.SetToolTip(this.comboSelectEpochWorld, "Instance IDs found in DB");
+            // 
+            // label14
+            // 
+            this.label14.AutoSize = true;
+            this.label14.Location = new System.Drawing.Point(14, 21);
+            this.label14.Name = "label14";
+            this.label14.Size = new System.Drawing.Size(89, 13);
+            this.label14.TabIndex = 109;
+            this.label14.Text = "Select WorldMap";
+            // 
+            // cbCartographer
+            // 
+            this.cbCartographer.AutoSize = true;
+            this.cbCartographer.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.cbCartographer.ForeColor = System.Drawing.Color.Black;
+            this.cbCartographer.Location = new System.Drawing.Point(6, 6);
+            this.cbCartographer.Name = "cbCartographer";
+            this.cbCartographer.Size = new System.Drawing.Size(78, 17);
+            this.cbCartographer.TabIndex = 8;
+            this.cbCartographer.Text = "Cartograph";
+            this.toolTip1.SetToolTip(this.cbCartographer, "internal use, will be removed later");
+            this.cbCartographer.UseVisualStyleBackColor = true;
             // 
             // splitContainerChat
             // 
@@ -1620,7 +1848,7 @@
             // 
             this.splitContainerChat.Panel2.Controls.Add(this.textBoxChatInput);
             this.splitContainerChat.Panel2MinSize = 30;
-            this.splitContainerChat.Size = new System.Drawing.Size(754, 84);
+            this.splitContainerChat.Size = new System.Drawing.Size(879, 84);
             this.splitContainerChat.SplitterDistance = 34;
             this.splitContainerChat.TabIndex = 2;
             // 
@@ -1631,7 +1859,7 @@
             this.richTextBoxChat.Name = "richTextBoxChat";
             this.richTextBoxChat.ReadOnly = true;
             this.richTextBoxChat.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
-            this.richTextBoxChat.Size = new System.Drawing.Size(754, 34);
+            this.richTextBoxChat.Size = new System.Drawing.Size(879, 34);
             this.richTextBoxChat.TabIndex = 1;
             this.richTextBoxChat.Text = "";
             // 
@@ -1642,55 +1870,15 @@
             this.textBoxChatInput.Location = new System.Drawing.Point(0, 0);
             this.textBoxChatInput.Multiline = true;
             this.textBoxChatInput.Name = "textBoxChatInput";
-            this.textBoxChatInput.Size = new System.Drawing.Size(754, 46);
+            this.textBoxChatInput.Size = new System.Drawing.Size(879, 46);
             this.textBoxChatInput.TabIndex = 0;
             this.textBoxChatInput.TextChanged += new System.EventHandler(this.textBoxChatInput_TextChanged);
-            // 
-            // toolStripContainer3
-            // 
-            // 
-            // toolStripContainer3.BottomToolStripPanel
-            // 
-            this.toolStripContainer3.BottomToolStripPanel.Controls.Add(this.statusStrip1);
-            // 
-            // toolStripContainer3.ContentPanel
-            // 
-            this.toolStripContainer3.ContentPanel.AutoScroll = true;
-            this.toolStripContainer3.ContentPanel.Controls.Add(this.toolStripContainer2);
-            this.toolStripContainer3.ContentPanel.Size = new System.Drawing.Size(754, 401);
-            this.toolStripContainer3.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.toolStripContainer3.LeftToolStripPanelVisible = false;
-            this.toolStripContainer3.Location = new System.Drawing.Point(0, 0);
-            this.toolStripContainer3.Name = "toolStripContainer3";
-            this.toolStripContainer3.RightToolStripPanelVisible = false;
-            this.toolStripContainer3.Size = new System.Drawing.Size(754, 442);
-            this.toolStripContainer3.TabIndex = 5;
-            this.toolStripContainer3.Text = "toolStripContainer3";
-            this.toolStripContainer3.TopToolStripPanelVisible = false;
-            // 
-            // bgWorkerLoadTiles
-            // 
-            this.bgWorkerLoadTiles.WorkerSupportsCancellation = true;
-            this.bgWorkerLoadTiles.DoWork += new System.ComponentModel.DoWorkEventHandler(this.bgWorkerLoadTiles_DoWork);
-            // 
-            // toolStripStatusDead
-            // 
-            this.toolStripStatusDead.AutoSize = false;
-            this.toolStripStatusDead.AutoToolTip = true;
-            this.toolStripStatusDead.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
-            this.toolStripStatusDead.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
-            this.toolStripStatusDead.Image = global::DBAccess.Properties.Resources.Dead;
-            this.toolStripStatusDead.Name = "toolStripStatusDead";
-            this.toolStripStatusDead.Size = new System.Drawing.Size(57, 36);
-            this.toolStripStatusDead.Text = "888";
-            this.toolStripStatusDead.ToolTipText = "Show dead players";
-            this.toolStripStatusDead.Click += new System.EventHandler(this.toolStripStatusDead_Click);
             // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(754, 442);
+            this.ClientSize = new System.Drawing.Size(879, 442);
             this.Controls.Add(this.toolStripContainer3);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MinimumSize = new System.Drawing.Size(770, 480);
@@ -1701,8 +1889,6 @@
             ((System.ComponentModel.ISupportInitialize)(this.dataSetBindingSource)).EndInit();
             this.contextMenuStripResetTypes.ResumeLayout(false);
             this.contextMenuStripSpawn.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.trackBarMagLevel)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.trackBarLastUpdated)).EndInit();
             this.contextMenuStripVehicle.ResumeLayout(false);
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
@@ -1712,6 +1898,13 @@
             this.toolStripContainer1.ContentPanel.ResumeLayout(false);
             this.toolStripContainer1.ResumeLayout(false);
             this.toolStripContainer1.PerformLayout();
+            this.contextMenuPlayersOnline.ResumeLayout(false);
+            this.toolStripContainer3.BottomToolStripPanel.ResumeLayout(false);
+            this.toolStripContainer3.BottomToolStripPanel.PerformLayout();
+            this.toolStripContainer3.ContentPanel.ResumeLayout(false);
+            this.toolStripContainer3.ResumeLayout(false);
+            this.toolStripContainer3.PerformLayout();
+            this.contextMenuStripPlayerMenu.ResumeLayout(false);
             this.splitContainerGlobal.Panel1.ResumeLayout(false);
             this.splitContainerGlobal.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainerGlobal)).EndInit();
@@ -1732,6 +1925,8 @@
             this.tabControl1.ResumeLayout(false);
             this.tabPageDisplay.ResumeLayout(false);
             this.tabPageDisplay.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.trackBarMagLevel)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.trackBarLastUpdated)).EndInit();
             this.groupBoxInfo.ResumeLayout(false);
             this.tabPageScripts.ResumeLayout(false);
             this.tabPageScripts.PerformLayout();
@@ -1745,18 +1940,20 @@
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).EndInit();
             this.splitContainer2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewPlayers)).EndInit();
-            this.contextMenuPlayersOnline.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewAdmins)).EndInit();
+            this.tabPageSetup.ResumeLayout(false);
+            this.tabPageSetup.PerformLayout();
+            this.groupBox3.ResumeLayout(false);
+            this.groupBox2.ResumeLayout(false);
+            this.groupBox2.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numericDBRefreshRate)).EndInit();
+            this.groupBox1.ResumeLayout(false);
+            this.groupBox1.PerformLayout();
             this.splitContainerChat.Panel1.ResumeLayout(false);
             this.splitContainerChat.Panel2.ResumeLayout(false);
             this.splitContainerChat.Panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainerChat)).EndInit();
             this.splitContainerChat.ResumeLayout(false);
-            this.toolStripContainer3.BottomToolStripPanel.ResumeLayout(false);
-            this.toolStripContainer3.BottomToolStripPanel.PerformLayout();
-            this.toolStripContainer3.ContentPanel.ResumeLayout(false);
-            this.toolStripContainer3.ResumeLayout(false);
-            this.toolStripContainer3.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -1806,10 +2003,9 @@
         private System.Windows.Forms.ComboBox comboBoxGameType;
         private System.Windows.Forms.Label label13;
         private System.Windows.Forms.BindingSource dataSetBindingSource;
-        private System.ComponentModel.BackgroundWorker bgWorkerFast;
+        private System.ComponentModel.BackgroundWorker bgWorkerMapZoom;
         private System.Windows.Forms.TabPage tabPageDeployables;
         private System.Windows.Forms.DataGridView dataGridViewDeployableTypes;
-        private System.Windows.Forms.CheckBox cbCartographer;
         private System.Windows.Forms.Button buttonSelectCustom3;
         private System.Windows.Forms.Button buttonSelectCustom2;
         private System.Windows.Forms.Button buttonSelectCustom1;
@@ -1901,6 +2097,22 @@
         private System.Windows.Forms.Label labelMagLevel;
         private System.Windows.Forms.TrackBar trackBarMagLevel;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusDead;
+        private System.Windows.Forms.ContextMenuStrip contextMenuStripPlayerMenu;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemHeal;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusNews;
+        private System.Windows.Forms.TabPage tabPageSetup;
+        private System.Windows.Forms.GroupBox groupBox3;
+        private System.Windows.Forms.Button buttonReconnectrCon;
+        private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.Label label12;
+        private System.Windows.Forms.ComboBox comboSelectInstance;
+        private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.ComboBox comboSelectEpochWorld;
+        private System.Windows.Forms.Label label14;
+        private System.Windows.Forms.CheckBox cbCartographer;
+        private System.Windows.Forms.NumericUpDown numericDBRefreshRate;
+        private System.Windows.Forms.Label label15;
+        private System.ComponentModel.BackgroundWorker bgWorkerFocus;
     }
 }
 

@@ -221,6 +221,16 @@ namespace DBAccess.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {\rtf1\adeflang1025\ansi\ansicpg1252\uc1\adeff39\deff0\stshfdbch31505\stshfloch31506\stshfhich31506\stshfbi0\deflang1036\deflangfe1036\themelang1036\themelangfe0\themelangcs0{\fonttbl{\f0\fbidi \froman\fcharset0\fprq2{\*\panose 02020603050405020304}Times New Roman;}{\f0\fbidi \froman\fcharset0\fprq2{\*\panose 02020603050405020304}Times New Roman;}
+        ///{\f39\fbidi \froman\fcharset0\fprq2{\*\panose 00000000000000000000}Liberation Serif{\*\falt Times New Roman};}{\f40\fbidi \fswiss\fcharset0\fprq2{\*\panose 00000 [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string HISTORY {
+            get {
+                return ResourceManager.GetString("HISTORY", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap iconAlive {
@@ -291,6 +301,16 @@ namespace DBAccess.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] README {
+            get {
+                object obj = ResourceManager.GetObject("README", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap small_build {
@@ -316,6 +336,16 @@ namespace DBAccess.Properties {
         internal static System.Drawing.Bitmap tent {
             get {
                 object obj = ResourceManager.GetObject("tent", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Tool_About {
+            get {
+                object obj = ResourceManager.GetObject("Tool_About", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

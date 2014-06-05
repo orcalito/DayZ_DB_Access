@@ -20,15 +20,17 @@ namespace DBAccess
 {
     public partial class MainWindow : Form
     {
+        public delegate void DelegateVoid();
+
         #region Fields
         static ModuleVersion curCfgVersion = new ModuleVersion(4, 1);
 
         private static int bUserAction = 0;
-        private static EventWaitHandle eventFastBgWorker = new EventWaitHandle(false, EventResetMode.AutoReset);
+        private static EventWaitHandle eventMapZoomBgWorker = new EventWaitHandle(false, EventResetMode.AutoReset);
         private static Mutex mtxTileRequest = new Mutex();
         private static Mutex mtxTileUpdate = new Mutex();
-        private DlgUpdateIcons dlgUpdateIcons;
-        private DlgUpdateIcons dlgRefreshMap;
+        private DelegateVoid dlgUpdateIcons;
+        private DelegateVoid dlgRefreshMap;
         //
         private static Dictionary<Int32, bool> dicTileExistence = new Dictionary<Int32, bool>();
         private static bool TileFileExists(tileReq req)
@@ -52,6 +54,7 @@ namespace DBAccess
         private DataSet PlayersOnline = new DataSet("Players Online DS");
         private DataSet AdminsOnline = new DataSet("Admins Online DS");
         //
+        private AboutBox diagAbout = new AboutBox();
         private MessageToPlayer diagMsgToPlayer = null;
         //
         private Dictionary<string, UIDGraph> dicUIDGraph = new Dictionary<string, UIDGraph>();
@@ -61,7 +64,7 @@ namespace DBAccess
         private List<myIcon> iconVehicles = new List<myIcon>();
         private List<myIcon> iconDeployables = new List<myIcon>();
         private MapPan mapPan = new MapPan();
-        private MapZoom mapZoom = new MapZoom(eventFastBgWorker);
+        private MapZoom mapZoom = new MapZoom(eventMapZoomBgWorker);
         private MapHelper mapHelper;
         private UIDGraph cartographer = new UIDGraph(new Pen(Color.Black, 2));
         private Tool.Point positionInDB = new Tool.Point();
@@ -243,8 +246,9 @@ namespace DBAccess
             dataGridViewAdmins.DataSource = AdminsOnline.Tables[0];
 
             bgWorkerDatabase.RunWorkerAsync();
-            bgWorkerFast.RunWorkerAsync();
+            bgWorkerMapZoom.RunWorkerAsync();
             bgWorkerLoadTiles.RunWorkerAsync();
+            bgWorkerFocus.RunWorkerAsync();
 
             Enable(false);
         }
@@ -454,6 +458,7 @@ namespace DBAccess
                     idb.icon.image = (rowOnline.Field<string>("Status") == "Ingame") ? global::DBAccess.Properties.Resources.iconOnline : global::DBAccess.Properties.Resources.iconLobby;
                     idb.icon.Size = idb.icon.image.Size;
                     idb.icon.iconDB = idb;
+                    idb.icon.contextMenuStrip = null;
 
                     //toolTip1.SetToolTip(idb.icon, row.Field<string>("name"));
 
@@ -492,6 +497,7 @@ namespace DBAccess
                 idb.icon.image = global::DBAccess.Properties.Resources.iconAlive;
                 idb.icon.Size = idb.icon.image.Size;
                 idb.icon.iconDB = idb;
+                idb.icon.contextMenuStrip = contextMenuStripPlayerMenu;
 
                 //toolTip1.SetToolTip(idb.icon, row.Field<string>("name"));
 
@@ -529,6 +535,7 @@ namespace DBAccess
                 idb.icon.image = global::DBAccess.Properties.Resources.iconDead;
                 idb.icon.Size = idb.icon.image.Size;
                 idb.icon.iconDB = idb;
+                idb.icon.contextMenuStrip = null;
 
                 listIcons.Add(idb);
 
@@ -704,6 +711,7 @@ namespace DBAccess
 
                     idb.icon = iconDeployables[idx];
                     idb.icon.iconDB = idb;
+                    idb.icon.contextMenuStrip = null;
 
                     string classname = (rowT != null) ? rowT.Field<string>("Type") : "";
                     switch (classname)
@@ -721,6 +729,7 @@ namespace DBAccess
                     }
 
                     idb.icon.Size = idb.icon.image.Size;
+
                     listIcons.Add(idb);
 
                     idx++;
@@ -814,6 +823,7 @@ namespace DBAccess
             if (Tool.NullOrEmpty(mycfg.rcon_password)) mycfg.rcon_password = "";
             if (mycfg.filter_last_updated == 0) mycfg.filter_last_updated = 7;
             if (mycfg.bitmap_mag_level == 0) mycfg.bitmap_mag_level = 4;
+            if (mycfg.db_refreshrate == 0) mycfg.db_refreshrate = 5.0M;
 
             // Custom scripts
             if (!Tool.NullOrEmpty(mycfg.customscript1))
@@ -944,6 +954,7 @@ namespace DBAccess
                 textBoxrConPassword.Text = mycfg.rcon_password;
                 trackBarLastUpdated.Value = Math.Min(trackBarLastUpdated.Maximum, Math.Max(trackBarLastUpdated.Minimum, mycfg.filter_last_updated));
                 trackBarMagLevel.Value = Math.Min(trackBarMagLevel.Maximum, Math.Max(trackBarMagLevel.Minimum, mycfg.bitmap_mag_level));
+                numericDBRefreshRate.Value = Math.Min(numericDBRefreshRate.Maximum, Math.Max(numericDBRefreshRate.Minimum, mycfg.db_refreshrate));
 
                 dataGridViewMaps.Columns["ColGVMID"].DataPropertyName = "World ID";
                 dataGridViewMaps.Columns["ColGVMName"].DataPropertyName = "World Name";
@@ -1079,7 +1090,6 @@ namespace DBAccess
 
             return uidgraph;
         }
-        public delegate void DlgUpdateIcons();
 
         #region Callbacks
         private void toolStripMenuItemAddVehicle_Click(object sender, EventArgs e)
@@ -1114,6 +1124,25 @@ namespace DBAccess
                 }
             }
         }
+        private void toolStripMenuItemHealPlayer_Click(object sender, EventArgs e)
+        {
+            var survivor = propertyGrid1.SelectedObject as Survivor;
+            if (survivor != null)
+            {
+                if (IsPlayerOnline(survivor.uid) == false)
+                {
+                    bool bRes = myDB.HealPlayer(survivor.uid);
+                    if (!bRes)
+                    {
+                        MessageBox.Show("Error while trying to heal player '" + survivor.name + "' into database");
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Player '" + survivor.name + "' must be offline or in lobby");
+                }
+            }
+        }
         private bool? IsPlayerOnline(string uid)
         {
             DataRow rowAlive = myDB.PlayersAlive.Tables[0].Rows.Find(uid);
@@ -1122,9 +1151,37 @@ namespace DBAccess
                 DataRow rowOnline = PlayersOnline.Tables[0].Rows.Find(rowAlive.Field<string>("name"));
                 if (rowOnline != null)
                     return (rowOnline.Field<string>("Status") == "Ingame");
+
+                return false;
             }
 
             return null;
+        }
+        private void contextMenuStripItemPlayerMenu_Opening(object sender, CancelEventArgs e)
+        {
+            e.Cancel = false;
+
+            var survivor = propertyGrid1.SelectedObject as Survivor;
+            if (survivor != null)
+            {
+                if (IsPlayerOnline(survivor.uid) == false)
+                {
+                    toolStripMenuItemHeal.Text = "Heal player '" + survivor.name + "'";
+                    toolStripMenuItemHeal.Enabled = true;
+                }
+                else
+                {
+                    toolStripMenuItemHeal.Text = "Heal: player '" + survivor.name + "' must be offline or in lobby";
+                    toolStripMenuItemHeal.Enabled = false;
+                }
+            }
+            else
+            {
+                toolStripMenuItemHeal.Text = "Heal: No survivor selected";
+                toolStripMenuItemHeal.Enabled = false;
+            }
+            //contextMenuStripPlayerMenu.Items.Clear();
+            //contextMenuStripPlayerMenu.Items.Add(toolStripMenuItemHeal);
         }
         private void contextMenuStripItemMenu_Opening(object sender, CancelEventArgs e)
         {
@@ -1138,7 +1195,7 @@ namespace DBAccess
 
                     if(survivor != null)
                     {
-                        if(IsPlayerOnline(survivor.uid) != true)
+                        if(IsPlayerOnline(survivor.uid) == false)
                         {
                             toolStripMenuMapTeleportPlayer.Text = "Teleport player '" + survivor.name + "'";
                             toolStripMenuMapTeleportPlayer.Enabled = true;
@@ -1209,6 +1266,12 @@ namespace DBAccess
             mycfg.bitmap_mag_level = track.Value;
             virtualMap.nfo.mag_depth = virtualMap.nfo.max_depth + track.Value;
         }
+        private void numericDBRefreshRate_ValueChanged(object sender, EventArgs e)
+        {
+            var numeric = sender as NumericUpDown;
+
+            mycfg.db_refreshrate = numeric.Value;
+        }
         private void toolStripStatusMapHelper_Click(object sender, EventArgs e)
         {
             currentMode = displayMode.MapHelper;
@@ -1253,6 +1316,10 @@ namespace DBAccess
 
             toolStripStatusTrail.BorderSides = (bShowTrails) ? ToolStripStatusLabelBorderSides.All : ToolStripStatusLabelBorderSides.None;
         }
+        private void toolStripStatusNews_Click(object sender, EventArgs e)
+        {
+            diagAbout.ShowDialog();
+        }
 
         enum displayMode
 	    {
@@ -1292,10 +1359,25 @@ namespace DBAccess
         }
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
+            // Cancel background workers
+            bgWorkerDatabase.CancelAsync();
+            bgWorkerMapZoom.CancelAsync();
+            bgWorkerLoadTiles.CancelAsync();
+            bgWorkerFocus.CancelAsync();
+
+            // Will release the bgWorkerMapZoom thread
+            eventMapZoomBgWorker.Set();
+
+            SaveConfigFile();
+
             CloseConnection();
 
-            //
-            SaveConfigFile();
+            // Wait until background workers are down
+            while (bgWorkerDatabase.IsBusy || bgWorkerMapZoom.IsBusy || bgWorkerLoadTiles.IsBusy || bgWorkerFocus.IsBusy)
+            {
+                Application.DoEvents();
+                Thread.Sleep(100);
+            }
         }
         //
         //  Panel
@@ -1481,7 +1563,6 @@ namespace DBAccess
             }
         }
         private iconDB prevNearest = null;
-
         private void Panel1_MouseMove(object sender, MouseEventArgs e)
         {
             Rectangle recPanel = new Rectangle(Point.Empty, splitContainer1.Panel1.Size);
@@ -1489,6 +1570,8 @@ namespace DBAccess
 
             if (!recPanel.IntersectsWith(recMouse))
                 return;
+
+            splitContainer1.Panel1.Focus();
 
             if (e.Button.HasFlag(MouseButtons.Right) && (mapHelper != null))
             {
@@ -1717,10 +1800,24 @@ namespace DBAccess
 
             if(myDB.Connected)
             {
-                Enable(true);
-
                 mycfg.instance_id = myDB.InstanceId.ToString();
                 mycfg.world_id = (UInt16)myDB.WorldId;
+
+                List<int> instances = myDB.GetInstanceList();
+                bool bInstanceFound = myDB.InstanceId == instances.Find(x => (x == myDB.InstanceId));
+
+                comboSelectInstance.Enabled = true;
+                comboSelectInstance.Items.Clear();
+                foreach(int i in instances)
+                    comboSelectInstance.Items.Add(i);
+
+                if (bInstanceFound == false)
+                {
+                    tabControl1.SelectedTab = tabPageSetup;
+                    MessageBox.Show("Instance Id " + myDB.InstanceId + " not found in DB, please select one from the Setup tab");
+                }
+
+                Enable(true);
 
                 this.textBoxCmdStatus.Text = "";
                 this.toolStripStatusWorld.Text = myDB.WorldName;
@@ -1989,6 +2086,14 @@ namespace DBAccess
 
             mycfg.game_type = cb.Items[cb.SelectedIndex] as string;
             numericUpDownInstanceId.Enabled = (cb.SelectedItem.ToString() != "Epoch");
+        }
+        private void comboSelectInstance_SelectedValueChanged(object sender, EventArgs e)
+        {
+            ComboBox cb = sender as ComboBox;
+
+            myDB.InstanceId = (int)cb.SelectedItem;
+            mycfg.instance_id = myDB.InstanceId.ToString();
+            numericUpDownInstanceId.Value = myDB.InstanceId;
         }
         private void cbCartographer_CheckedChanged(object sender, EventArgs e)
         {
@@ -2310,7 +2415,7 @@ namespace DBAccess
 
             while (!bw.CancellationPending)
             {
-                Thread.Sleep(5000);
+                Thread.Sleep((int)(1000 * mycfg.db_refreshrate));
 
                 myDB.Refresh();
 
@@ -2331,13 +2436,13 @@ namespace DBAccess
                 }
             }
         }
-        private void bgWorkerFast_DoWork(object sender, DoWorkEventArgs e)
+        private void bgWorkerMapZoom_DoWork(object sender, DoWorkEventArgs e)
         {
             BackgroundWorker bw = sender as BackgroundWorker;
 
             while (!bw.CancellationPending)
             {
-                eventFastBgWorker.WaitOne();
+                eventMapZoomBgWorker.WaitOne();
 
                 if (virtualMap.Enabled)
                 {
@@ -2354,8 +2459,31 @@ namespace DBAccess
                         dlgRefreshMap = this.ApplyMapChanges;
                         this.Invoke(dlgRefreshMap);
                     }
-
                     System.Threading.Interlocked.CompareExchange(ref bUserAction, 0, 1);
+                }
+            }
+        }
+        private void bgWorkerFocus_DoWork(object sender, DoWorkEventArgs e)
+        {
+            BackgroundWorker bw = sender as BackgroundWorker;
+
+            while (!bw.CancellationPending)
+            {
+                Thread.Sleep(250);
+                DelegateVoid dlg = FocusOnControlAtCursor;
+                this.Invoke(dlg);
+            }
+        }
+        private Control lastFocusCtrl = null;
+        private void FocusOnControlAtCursor()
+        {
+            Control overCtrl = Tool.FindControlAtCursor(this);
+            if (overCtrl != null && overCtrl != lastFocusCtrl)
+            {
+                if (overCtrl is SplitterPanel || overCtrl is TrackBar || overCtrl is DataGridView)
+                {
+                    overCtrl.Focus();
+                    lastFocusCtrl = overCtrl;
                 }
             }
         }
