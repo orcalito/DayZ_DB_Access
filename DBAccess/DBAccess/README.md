@@ -57,4 +57,7 @@ If something goes wrong, all files created by this application are stored in you
 You can edit the config file, or delete all files to restore an empty configuration file.
 
 =============
-Icons used in this application have been borrowed from DayZDB and DayZST web sites, thanks to them even if I didn't asked permission for that... :S
+Using the BattleNET library from Marcel de Vries / Robert van der Boorn
+https://github.com/dddlazer/BattleNET
+
+Some icons used in this application have been borrowed from DayZDB and DayZST web sites, thanks to them even if I didn't asked permission for that... :S
