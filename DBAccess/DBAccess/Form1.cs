@@ -8,7 +8,12 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using System.Xml.Serialization;
 
@@ -27,6 +32,7 @@ namespace DBAccess
         private VirtualMap virtualMap = new VirtualMap();
         //
         private myDatabase myDB = new myDatabase();
+        private string localIP = "";
         //
         internal BattlEyeClient rCon = null;
         private DataSet PlayerNamesOnline = new DataSet("Players Online DS");
@@ -238,6 +244,9 @@ namespace DBAccess
             tableA.PrimaryKey = keysA;
             dataGridViewAdmins.DataSource = AdminsOnline.Tables[0];
 
+            //
+            localIP = ExternalLocalIP();
+            
             bgWorkerDatabase.RunWorkerAsync();
             bgWorkerBattlEye.RunWorkerAsync();
             bgWorkerMapZoom.RunWorkerAsync();
@@ -1157,7 +1166,25 @@ namespace DBAccess
             new Pen(Color.Orange, 2),
             new Pen(Color.Violet, 2)
         };
+        private string ExternalLocalIP()
+        {
+            WebClient wc = new WebClient();
+            string strIP = wc.DownloadString("http://checkip.dyndns.org");
+            strIP = (new Regex(@"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b")).Match(strIP).Value;
+            wc.Dispose();
+            return strIP;
+        }
+        private string LocalResolveIP(string ip)
+        {
+            if (ip.CompareTo(localIP) == 0)
+                ip = "local IP";
+            else if (ip.CompareTo(mycfg.url) == 0)
+                ip = "server IP";
+            else if (ip.CompareTo(mycfg.rcon_url) == 0)
+                ip = "rCon IP";
 
+            return ip;
+        }
         private void buttonConnect_Click(object sender, EventArgs e)
         {
             cb_buttonConnect_Click(sender, e);

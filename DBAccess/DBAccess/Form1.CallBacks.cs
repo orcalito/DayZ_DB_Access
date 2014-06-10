@@ -1459,8 +1459,10 @@ namespace DBAccess
                     });
                 if (found != null)
                 {
-                    if (row.Field<string>("IP") != found.Ip)
-                        row.SetField<string>("IP", found.Ip);
+                    string ip = LocalResolveIP(found.Ip);
+
+                    if (row.Field<string>("IP") != ip)
+                        row.SetField<string>("IP", ip);
 
                     if (row.Field<int>("Port") != found.Port)
                         row.SetField<int>("Port", found.Port);
@@ -1479,6 +1481,8 @@ namespace DBAccess
             {
                 if (admin.Processed == false)
                 {
+                    admin.Ip = LocalResolveIP(admin.Ip);
+
                     AdminsOnline.Tables[0].Rows.Add(admin.Id, admin.Ip, admin.Port);
                 }
             }
