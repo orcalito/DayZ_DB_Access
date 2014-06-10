@@ -1,6 +1,6 @@
 DayZ DB Access
 ==============
-![Screenshot](http://82.67.37.43/Screenshot 320.jpg "Screenshot")
+![Screenshot](http://ddba.olympe.in/Screenshot.jpg "Screenshot")
 
 (WIP) Simple tool to show some data from a DayZ database. (Windows Only)
 
@@ -32,10 +32,10 @@ DayZ DB Access
 (1) : disabled with Epoch's DB because useless.
 
 Executable (ClickOnce) can be found here:
-http://82.67.37.43/publish
+http://ddba.olympe.in/publish.htm
 
 Chernarus 16384*13824 bitmap can be found here:
-http://82.67.37.43/Chernarus_16k.jpg
+http://ddba.olympe.in/Chernarus_16k.jpg
 
 Configuration
 =============
