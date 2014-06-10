@@ -1,11 +1,6 @@
-﻿using System;
-using System.Data;
-using System.Collections.Generic;
+﻿using System.Collections;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Collections;
+using System.Data;
 
 namespace DBAccess
 {

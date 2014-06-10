@@ -124,14 +124,6 @@ namespace DBAccess
             this.linkLabel1.LinkVisited = true;
             System.Diagnostics.Process.Start(this.linkLabel1.Text);
         }
-        private void AddVersion(string version)
-        {
-            this.textboxDesc.AppendText("\n" + version, Color.Blue);
-        }
-        private void AddDescription(string desc)
-        {
-            this.textboxDesc.AppendText("\n\t- " + desc, Color.Black);
-        }
     }
 }
 public static class RichTextBoxExtensions

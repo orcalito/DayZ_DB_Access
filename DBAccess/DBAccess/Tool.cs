@@ -6,10 +6,7 @@ using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace DBAccess
@@ -176,7 +173,7 @@ namespace DBAccess
                         break;
 
                     case ']':
-                        if (value != "") curr.Add(value);
+                        if (value != "") curr.Add(value.Trim());
                         value = "";
                         bValue = false;
                         if (stack.Count > 0) curr = stack.Pop();
@@ -188,7 +185,7 @@ namespace DBAccess
                         break;
 
                     case ',':
-                        if (bValue) curr.Add(value);
+                        if (bValue) curr.Add(value.Trim());
                         value = "";
                         bValue = false;
                         break;

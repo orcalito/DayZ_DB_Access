@@ -1,61 +1,130 @@
 ﻿using MySql.Data.MySqlClient;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Globalization;
 using System.IO;
-using System.Reflection;
 using System.Threading;
 using System.Windows.Forms;
-using System.Xml.Serialization;
 
 namespace DBAccess
 {
-    class myDatabase
+    public abstract class DBSchema
     {
-        public int FilterLastUpdated;
-        public int OnlineTimeLimit;
+        public int WorldId = 0;
+        public int InstanceId = 0;
+        public string WorldName = "";
+        public int FilterLastUpdated = 0;
+        public int OnlineTimeLimit = 0;
 
-        public bool Connected { get { return bConnected;  } }
-        public int InstanceId { get; set; }
-        public int WorldId { get { return worldId; } }
-        public string WorldName { get { return worldName; } }
-        public string GameType { get { return gameType; } }
-        public DataSet WorldDefs { get { return dsWorldDefs; } }
-        public DataSet VehicleTypes { get { return dsVehicleTypes; } }
-        public DataSet DeployableTypes { get { return dsDeployableTypes; } }
-        public DataSet Instances { get { return dsInstances; } }
-        public DataSet Deployables { get { return dsDeployables; } }
-        public DataSet PlayersAlive { get { return dsAlivePlayers; } }
-        public DataSet PlayersDead { get { return dsDeadPlayers; } }
-        public DataSet Vehicles { get { return dsVehicles; } }
-        public DataSet SpawnPoints { get { return dsSpawnPoints; } }
-        public List<int> GetInstanceList()
+        public DBSchema(myDatabase db) { this.db = db; }
+
+        public abstract string Type { get; }
+
+        public abstract string BuildQueryInstanceList();
+
+        public abstract bool QueryUpdatePlayerPosition(string worldspace, string uid);
+        public abstract bool QueryHealPlayer(string uid);
+        public abstract bool QueryRepairAndRefuel(string uid);
+        public abstract bool QueryDeleteVehicle(string uid);
+        public abstract bool QueryDeleteSpawn(string uid);
+        public abstract bool QueryAddVehicle(bool instanceOrSpawn, string classname, int vehicle_id, Tool.Point position);
+        public abstract int QuerySpawnVehicles(int max_vehicles);
+        public abstract int QueryRemoveBodies(int time_limit);
+
+        public abstract bool OnConnection();
+        public abstract bool Refresh();
+
+        public myDatabase db = null;
+        public DataSet dsWorldDefs = new DataSet();
+        public DataSet dsVehicleTypes = new DataSet();
+        public DataSet dsDeployableTypes = new DataSet();
+        public DataSet dsInstances = new DataSet();
+        public DataSet dsDeployables = new DataSet();
+        public DataSet dsAlivePlayers = new DataSet();
+        public DataSet dsDeadPlayers = new DataSet();
+        public DataSet dsVehicles = new DataSet();
+        public DataSet dsSpawnPoints = new DataSet();
+    }
+
+    public class myDatabase
+    {
+        public class LoginData
         {
-            List<int> listIDs = new List<int>();
-
-            MySqlCommand cmd = sqlCnx.CreateCommand();
-
-            switch (GameType)
+            public LoginData()
             {
-                case "Epoch":   cmd.CommandText = "SELECT Instance, COUNT(*) FROM " + epochObjectTable + " GROUP BY Instance"; break;
-                default:        cmd.CommandText = "SELECT id, COUNT(*) FROM instance GROUP BY Instance"; break;
+                Server = "";
+                Port = 0;
+                DBname = "";
+                Username = "";
+                Password = "";
+                InstanceId = -1;
+                Cfg = null;
             }
-            
-            MySqlDataReader reader = cmd.ExecuteReader();
-            while (reader.Read())
-            {
-                string instance = reader.GetString(0);
-
-                listIDs.Add(int.Parse(instance));
-            }
-            reader.Close();
-
-            return listIDs;
+            public string Server { get; set; }
+            public int Port { get; set; }
+            public string DBname { get; set; }
+            public string Username { get; set; }
+            public string Password { get; set; }
+            public int InstanceId { get; set; }
+            public myConfig Cfg { get; set; }
         }
 
+        public myDatabase()
+        {
+            Connected = false;
+        }
+
+        public DBSchema Schema { get { return schema; } }
+        public bool Connected { get; private set; }
+        public decimal ReconnectDelay
+        {
+            get
+            {
+                return reconnectDelay;
+            }
+
+            set
+            {
+                reconnectDelay = value;
+                if (value > 0)
+                {
+                    if (reconnectThread == null)
+                    {
+                        reconnectThread = new Thread(ThreadReconnect);
+                        reconnectThread.Start();
+                    }
+                }
+                else
+                {
+                    reconnectThread = null;
+                }
+            }
+        }
+
+        //public int InstanceId { get { return schema.InstanceId; } }
+        //public int WorldId { get { return schema.WorldId; } }
+        //public string WorldName { get { return schema.WorldName; } }
+        //public string GameType { get { return schema.Type; } }
+        
+        //public DataSet WorldDefs { get { return dsWorldDefs; } }
+        //public DataSet VehicleTypes { get { return dsVehicleTypes; } }
+        //public DataSet DeployableTypes { get { return dsDeployableTypes; } }
+        //public DataSet Instances { get { return dsInstances; } }
+        public DataSet Deployables  { get { return schema.dsDeployables; } }
+        public DataSet PlayersAlive { get { return schema.dsAlivePlayers; } }
+        public DataSet PlayersDead  { get { return schema.dsDeadPlayers; } }
+        public DataSet Vehicles     { get { return schema.dsVehicles; } }
+        public DataSet SpawnPoints  { get { return schema.dsSpawnPoints; } }
+        public MySqlConnection Cnx { get { return sqlCnx; } }
+        public void AccessDB(bool state)
+        {
+            switch (state)
+            {
+                case true: mtxAccessDB.WaitOne(); break;
+                case false: mtxAccessDB.ReleaseMutex(); break;
+            }
+        }
         public void UseDS(bool state)
         {
             switch (state)
@@ -64,12 +133,14 @@ namespace DBAccess
                 case false: mtxUseDS.ReleaseMutex(); break;
             }
         }
-        public void Connect(string server, int port, string dbname, string user, string pass, int instance_id, myConfig cfg)
+        public void Connect(LoginData login)
         {
-            mtxUpdate.WaitOne();
+            AccessDB(true);
+
+            loginData = login;
 
             //  "Server=localhost;Database=testdb;Uid=root;Pwd=pass;";
-            string strCnx = "Server=" + server + ";Port=" + port + ";Database=" + dbname + ";Uid=" + user + ";Pwd=" + pass + ";";
+            string strCnx = "Server=" + login.Server + ";Port=" + login.Port + ";Database=" + login.DBname + ";Uid=" + login.Username + ";Pwd=" + login.Password + ";";
 
             sqlCnx = new MySqlConnection(strCnx);
 
@@ -77,92 +148,83 @@ namespace DBAccess
             {
                 sqlCnx.Open();
 
-                this.FilterLastUpdated = cfg.filter_last_updated;
-                this.OnlineTimeLimit = int.Parse(cfg.online_time_limit);
-                this.gameType = cfg.game_type;
-                this.InstanceId = instance_id;
+                DetermineGameSchema();
 
-                dsWorldDefs = cfg.worlds_def;
-                dsVehicleTypes = cfg.vehicle_types;
-                dsDeployableTypes = cfg.deployable_types;
+                schema.WorldId = login.Cfg.world_id;
+                schema.InstanceId = login.InstanceId;
+                schema.dsWorldDefs = login.Cfg.worlds_def;
+                schema.dsVehicleTypes = login.Cfg.vehicle_types;
+                schema.dsDeployableTypes = login.Cfg.deployable_types;
+                schema.FilterLastUpdated = login.Cfg.filter_last_updated;
+                schema.OnlineTimeLimit = int.Parse(login.Cfg.online_time_limit);
 
-                if (gameType == "Auto")
+                this.Connected = true;
+
+                try
                 {
-                    bool bFoundClassic = false;
-                    bool bFoundEpoch = false;
+                    Connected = schema.OnConnection();
+                    
+                    Refresh();
 
-                    MySqlCommand cmd = sqlCnx.CreateCommand();
-                    cmd.CommandText = "SHOW TABLES";
-                    MySqlDataReader reader = cmd.ExecuteReader();
-                    while (reader.Read())
-                    {
-                        string name = reader.GetString(0);
-
-                        bFoundClassic |= (name == "instance_vehicle");
-                        bFoundEpoch |= (name == "object_data");
-                    }
-                    reader.Close();
-
-                    if (bFoundEpoch && !bFoundClassic)
-                        gameType = "Epoch";
-                    else if (!bFoundEpoch && bFoundClassic)
-                        gameType = "Classic";
-                    else
-                    {
-                        MessageBox.Show("Can't determine the type of database between epoch and default DayZ schema, using default schema");
-                        gameType = "Classic";
-                    }
+                    loginAccepted = true;
                 }
-
-                this.bConnected = true;
-
-                OnConnection();
-
-                Refresh();
+                catch
+                {
+                }
             }
-            catch (Exception ex)
+            catch
             {
-                MessageBox.Show(ex.Message, "Exception found");
-                this.bConnected = false;
+                this.Connected = false;
             }
-            mtxUpdate.ReleaseMutex();
+            AccessDB(false);
         }
         public void CloseConnection()
         {
             mtxUseDS.WaitOne();
-            mtxUpdate.WaitOne();
+            AccessDB(true);
 
-            this.bConnected = false;
+            this.Connected = false;
+            keepRunning = false;
+            loginAccepted = false;
 
-            dsAlivePlayers.Clear();
-            dsVehicles.Clear();
-            dsSpawnPoints.Clear();
-            dsDeployables.Clear();
+
+            schema.dsAlivePlayers.Clear();
+            schema.dsVehicles.Clear();
+            schema.dsSpawnPoints.Clear();
+            schema.dsDeployables.Clear();
+            schema = new NullSchema(null);
 
             if (sqlCnx != null)
                 sqlCnx.Close();
 
-            mtxUpdate.ReleaseMutex();
+            AccessDB(false);
             mtxUseDS.ReleaseMutex();
-        }
-        public void OnConnection()
-        {
-            switch (GameType)
-            {
-                case "Epoch": EpochDB_OnConnection(); break;
-                default: ClassicDB_OnConnection(); break;
-            }
         }
         public void Refresh()
         {
-            if (!Connected)
-                return;
+            if (Connected)
+                Connected = schema.Refresh();
+        }
+        public List<int> GetInstanceList()
+        {
+            List<int> listIDs = new List<int>();
 
-            switch (GameType)
+            MySqlCommand cmd = sqlCnx.CreateCommand();
+
+            cmd.CommandText = schema.BuildQueryInstanceList();
+
+            AccessDB(true);
+
+            MySqlDataReader reader = cmd.ExecuteReader();
+            while (reader.Read())
             {
-                case "Epoch": EpochDB_Refresh(); break;
-                default: ClassicDB_Refresh(); break;
+                listIDs.Add(int.Parse(reader.GetString(0)));
             }
+            reader.Close();
+
+            AccessDB(false);
+
+            return listIDs;
         }
         public int ExecuteSqlNonQuery(string query)
         {
@@ -171,7 +233,7 @@ namespace DBAccess
 
             int res = 0;
 
-            mtxUpdate.WaitOne();
+            AccessDB(true);
 
             try
             {
@@ -186,7 +248,7 @@ namespace DBAccess
                 MessageBox.Show(ex.Message, "Exception found");
             }
 
-            mtxUpdate.ReleaseMutex();
+            AccessDB(false);
 
             return res;
         }
@@ -194,7 +256,7 @@ namespace DBAccess
         {
             string result = "";
 
-            mtxUpdate.WaitOne();
+            AccessDB(true);
             try
             {
                 MySqlScript script = new MySqlScript(sqlCnx, queries);
@@ -209,7 +271,7 @@ namespace DBAccess
             {
                 MessageBox.Show(ex.Message, "Exception found");
             }
-            mtxUpdate.ReleaseMutex();
+            AccessDB(false);
 
             return result;
         }
@@ -229,7 +291,7 @@ namespace DBAccess
             if (!Connected)
                 return "";
 
-            mtxUpdate.WaitOne();
+            AccessDB(true);
 
             string result = "";
 
@@ -434,11 +496,203 @@ namespace DBAccess
                 MessageBox.Show(ex.Message, "Exception found");
             }
 
-            mtxUpdate.ReleaseMutex();
+            AccessDB(false);
 
             return result;
         }
         public bool AddVehicle(bool instanceOrSpawn, string classname, int vehicle_id, Tool.Point position)
+        {
+            bool res = false;
+
+            if (Connected)
+            {
+                res = schema.QueryAddVehicle(instanceOrSpawn, classname, vehicle_id, position);
+            }
+            return res;
+        }
+        public bool TeleportPlayer(string uid, Tool.Point position)
+        {
+            bool res = false;
+
+            if (Connected)
+            {
+                string worldspace = "\"[0,[" + position.X.ToString(CultureInfo.InvariantCulture.NumberFormat) + "," + position.Y.ToString(CultureInfo.InvariantCulture.NumberFormat) + ",0.0015]]\"";
+                res = schema.QueryUpdatePlayerPosition(worldspace, uid);
+            }
+            return res;
+        }
+        public bool HealPlayer(string uid)
+        {
+            bool res = false;
+
+            if (Connected)
+            {
+                res = schema.QueryHealPlayer(uid);
+            }
+            return res;
+        }
+        public bool RepairAndRefuelVehicle(string uid)
+        {
+            bool res = false;
+
+            if (Connected)
+            {
+                res = schema.QueryRepairAndRefuel(uid);
+            }
+            return res;
+        }
+        public bool DeleteVehicle(string uid)
+        {
+            bool res = false;
+
+            if (Connected)
+            {
+                res = schema.QueryDeleteVehicle(uid);
+            }
+            return res;
+        }
+        public bool DeleteSpawn(string uid)
+        {
+            bool res = false;
+
+            if (Connected)
+            {
+                res = schema.QueryDeleteSpawn(uid);
+            }
+            return res;
+        }
+        public int RemoveBodies(int time_limit)
+        {
+            int res = 0;
+
+            if (Connected)
+            {
+                res = schema.QueryRemoveBodies(time_limit);
+            }
+            return res;
+        }
+        public int SpawnNewVehicles(int max_vehicles)
+        {
+            int res = 0;
+
+            if (Connected)
+            {
+                res = schema.QuerySpawnVehicles(max_vehicles);
+            }
+            return res;
+        }
+        private void DetermineGameSchema()
+        {
+            bool bFoundClassic = false;
+            bool bFoundEpoch = false;
+
+            MySqlCommand cmd = sqlCnx.CreateCommand();
+            cmd.CommandText = "SHOW TABLES";
+
+            MySqlDataReader reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                string name = reader.GetString(0);
+
+                bFoundClassic |= (name == "instance_vehicle");
+                bFoundEpoch |= (name == "object_data");
+            }
+            reader.Close();
+
+            string gameType = "Classic";
+            if (bFoundEpoch && !bFoundClassic)
+                gameType = "Epoch";
+            else if (!bFoundEpoch && bFoundClassic)
+                gameType = "Classic";
+            else
+                MessageBox.Show("Can't determine the type of database between epoch and classic DayZ schema, using classic schema");
+
+            switch (gameType)
+            {
+                case "Epoch": schema = new EpochSchema(this); break;
+                default: schema = new ClassicSchema(this); break;
+            }
+        }
+        private void sqlScript_Error(Object sender, MySqlScriptErrorEventArgs args)
+        {
+            MessageBox.Show(args.Exception.Message, "Script error");
+        }
+        private void ThreadReconnect()
+        {
+            keepRunning = true;
+            while (keepRunning && (ReconnectDelay > 0))
+            {
+                if (loginAccepted && !Connected)
+                {
+                    Connect(loginData);
+                }
+
+                Thread.Sleep((int)(1000 * ReconnectDelay));
+            }
+        }
+
+        private LoginData loginData = null;
+        private MySqlConnection sqlCnx = null;
+        private DBSchema schema = new NullSchema(null);
+        private Mutex mtxAccessDB = new Mutex();
+        private Mutex mtxUseDS = new Mutex();
+        private bool loginAccepted = false;
+        private bool keepRunning = false;
+        private Thread reconnectThread = null;
+        private decimal reconnectDelay = 0;
+    }
+
+    public class NullSchema : DBSchema
+    {
+        public NullSchema(myDatabase db) : base(null) { }
+
+        public override string Type { get { return "Null"; } }
+        public override string BuildQueryInstanceList() { return ""; }
+        public override bool QueryUpdatePlayerPosition(string worldspace, string uid) { return true; }
+        public override bool QueryHealPlayer(string uid) { return true; }
+        public override bool QueryRepairAndRefuel(string uid) { return true; }
+        public override bool QueryDeleteVehicle(string uid) { return true; }
+        public override bool QueryDeleteSpawn(string uid) { return true; }
+        public override int QueryRemoveBodies(int time_limit) { return 0; }
+        public override bool QueryAddVehicle(bool instanceOrSpawn, string classname, int vehicle_id, Tool.Point position) { return true; }
+        public override int QuerySpawnVehicles(int max_vehicles) { return 0; }
+        public override bool OnConnection() { return false; }
+        public override bool Refresh() { return false; }
+    }
+    public class ClassicSchema : DBSchema
+    {
+        public ClassicSchema(myDatabase db) : base(db) { }
+
+        public override string Type { get { return "Classic"; } }
+        public override string BuildQueryInstanceList()
+        {
+            return "SELECT instance_id, COUNT(*) FROM instance_vehicle GROUP BY instance_id";
+        }
+        public override bool QueryUpdatePlayerPosition(string worldspace, string uid)
+        {
+            return 1 == db.ExecuteSqlNonQuery("UPDATE `survivor` SET worldspace=" + worldspace + " WHERE (world_id=" + WorldId + " AND unique_id=" + uid + " AND is_dead=0) ORDER BY id DESC LIMIT 1");
+        }
+        public override bool QueryHealPlayer(string uid)
+        {
+            return 1 == db.ExecuteSqlNonQuery("UPDATE survivor SET medical='[false,false,false,false,false,false,true,12000,[],[0,0],0,[0,0]]' WHERE (unique_id=" + uid + " AND is_dead=0)");
+        }
+        public override bool QueryRepairAndRefuel(string uid)
+        {
+            return 1 == db.ExecuteSqlNonQuery("UPDATE instance_vehicle SET parts='[]',fuel='1',damage='0' WHERE (id=" + uid + ")");
+        }
+        public override bool QueryDeleteVehicle(string uid)
+        {
+            return 1 == db.ExecuteSqlNonQuery("DELETE FROM instance_vehicle WHERE id=" + uid + " AND instance_id=" + InstanceId);
+        }
+        public override bool QueryDeleteSpawn(string uid)
+        {
+            return 1 == db.ExecuteSqlNonQuery("DELETE FROM world_vehicle WHERE id=" + uid + " AND world_id=" + WorldId);
+        }
+        public override int QueryRemoveBodies(int time_limit)
+        {
+            return db.ExecuteSqlNonQuery("DELETE FROM survivor WHERE world_id=" + InstanceId + " AND is_dead=1 AND last_updated < now() - interval " + time_limit + " day");
+        }
+        public override bool QueryAddVehicle(bool instanceOrSpawn, string classname, int vehicle_id, Tool.Point position)
         {
             int res;
             string worldspace = "\"[0,[" + position.X.ToString(CultureInfo.InvariantCulture.NumberFormat) + "," + position.Y.ToString(CultureInfo.InvariantCulture.NumberFormat) + ",0.0015]]\"";
@@ -455,8 +709,8 @@ namespace DBAccess
                         float damage = 0.1f;
                         string inventory = "\"[]\"";
                         string parts = "\"[]\"";
-                        
-                        res = ExecuteSqlNonQuery("INSERT INTO instance_vehicle (`world_vehicle_id`, `instance_id`, `worldspace`, `inventory`, `parts`, `fuel`, `damage`, `created`) VALUES(" + wv_id + "," + InstanceId + "," + worldspace + "," + inventory + "," + parts + "," + fuel + "," + damage + ", now());");
+
+                        res = db.ExecuteSqlNonQuery("INSERT INTO instance_vehicle (`world_vehicle_id`, `instance_id`, `worldspace`, `inventory`, `parts`, `fuel`, `damage`, `created`) VALUES(" + wv_id + "," + InstanceId + "," + worldspace + "," + inventory + "," + parts + "," + fuel + "," + damage + ", now());");
                         return (res != 0);
                     }
                 }
@@ -464,94 +718,17 @@ namespace DBAccess
                 return false;
             }
 
-            /*else spawn point */
-            res = ExecuteSqlNonQuery("INSERT INTO world_vehicle (`vehicle_id`, `world_id`, `worldspace`, `description`, `chance`) VALUES(" + vehicle_id + "," + WorldId + "," + worldspace + ",\"" + classname + "\", 0.7);");
+            /* else spawn point */
+            res = db.ExecuteSqlNonQuery("INSERT INTO world_vehicle (`vehicle_id`, `world_id`, `worldspace`, `description`, `chance`) VALUES(" + vehicle_id + "," + WorldId + "," + worldspace + ",\"" + classname + "\", 0.7);");
             return (res != 0);
         }
-        public bool TeleportPlayer(string uid, Tool.Point position)
+        public override int QuerySpawnVehicles(int max_vehicles)
         {
-            int res;
-            string worldspace = "\"[0,[" + position.X.ToString(CultureInfo.InvariantCulture.NumberFormat) + "," + position.Y.ToString(CultureInfo.InvariantCulture.NumberFormat) + ",0.0015]]\"";
-
-            switch (GameType)
-            {
-                case "Epoch":
-                    res = ExecuteSqlNonQuery("UPDATE " + epochCharacterTable + " SET Worldspace=" + worldspace + " WHERE (PlayerUID=" + uid + " AND Alive=1 AND InstanceID=" + InstanceId + ") ORDER BY CharacterID DESC LIMIT 1");
-                    break;
-                default:
-                    res = ExecuteSqlNonQuery("UPDATE `survivor` SET worldspace=" + worldspace + " WHERE (world_id=" + WorldId + " AND unique_id=" + uid + " AND is_dead=0) ORDER BY id DESC LIMIT 1");
-                    break;
-            }
-            return (res == 1);
-        }
-        public bool HealPlayer(string uid)
-        {
-            int res;
-            switch (GameType)
-            {
-                case "Epoch":
-                    res = ExecuteSqlNonQuery("UPDATE " + epochCharacterTable + " SET Medical='[false,false,false,false,false,false,true,12000,[],[0,0],0,[0,0]]' WHERE (PlayerUID=" + uid + " AND Alive=1 AND InstanceID=" + InstanceId + ")");
-                    break;
-                default:
-                    res = ExecuteSqlNonQuery("UPDATE survivor SET medical='[false,false,false,false,false,false,true,12000,[],[0,0],0,[0,0]]' WHERE (unique_id=" + uid + " AND is_dead=0)");
-                    break;
-            }
-            return (res == 1);
-        }
-        public bool RepairAndRefuelVehicle(string uid)
-        {
-            int res;
-            switch (GameType)
-            {
-                case "Epoch":
-                    res = ExecuteSqlNonQuery("UPDATE " + epochObjectTable + " SET Hitpoints='[]',Fuel='1',Damage='0' WHERE (ObjectID=" + uid + " AND Instance=" + InstanceId + ")");
-                    break;
-                default:
-                    res = ExecuteSqlNonQuery("UPDATE instance_vehicle SET parts='[]',fuel='1',damage='0' WHERE (id=" + uid + ")");
-                    break;
-            }
-            return (res == 1);
-        }
-        public bool DeleteVehicle(string uid)
-        {
-            int res;
-            switch (GameType)
-            {
-                case "Epoch":
-                    res = ExecuteSqlNonQuery("DELETE FROM " + epochObjectTable + " WHERE (ObjectID=" + uid + " AND Instance=" + InstanceId + ")");
-                    break;
-                default:
-                    res = ExecuteSqlNonQuery("DELETE FROM instance_vehicle WHERE id=" + uid + " AND instance_id=" + InstanceId);
-                    break;
-            }
-            return (res == 1);
-        }
-        public bool DeleteSpawn(string uid)
-        {
-            int res;
-            switch (GameType)
-            {
-                case "Epoch":
-                    res = 0;
-                    break;
-                default:
-                    res = ExecuteSqlNonQuery("DELETE FROM world_vehicle WHERE id=" + uid + " AND world_id=" + WorldId);
-                    break;
-            }
-            return (res == 1);
-        }
-        public string SpawnNewVehicles(int max_vehicles)
-        {
-            if (!Connected)
-                return "";
-
-            string sResult = "";
-
-            mtxUpdate.WaitOne();
+            int res = 0;
 
             try
             {
-                MySqlCommand cmd = sqlCnx.CreateCommand();
+                MySqlCommand cmd = db.Cnx.CreateCommand();
                 MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
 
                 cmd.CommandText = "SELECT count(*) FROM instance_vehicle WHERE instance_id =" + InstanceId;
@@ -611,51 +788,29 @@ namespace DBAccess
                 foreach (string query in queries)
                 {
                     cmd.CommandText = query;
-                    int res = cmd.ExecuteNonQuery();
+                    cmd.ExecuteNonQuery();
                 }
 
-                sResult = "spawned " + queries.Count + " new vehicles.";
+                res = queries.Count;
             }
-            catch (Exception ex)
+            catch
             {
-                MessageBox.Show(ex.Message, "Exception found");
+                res = 0;
             }
 
-            mtxUpdate.ReleaseMutex();
-
-            return sResult;
+            return res;
         }
-
-        internal MySqlConnection sqlCnx;
-        private bool bConnected = false;
-        private int worldId;
-        private string worldName;
-        private string gameType;
-        private Mutex mtxUpdate = new Mutex();
-        private Mutex mtxUseDS = new Mutex();
-        private DataSet dsWorldDefs { get; set; }
-        private DataSet dsVehicleTypes { get; set; }
-        private DataSet dsDeployableTypes { get; set; }
-        private DataSet dsInstances = new DataSet();
-        private DataSet dsDeployables = new DataSet();
-        private DataSet dsAlivePlayers = new DataSet();
-        private DataSet dsDeadPlayers = new DataSet();
-        private DataSet dsVehicles = new DataSet();
-        private DataSet dsSpawnPoints = new DataSet();
-
-        private void ClassicDB_OnConnection()
+        public override bool OnConnection()
         {
-            if (!bConnected)
-                return;
-
-            mtxUpdate.WaitOne();
+            bool bRes = true;
 
             DataSet _dsWorlds = new DataSet();
             DataSet _dsAllVehicleTypes = new DataSet();
 
+            db.AccessDB(true);
             try
             {
-                MySqlCommand cmd = sqlCnx.CreateCommand();
+                MySqlCommand cmd = db.Cnx.CreateCommand();
                 MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
 
                 //
@@ -685,19 +840,16 @@ namespace DBAccess
                 keysV[0] = _dsAllVehicleTypes.Tables[0].Columns[0];
                 _dsAllVehicleTypes.Tables[0].PrimaryKey = keysV;
             }
-            catch (Exception ex)
+            catch
             {
-                MessageBox.Show(ex.Message, "Exception found");
-                this.bConnected = false;
+                bRes = false;
             }
+            db.AccessDB(false);
 
-            mtxUpdate.ReleaseMutex();
+            if (bRes == false)
+                return false;
 
-            if (!Connected)
-                return;
-
-            mtxUseDS.WaitOne();
-
+            db.UseDS(true);
             try
             {
                 foreach (DataRow row in _dsAllVehicleTypes.Tables[0].Rows)
@@ -719,10 +871,10 @@ namespace DBAccess
                     if (rowWD == null)
                     {
                         dsWorldDefs.Tables[0].Rows.Add(row.Field<UInt16>("id"),
-                                                            row.Field<string>("name"),
-                                                            (UInt32)row.Field<Int32>("max_x"),
-                                                            (UInt32)row.Field<Int32>("max_y"),
-                                                            "");
+                                                       row.Field<string>("name"),
+                                                       "", 0, 0, 0, 0, 0, 0, 0,
+                                                       (UInt32)row.Field<Int32>("max_x"),
+                                                       (UInt32)row.Field<Int32>("max_y"));
                     }
                     else
                     {
@@ -733,260 +885,290 @@ namespace DBAccess
                 DataRow rowI = this.dsInstances.Tables[0].Rows.Find(InstanceId);
                 if (rowI != null)
                 {
-                    worldId = rowI.Field<UInt16>("world_id");
+                    WorldId = rowI.Field<UInt16>("world_id");
 
-                    DataRow rowW = dsWorldDefs.Tables[0].Rows.Find(worldId);
-                    worldName = (rowW != null) ? rowW.Field<string>("World Name") : "unknown";
+                    DataRow rowW = dsWorldDefs.Tables[0].Rows.Find(WorldId);
+                    WorldName = (rowW != null) ? rowW.Field<string>("World Name") : "unknown";
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                MessageBox.Show(ex.Message, "Exception found");
-                this.bConnected = false;
+                bRes = true;
             }
+            db.UseDS(false);
 
-            mtxUseDS.ReleaseMutex();
-
-            if (WorldId == 0)
-            {
-                CloseConnection();
-                MessageBox.Show("Instance id '" + InstanceId + "' not found in database", "Warning");
-            }
+            return bRes;
         }
-        private void ClassicDB_Refresh()
+        public override bool Refresh()
         {
-            if (bConnected)
+            bool bRes = true;
+
+            DataSet _dsAlivePlayers = new DataSet();
+            DataSet _dsDeadPlayers = new DataSet();
+            DataSet _dsDeployables = new DataSet();
+            DataSet _dsVehicles = new DataSet();
+            DataSet _dsVehicleSpawnPoints = new DataSet();
+
+            db.AccessDB(true);
+            try
             {
-                DataSet _dsAlivePlayers = new DataSet();
-                DataSet _dsDeadPlayers = new DataSet();
-                DataSet _dsDeployables = new DataSet();
-                DataSet _dsVehicles = new DataSet();
-                DataSet _dsVehicleSpawnPoints = new DataSet();
-
-                mtxUpdate.WaitOne();
-
-                if (bConnected)
+                if (db.Connected)
                 {
-                    try
+                    MySqlCommand cmd = db.Cnx.CreateCommand();
+                    MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
+
+                    //
+                    //  Players alive
+                    //
                     {
-                        MySqlCommand cmd = sqlCnx.CreateCommand();
-                        MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
-
-                        //
-                        //  Players alive
-                        //
-                        {
-                            cmd.CommandText = "SELECT s.id id, s.unique_id unique_id, p.name name, p.humanity humanity, s.worldspace worldspace,"
-                                            + " s.inventory inventory, s.backpack backpack, s.medical medical, s.state state, s.last_updated last_updated"
-                                            + " FROM survivor as s, profile as p WHERE s.unique_id=p.unique_id AND s.world_id=" + WorldId + " AND s.is_dead=0";
-                            cmd.CommandText += " AND s.last_updated > now() - interval " + FilterLastUpdated + " day";
-                            _dsAlivePlayers.Clear();
-                            adapter.Fill(_dsAlivePlayers);
-                            DataColumn[] keys = new DataColumn[1];
-                            keys[0] = _dsAlivePlayers.Tables[0].Columns[1];
-                            _dsAlivePlayers.Tables[0].PrimaryKey = keys;
-                        }
-
-                        //
-                        //  Players dead
-                        //
-                        {
-                            cmd.CommandText = "SELECT s.id id, s.unique_id unique_id, p.name name, p.humanity humanity, s.worldspace worldspace,"
-                                            + " s.inventory inventory, s.backpack backpack, s.medical medical, s.state state, s.last_updated last_updated"
-                                            + " FROM survivor as s, profile as p WHERE s.unique_id=p.unique_id AND s.world_id=" + WorldId + " AND s.is_dead=1";
-                            cmd.CommandText += " AND s.last_updated > now() - interval " + FilterLastUpdated + " day";
-                            _dsDeadPlayers.Clear();
-                            adapter.Fill(_dsDeadPlayers);
-                            DataColumn[] keys = new DataColumn[1];
-                            keys[0] = _dsDeadPlayers.Tables[0].Columns[0];
-                            _dsDeadPlayers.Tables[0].PrimaryKey = keys;
-                        }
-
-                        //
-                        //  Vehicles
-                        //
-                        cmd.CommandText = "SELECT iv.id id, wv.id spawn_id, v.class_name class_name, iv.worldspace worldspace, iv.inventory inventory,"
-                                        + " iv.fuel fuel, iv.damage damage, iv.last_updated last_updated, iv.parts parts"
-                                        + " FROM vehicle as v, world_vehicle as wv, instance_vehicle as iv"
-                                        + " WHERE iv.instance_id=" + InstanceId
-                                        + " AND iv.world_vehicle_id=wv.id AND wv.vehicle_id=v.id"
-                                        + " AND iv.last_updated > now() - interval " + FilterLastUpdated + " day";
-                        _dsVehicles.Clear();
-                        adapter.Fill(_dsVehicles);
-
-                        //
-                        //  Vehicle Spawn points
-                        //
-                        cmd.CommandText = "SELECT w.id id, w.vehicle_id vid, w.worldspace worldspace, w.chance chance, v.inventory inventory, v.class_name class_name FROM world_vehicle as w, vehicle as v"
-                                        + " WHERE w.world_id=" + WorldId + " AND w.vehicle_id=v.id";
-                        _dsVehicleSpawnPoints.Clear();
-                        adapter.Fill(_dsVehicleSpawnPoints);
-
-                        //
-                        //  Deployables
-                        //
-                        cmd.CommandText = "SELECT id.id id, CAST(0 AS UNSIGNED) keycode, d.class_name class_name, id.worldspace, id.inventory"
-                                        + " FROM instance_deployable as id, deployable as d"
-                                        + " WHERE instance_id=" + InstanceId
-                                        + " AND id.deployable_id=d.id"
-                                        + " AND id.last_updated > now() - interval " + FilterLastUpdated + " day";
-                        _dsDeployables.Clear();
-                        adapter.Fill(_dsDeployables);
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show(ex.Message, "Exception found");
-                        this.bConnected = false;
+                        cmd.CommandText = "SELECT s.id id, s.unique_id unique_id, p.name name, p.humanity humanity, s.worldspace worldspace,"
+                                        + " s.inventory inventory, s.backpack backpack, s.medical medical, s.state state, s.last_updated last_updated"
+                                        + " FROM survivor as s, profile as p WHERE s.unique_id=p.unique_id AND s.world_id=" + WorldId + " AND s.is_dead=0";
+                        cmd.CommandText += " AND s.last_updated > now() - interval " + FilterLastUpdated + " day";
+                        _dsAlivePlayers.Clear();
+                        adapter.Fill(_dsAlivePlayers);
+                        DataColumn[] keys = new DataColumn[1];
+                        keys[0] = _dsAlivePlayers.Tables[0].Columns[1];
+                        _dsAlivePlayers.Tables[0].PrimaryKey = keys;
                     }
 
-                    foreach (DataRow row in _dsDeployables.Tables[0].Rows)
+                    //
+                    //  Players dead
+                    //
                     {
-                        string name = row.Field<string>("class_name");
-
-                        if (dsDeployableTypes.Tables[0].Rows.Find(name) == null)
-                            dsDeployableTypes.Tables[0].Rows.Add(name, "Unknown", true);
+                        cmd.CommandText = "SELECT s.id id, s.unique_id unique_id, p.name name, p.humanity humanity, s.worldspace worldspace,"
+                                        + " s.inventory inventory, s.backpack backpack, s.medical medical, s.state state, s.last_updated last_updated"
+                                        + " FROM survivor as s, profile as p WHERE s.unique_id=p.unique_id AND s.world_id=" + WorldId + " AND s.is_dead=1";
+                        cmd.CommandText += " AND s.last_updated > now() - interval " + FilterLastUpdated + " day";
+                        _dsDeadPlayers.Clear();
+                        adapter.Fill(_dsDeadPlayers);
+                        DataColumn[] keys = new DataColumn[1];
+                        keys[0] = _dsDeadPlayers.Tables[0].Columns[0];
+                        _dsDeadPlayers.Tables[0].PrimaryKey = keys;
                     }
+
+                    //
+                    //  Vehicles
+                    //
+                    cmd.CommandText = "SELECT iv.id id, wv.id spawn_id, v.class_name class_name, iv.worldspace worldspace, iv.inventory inventory,"
+                                    + " iv.fuel fuel, iv.damage damage, iv.last_updated last_updated, iv.parts parts"
+                                    + " FROM vehicle as v, world_vehicle as wv, instance_vehicle as iv"
+                                    + " WHERE iv.instance_id=" + InstanceId
+                                    + " AND iv.world_vehicle_id=wv.id AND wv.vehicle_id=v.id"
+                                    + " AND iv.last_updated > now() - interval " + FilterLastUpdated + " day";
+                    _dsVehicles.Clear();
+                    adapter.Fill(_dsVehicles);
+
+                    //
+                    //  Vehicle Spawn points
+                    //
+                    cmd.CommandText = "SELECT w.id id, w.vehicle_id vid, w.worldspace worldspace, w.chance chance, v.inventory inventory, v.class_name class_name FROM world_vehicle as w, vehicle as v"
+                                    + " WHERE w.world_id=" + WorldId + " AND w.vehicle_id=v.id";
+                    _dsVehicleSpawnPoints.Clear();
+                    adapter.Fill(_dsVehicleSpawnPoints);
+
+                    //
+                    //  Deployables
+                    //
+                    cmd.CommandText = "SELECT id.id id, CAST(0 AS UNSIGNED) keycode, d.class_name class_name, id.worldspace, id.inventory"
+                                    + " FROM instance_deployable as id, deployable as d"
+                                    + " WHERE instance_id=" + InstanceId
+                                    + " AND id.deployable_id=d.id"
+                                    + " AND id.last_updated > now() - interval " + FilterLastUpdated + " day";
+                    _dsDeployables.Clear();
+                    adapter.Fill(_dsDeployables);
                 }
+            }
+            catch
+            {
+                bRes = false;
+            }
+            db.AccessDB(false);
 
-                mtxUpdate.ReleaseMutex();
+            if (bRes == false)
+                return false;
 
-                mtxUseDS.WaitOne();
+            db.UseDS(true);
+            {
+                foreach (DataRow row in _dsDeployables.Tables[0].Rows)
+                {
+                    string name = row.Field<string>("class_name");
+
+                    if (dsDeployableTypes.Tables[0].Rows.Find(name) == null)
+                        dsDeployableTypes.Tables[0].Rows.Add(name, "Unknown", true);
+                }
 
                 dsDeployables = _dsDeployables.Copy();
                 dsAlivePlayers = _dsAlivePlayers.Copy();
                 dsDeadPlayers = _dsDeadPlayers.Copy();
                 dsVehicles = _dsVehicles.Copy();
                 dsSpawnPoints = _dsVehicleSpawnPoints.Copy();
-
-                mtxUseDS.ReleaseMutex();
             }
-        }
-        private void EpochDB_OnConnection()
-        {
-            if (!bConnected)
-                return;
+            db.UseDS(false);
 
-            mtxUpdate.WaitOne();
+            return bRes;
+        }
+    }
+    public class EpochSchema : DBSchema
+    {
+        public EpochSchema(myDatabase db) : base(db) { }
+
+        public override string Type { get { return "Epoch"; } }
+        public override string BuildQueryInstanceList()
+        {
+            return "SELECT Instance, COUNT(*) FROM object_data GROUP BY Instance";
+        }
+        public override bool QueryUpdatePlayerPosition(string worldspace, string uid)
+        {
+            return 1 == db.ExecuteSqlNonQuery("UPDATE character_data SET Worldspace=" + worldspace + " WHERE (PlayerUID=" + uid + " AND Alive=1 AND InstanceID=" + InstanceId + ") ORDER BY CharacterID DESC LIMIT 1");
+        }
+        public override bool QueryHealPlayer(string uid)
+        {
+            return 1 == db.ExecuteSqlNonQuery("UPDATE character_data SET Medical='[false,false,false,false,false,false,true,12000,[],[0,0],0,[0,0]]' WHERE (PlayerUID=" + uid + " AND Alive=1 AND InstanceID=" + InstanceId + ")");
+        }
+        public override bool QueryRepairAndRefuel(string uid)
+        {
+            return 1 == db.ExecuteSqlNonQuery("UPDATE object_data SET Hitpoints='[]',Fuel='1',Damage='0' WHERE (ObjectID=" + uid + " AND Instance=" + InstanceId + ")");
+        }
+        public override bool QueryDeleteVehicle(string uid)
+        {
+            return 1 == db.ExecuteSqlNonQuery("DELETE FROM object_data WHERE (ObjectID=" + uid + " AND Instance=" + InstanceId + ")");
+        }
+        public override int QueryRemoveBodies(int time_limit)
+        {
+            return db.ExecuteSqlNonQuery("DELETE FROM character_data WHERE InstanceID=" + InstanceId + " AND Alive=0 AND LastLogin < now() - interval " + time_limit + " day");
+        }
+        public override bool OnConnection()
+        {
+            bool bRes = true;
+
+            // World ID not used in Epoch
+            this.WorldId = -1;
 
             DataSet _dsVehicles = new DataSet();
 
+            db.AccessDB(true);
             try
             {
-                MySqlCommand cmd = sqlCnx.CreateCommand();
+                MySqlCommand cmd = db.Cnx.CreateCommand();
                 MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
 
                 //
                 //  Vehicle types
                 //
-                cmd.CommandText = "SELECT Classname class_name FROM " + epochObjectTable + " WHERE CharacterID=0 AND Instance=" + InstanceId;
+                cmd.CommandText = "SELECT Classname class_name FROM object_data WHERE CharacterID=0 AND Instance=" + InstanceId;
                 _dsVehicles.Clear();
                 adapter.Fill(_dsVehicles);
             }
-            catch (Exception ex)
+            catch
             {
-                MessageBox.Show(ex.Message, "Exception found");
-                this.bConnected = false;
+                bRes = false;
             }
+            db.AccessDB(false);
 
-            mtxUpdate.ReleaseMutex();
-
-            mtxUseDS.WaitOne();
-
-            try
+            if (bRes)
             {
-                foreach (DataRow row in _dsVehicles.Tables[0].Rows)
+                db.UseDS(true);
+                try
                 {
-                    string name = row.Field<string>("class_name");
+                    foreach (DataRow row in _dsVehicles.Tables[0].Rows)
+                    {
+                        string name = row.Field<string>("class_name");
 
-                    if (dsVehicleTypes.Tables[0].Rows.Find(name) == null)
-                        dsVehicleTypes.Tables[0].Rows.Add(name, "Car", true);
+                        if (dsVehicleTypes.Tables[0].Rows.Find(name) == null)
+                            dsVehicleTypes.Tables[0].Rows.Add(name, "Car", true);
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "Exception found");
-                this.bConnected = false;
+                catch
+                {
+                    bRes = false;
+                }
+                db.UseDS(false);
             }
 
-            mtxUseDS.ReleaseMutex();
+            return bRes;
         }
-        private void EpochDB_Refresh()
+        public override bool Refresh()
         {
-            if (bConnected)
+            bool bRes = true;
+
+            if (db.Connected)
             {
                 DataSet _dsAlivePlayers = new DataSet();
                 DataSet _dsDeadPlayers = new DataSet();
                 DataSet _dsDeployables = new DataSet();
                 DataSet _dsVehicles = new DataSet();
 
-                mtxUpdate.WaitOne();
-
-                if (bConnected)
+                db.AccessDB(true);
+                try
                 {
-                    try
+                    MySqlCommand cmd = db.Cnx.CreateCommand();
+                    MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
+
+                    //
+                    //  Players alive
+                    //
                     {
-                        MySqlCommand cmd = sqlCnx.CreateCommand();
-                        MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
-
-                        //
-                        //  Players alive
-                        //
-                        {
-                            cmd.CommandText = "SELECT cd.CharacterID id, pd.PlayerUID unique_id, pd.PlayerName name, cd.Humanity humanity, cd.worldspace worldspace,"
-                                            + " cd.inventory inventory, cd.backpack backpack, cd.medical medical, cd.CurrentState state, cd.DateStamp last_updated"
-                                            + " FROM " + epochCharacterTable + " as cd, " + epochPlayerTable + " as pd"
-                                            + " WHERE cd.PlayerUID=pd.PlayerUID AND cd.Alive=1"
-                                            + " AND cd.InstanceID=" + InstanceId
-                                            + " AND cd.LastLogin > now() - interval " + FilterLastUpdated + " day";
-                            _dsAlivePlayers.Clear();
-                            adapter.Fill(_dsAlivePlayers);
-                            DataColumn[] keys = new DataColumn[1];
-                            keys[0] = _dsAlivePlayers.Tables[0].Columns[1];
-                            _dsAlivePlayers.Tables[0].PrimaryKey = keys;
-                        }
-
-                        //
-                        //  Players dead
-                        //
-                        {
-                            cmd.CommandText = "SELECT cd.CharacterID id, pd.PlayerUID unique_id, pd.PlayerName name, cd.Humanity humanity, cd.worldspace worldspace,"
-                                            + " cd.inventory inventory, cd.backpack backpack, cd.medical medical, cd.CurrentState state, cd.DateStamp last_updated"
-                                            + " FROM " + epochCharacterTable + " as cd, " + epochPlayerTable + " as pd"
-                                            + " WHERE cd.PlayerUID=pd.PlayerUID AND cd.Alive=0"
-                                            + " AND cd.InstanceID=" + InstanceId
-                                            + " AND cd.LastLogin > now() - interval " + FilterLastUpdated + " day";
-                            _dsDeadPlayers.Clear();
-                            adapter.Fill(_dsDeadPlayers);
-                            DataColumn[] keys = new DataColumn[1];
-                            keys[0] = _dsDeadPlayers.Tables[0].Columns[0];
-                            _dsDeadPlayers.Tables[0].PrimaryKey = keys;
-                        }
-
-                        //
-                        //  Vehicles
-                        cmd.CommandText = "SELECT CAST(ObjectID AS UNSIGNED) id, CAST(0 AS UNSIGNED) spawn_id, ClassName class_name, worldspace, inventory, Hitpoints parts,"
-                                        + " fuel, damage, DateStamp last_updated"
-                                        + " FROM " + epochObjectTable + " WHERE CharacterID=0"
-                                        + " AND Instance=" + InstanceId
-                                        + " AND Datestamp > now() - interval " + FilterLastUpdated + " day";
-                        _dsVehicles.Clear();
-                        adapter.Fill(_dsVehicles);
-
-                        //
-                        //  Deployables
-                        //
-                        cmd.CommandText = "SELECT CAST(ObjectID AS UNSIGNED) id, CharacterID keycode, Classname class_name, worldspace, inventory FROM " + epochObjectTable + " WHERE CharacterID!=0"
-                                        + " AND Instance=" + InstanceId
-                                        + " AND Datestamp > now() - interval " + FilterLastUpdated + " day";
-                        _dsDeployables.Clear();
-                        adapter.Fill(_dsDeployables);
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show(ex.Message, "Exception found");
-                        this.bConnected = false;
+                        cmd.CommandText = "SELECT cd.CharacterID id, pd.PlayerUID unique_id, pd.PlayerName name, cd.Humanity humanity, cd.worldspace worldspace,"
+                                        + " cd.inventory inventory, cd.backpack backpack, cd.medical medical, cd.CurrentState state, cd.DateStamp last_updated"
+                                        + " FROM character_data as cd, player_data as pd"
+                                        + " WHERE cd.PlayerUID=pd.PlayerUID AND cd.Alive=1"
+                                        + " AND cd.InstanceID=" + InstanceId
+                                        + " AND cd.LastLogin > now() - interval " + FilterLastUpdated + " day";
+                        _dsAlivePlayers.Clear();
+                        adapter.Fill(_dsAlivePlayers);
+                        DataColumn[] keys = new DataColumn[1];
+                        keys[0] = _dsAlivePlayers.Tables[0].Columns[1];
+                        _dsAlivePlayers.Tables[0].PrimaryKey = keys;
                     }
 
+                    //
+                    //  Players dead
+                    //
+                    {
+                        cmd.CommandText = "SELECT cd.CharacterID id, pd.PlayerUID unique_id, pd.PlayerName name, cd.Humanity humanity, cd.worldspace worldspace,"
+                                        + " cd.inventory inventory, cd.backpack backpack, cd.medical medical, cd.CurrentState state, cd.DateStamp last_updated"
+                                        + " FROM character_data as cd, player_data as pd"
+                                        + " WHERE cd.PlayerUID=pd.PlayerUID AND cd.Alive=0"
+                                        + " AND cd.InstanceID=" + InstanceId
+                                        + " AND cd.LastLogin > now() - interval " + FilterLastUpdated + " day";
+                        _dsDeadPlayers.Clear();
+                        adapter.Fill(_dsDeadPlayers);
+                        DataColumn[] keys = new DataColumn[1];
+                        keys[0] = _dsDeadPlayers.Tables[0].Columns[0];
+                        _dsDeadPlayers.Tables[0].PrimaryKey = keys;
+                    }
+
+                    //
+                    //  Vehicles
+                    cmd.CommandText = "SELECT CAST(ObjectID AS UNSIGNED) id, CAST(0 AS UNSIGNED) spawn_id, ClassName class_name, worldspace, inventory, Hitpoints parts,"
+                                    + " fuel, damage, DateStamp last_updated"
+                                    + " FROM object_data WHERE CharacterID=0"
+                                    + " AND Instance=" + InstanceId
+                                    + " AND Datestamp > now() - interval " + FilterLastUpdated + " day";
+                    _dsVehicles.Clear();
+                    adapter.Fill(_dsVehicles);
+
+                    //
+                    //  Deployables
+                    //
+                    cmd.CommandText = "SELECT CAST(ObjectID AS UNSIGNED) id, CharacterID keycode, Classname class_name, worldspace, inventory FROM object_data WHERE CharacterID!=0"
+                                    + " AND Instance=" + InstanceId
+                                    + " AND Datestamp > now() - interval " + FilterLastUpdated + " day";
+                    _dsDeployables.Clear();
+                    adapter.Fill(_dsDeployables);
+                }
+                catch
+                {
+                    bRes = false;
+                }
+                db.AccessDB(false);
+
+                if (bRes == false)
+                    return false;
+
+                db.UseDS(true);
+                {
                     foreach (DataRow row in _dsDeployables.Tables[0].Rows)
                     {
                         string name = row.Field<string>("class_name");
@@ -994,30 +1176,19 @@ namespace DBAccess
                         if (dsDeployableTypes.Tables[0].Rows.Find(name) == null)
                             dsDeployableTypes.Tables[0].Rows.Add(name, "Unknown", true);
                     }
+
+                    dsDeployables = _dsDeployables.Copy();
+                    dsAlivePlayers = _dsAlivePlayers.Copy();
+                    dsDeadPlayers = _dsDeadPlayers.Copy();
+                    dsVehicles = _dsVehicles.Copy();
                 }
-
-                mtxUpdate.ReleaseMutex();
-
-                mtxUseDS.WaitOne();
-
-                dsDeployables = _dsDeployables.Copy();
-                dsAlivePlayers = _dsAlivePlayers.Copy();
-                dsDeadPlayers = _dsDeadPlayers.Copy();
-                dsVehicles = _dsVehicles.Copy();
-
-                worldId = 1;
-
-                mtxUseDS.ReleaseMutex();
+                db.UseDS(false);
             }
-        }
-        private void sqlScript_Error(Object sender, MySqlScriptErrorEventArgs args)
-        {
-            MessageBox.Show(args.Exception.Message, "Script error");
-        }
 
-        internal string epochCharacterTable = "character_data";
-        internal string epochObjectTable = "object_data";
-        internal string epochPlayerTable = "player_data";
-        internal string epochTraderTable = "traders_data";
+            return bRes;
+        }
+        public override bool QueryDeleteSpawn(string uid) { return true; }
+        public override bool QueryAddVehicle(bool instanceOrSpawn, string classname, int vehicle_id, Tool.Point position) { return true; }
+        public override int QuerySpawnVehicles(int max_vehicles) { return 0; }
     }
 }

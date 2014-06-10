@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Data;
 using System.Collections;
-using System.Collections.Generic;
 using System.ComponentModel;
+using System.Data;
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DBAccess
 {
@@ -59,19 +55,22 @@ namespace DBAccess
                 aTypes = aItems[0] as ArrayList;
                 aCount = aItems[1] as ArrayList;
                 for (int i = 0; i < aTypes.Count; i++)
-                    this.inventory.weapons.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
+                    if (aCount[i] as string != "")
+                        this.inventory.weapons.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
 
                 aItems = arr[1] as ArrayList;
                 aTypes = aItems[0] as ArrayList;
                 aCount = aItems[1] as ArrayList;
                 for (int i = 0; i < aTypes.Count; i++)
-                    this.inventory.items.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
+                    if (aCount[i] as string != "")
+                        this.inventory.items.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
 
                 aItems = arr[2] as ArrayList;
                 aTypes = aItems[0] as ArrayList;
                 aCount = aItems[1] as ArrayList;
                 for (int i = 0; i < aTypes.Count; i++)
-                    this.inventory.bags.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
+                    if (aCount[i] as string != "")
+                        this.inventory.bags.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
             }
         }
     }

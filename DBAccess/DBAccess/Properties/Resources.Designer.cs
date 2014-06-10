@@ -193,16 +193,6 @@ namespace DBAccess.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap Dead {
-            get {
-                object obj = ResourceManager.GetObject("Dead", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
         internal static System.Drawing.Bitmap helicopter {
             get {
                 object obj = ResourceManager.GetObject("helicopter", resourceCulture);
@@ -301,16 +291,6 @@ namespace DBAccess.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        internal static byte[] README {
-            get {
-                object obj = ResourceManager.GetObject("README", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap small_build {
@@ -383,9 +363,49 @@ namespace DBAccess.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Tool_Dead {
+            get {
+                object obj = ResourceManager.GetObject("Tool_Dead", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Tool_Deployable {
             get {
                 object obj = ResourceManager.GetObject("Tool_Deployable", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Tool_LedAccess {
+            get {
+                object obj = ResourceManager.GetObject("Tool_LedAccess", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Tool_LedOff {
+            get {
+                object obj = ResourceManager.GetObject("Tool_LedOff", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Tool_LedOn {
+            get {
+                object obj = ResourceManager.GetObject("Tool_LedOn", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -426,6 +446,16 @@ namespace DBAccess.Properties {
         internal static System.Drawing.Bitmap Tool_Spawn {
             get {
                 object obj = ResourceManager.GetObject("Tool_Spawn", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Tool_Traders {
+            get {
+                object obj = ResourceManager.GetObject("Tool_Traders", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

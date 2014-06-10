@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Drawing;
 
 namespace DBAccess
@@ -24,6 +23,9 @@ namespace DBAccess
         public MapHelper(VirtualMap map, int worldId)
         {
             this.map = map;
+
+            if (worldId == 0)
+                return;
 
             foreach (Tool.Point[] arr in Tool.MapHelperDefs[worldId - 1])
                 AddPathDef(arr);

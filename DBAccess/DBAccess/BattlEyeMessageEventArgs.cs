@@ -9,17 +9,17 @@ using System;
 
 namespace BattleNET
 {
-    public delegate void BattlEyeMessageEventHandler(BattlEyeMessageEventArgs args);
+	public delegate void BattlEyeMessageEventHandler(BattlEyeMessageEventArgs args);
 
-    public class BattlEyeMessageEventArgs : EventArgs
-    {
-        public BattlEyeMessageEventArgs(string message, int id)
-        {
-            Message = message;
-            Id = id;
-        }
+	public class BattlEyeMessageEventArgs : EventArgs
+	{
+		public BattlEyeMessageEventArgs(string message, int id)
+		{
+			Message = message;
+			Id = id;
+		}
 
-        public string Message { get; private set; }
-        public int Id { get; private set; }
-    }
+		public string Message { get; private set; }
+		public int Id { get; private set; }
+	}
 }

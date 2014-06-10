@@ -7,10 +7,10 @@
 
 namespace BattleNET
 {
-    enum BattlEyePacketType
-    {
-        Login,
-        Command,
-        Acknowledge
-    }
+	enum BattlEyePacketType
+	{
+		Login,
+		Command,
+		Acknowledge
+	}
 }

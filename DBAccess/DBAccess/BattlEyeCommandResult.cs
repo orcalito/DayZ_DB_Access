@@ -7,10 +7,10 @@
 
 namespace BattleNET
 {
-    public enum BattlEyeCommandResult
-    {
-        Success,
-        Error,
-        NotConnected,
-    }
+	public enum BattlEyeCommandResult
+	{
+		Success,
+		Error,
+		NotConnected,
+	}
 }

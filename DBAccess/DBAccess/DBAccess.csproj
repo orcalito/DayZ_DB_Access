@@ -28,8 +28,8 @@
     <CreateWebPageOnPublish>true</CreateWebPageOnPublish>
     <WebPage>publish.htm</WebPage>
     <OpenBrowserOnPublish>false</OpenBrowserOnPublish>
-    <ApplicationRevision>3</ApplicationRevision>
-    <ApplicationVersion>2.9.2.%2a</ApplicationVersion>
+    <ApplicationRevision>4</ApplicationRevision>
+    <ApplicationVersion>2.9.5.%2a</ApplicationVersion>
     <UseApplicationTrust>true</UseApplicationTrust>
     <CreateDesktopShortcut>true</CreateDesktopShortcut>
     <PublishWizardCompleted>true</PublishWizardCompleted>
@@ -111,6 +111,9 @@
     <Compile Include="BE_Helpers.cs" />
     <Compile Include="CRC32.cs" />
     <Compile Include="Database.cs" />
+    <Compile Include="Form1.CallBacks.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="MapHelper.cs" />
     <Compile Include="MapPan.cs" />
     <Compile Include="MapZoom.cs" />
@@ -161,7 +164,6 @@
       <SubType>Designer</SubType>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <None Include="ClassDiagram1.cd" />
     <None Include="DBAccess_TemporaryKey.pfx" />
     <None Include="Properties\DataSources\System.Data.DataSet.datasource" />
     <None Include="Properties\Settings.settings">
@@ -173,7 +175,6 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <None Include="README.md" />
     <None Include="Resources\HISTORY.rtf" />
     <None Include="Resources\README.md" />
   </ItemGroup>
@@ -201,82 +202,16 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Properties\air.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Properties\bike.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Properties\boat.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Properties\bus.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Properties\car.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Properties\helicopter.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Properties\iconAlive.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Properties\iconOnline.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Properties\motorcycle.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Properties\Tent.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Folder Include="bin\" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Properties\truck.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="Application.ico" />
-    <None Include="Properties\Tool_About.png" />
+    <None Include="Resources\Tool_LedAccess.png" />
+    <None Include="Resources\Tool_Dead.png" />
+    <None Include="Resources\atv.png" />
     <None Include="Resources\iconDead.png" />
-    <None Include="Resources\Dead.png" />
     <None Include="Resources\air_crashed.png" />
     <None Include="Resources\air.png" />
-    <None Include="Properties\Tool_World.png" />
-    <None Include="Properties\Tool_Vehicle.png" />
-    <None Include="Properties\Tool_Trail.png" />
-    <None Include="Properties\Tool_Spawn.png" />
-    <None Include="Properties\Tool_Online.png" />
-    <None Include="Properties\Tool_MapHelper.png" />
-    <None Include="Properties\Tool_Map.png" />
-    <None Include="Properties\Tool_Deployable.png" />
-    <None Include="Properties\Tool_DB.png" />
-    <None Include="Properties\Tool_Chat.png" />
-    <None Include="Properties\Tool_Alive.png" />
-    <None Include="Properties\iconLobby.png" />
-    <None Include="Properties\Trail.png" />
-    <None Include="Properties\Vehicle.png" />
-    <None Include="Properties\Map.png" />
-    <None Include="Properties\deployable.png" />
-    <None Include="Properties\uaz.png" />
-    <None Include="Properties\tractor.png" />
-    <None Include="Properties\atv.png" />
-    <None Include="Properties\application48.png" />
-    <None Include="Properties\uaz_crashed.png" />
-    <None Include="Properties\truck_crashed.png" />
-    <None Include="Properties\tractor_crashed.png" />
-    <None Include="Properties\motorcycle_crashed.png" />
-    <None Include="Properties\helicopter_crashed.png" />
-    <None Include="Properties\car_crashed.png" />
-    <None Include="Properties\bus_crashed.png" />
-    <None Include="Properties\boat_crashed.png" />
-    <None Include="Properties\bike_crashed.png" />
-    <None Include="Properties\atv_crashed.png" />
-    <None Include="Properties\large_build.png" />
-    <None Include="Properties\small_build.png" />
-    <None Include="Properties\unknown.png" />
-    <None Include="Properties\stach.png" />
     <None Include="Resources\Application.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

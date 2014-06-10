@@ -1,30 +1,14 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Reflection;
 using System.Windows.Forms;
-using System.Xml.Serialization;
 
 
 namespace DBAccess
 {
-    //
-    //
-    //
-    internal class MySplitContainer : SplitContainer
-    {
-        public MySplitContainer()
-        {
-            MethodInfo mi = typeof(Control).GetMethod("SetStyle", BindingFlags.NonPublic | BindingFlags.Instance);
-            object[] args = new object[] { ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true };
-            mi.Invoke(this.Panel1, args);
-            mi.Invoke(this.Panel2, args);
-        }
-    }
     //
     //
     //
@@ -46,6 +30,19 @@ namespace DBAccess
     //
     //
     //
+    internal class MySplitContainer : SplitContainer
+    {
+        public MySplitContainer()
+        {
+            MethodInfo mi = typeof(Control).GetMethod("SetStyle", BindingFlags.NonPublic | BindingFlags.Instance);
+            object[] args = new object[] { ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true };
+            mi.Invoke(this.Panel1, args);
+            mi.Invoke(this.Panel2, args);
+        }
+    }
+    //
+    //
+    //
     public class myConfig
     {
         public myConfig()
@@ -58,7 +55,6 @@ namespace DBAccess
             vehicle_types = new DataSet();
             deployable_types = new DataSet();
         }
-        public string game_type;
         public string url;
         public string port;
         public string basename;
@@ -74,17 +70,19 @@ namespace DBAccess
         public string customscript3;
         public int filter_last_updated;
         public int bitmap_mag_level;
+        public int world_id;
         public decimal db_refreshrate;
+        public decimal be_refreshrate;
         public string rcon_port;
         public string rcon_url;
         public string rcon_password;
+        public string rcon_adminname;
         public ModuleVersion cfgVersion { get; set; }
         public DataSet worlds_def { get; set; }
         public DataSet vehicle_types { get; set; }
         public DataSet deployable_types { get; set; }
         //
-        [XmlIgnore]
-        public UInt16 world_id = 0;
+        //[XmlIgnore]
     }
     //
     //
