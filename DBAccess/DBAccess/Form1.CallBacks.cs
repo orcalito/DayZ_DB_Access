@@ -748,7 +748,7 @@ namespace DBAccess
                     rCon.BattlEyeMessageReceived += BattlEyeMessageReceived;
                     rCon.BattlEyeConnected += BattlEyeConnected;
                     rCon.BattlEyeDisconnected += BattlEyeDisconnected;
-                    rCon.ReconnectOnPacketLoss = true;
+                    rCon.ReconnectDelay = 10;   // 10s delay before trying to reconnect
 
                     resultBE = rCon.Connect();
                 }
@@ -836,7 +836,7 @@ namespace DBAccess
             }
 
             led_database = (myDB.Connected) ? LedStatus.On : LedStatus.Off;
-            led_battleye = (rCon.Connected) ? LedStatus.On : LedStatus.Off;
+            led_battleye = (rCon!=null && rCon.Connected) ? LedStatus.On : LedStatus.Off;
 
             this.Cursor = Cursors.Arrow;
         }
@@ -1277,18 +1277,33 @@ namespace DBAccess
         #region BattlEye
         private void BattlEyeConnected(BattlEyeConnectEventArgs args)
         {
-            richTextBoxChat.Invoke((System.Threading.ThreadStart)(delegate { AddTextInChat(args.Message, Color.Green); }));
+            bool bSuccess = (args.ConnectionResult == BattlEyeConnectionResult.Success);
+
+            richTextBoxChat.Invoke((System.Threading.ThreadStart)(delegate
+            {
+                BattlEyeConnectionMessage(args.Message, bSuccess);
+            }));
+
         }
         private void BattlEyeDisconnected(BattlEyeDisconnectEventArgs args)
         {
             richTextBoxChat.Invoke((System.Threading.ThreadStart)(delegate
             {
-                AddTextInChat(args.Message, Color.DarkGreen);
+                BattlEyeConnectionMessage(args.Message, false);
+            }));
+        }
+        private void BattlEyeConnectionMessage(string msg, bool connected)
+        {
+            AddTextInChat(msg, connected ? Color.Green : Color.Red);
 
+            led_battleye = connected ? LedStatus.On : LedStatus.Off;
+
+            if (connected == false)
+            {
                 PlayerNamesOnline.Tables[0].Rows.Clear();
                 PlayersOnline.Tables[0].Rows.Clear();
                 AdminsOnline.Tables[0].Rows.Clear();
-            }));
+            }
         }
         public class PlayerData
         {

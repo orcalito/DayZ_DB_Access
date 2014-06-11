@@ -27,6 +27,8 @@ namespace BattleNET
 		private BattlEyeLoginCredentials loginCredentials;
 		private Mutex mtxQueue = new Mutex();
 		private SortedDictionary<int, string[]> packetQueue;
+        private Thread reconnectThread = null;
+        private decimal reconnectDelay = 0;
 
 		public bool Connected
 		{
@@ -36,13 +38,32 @@ namespace BattleNET
 			}
 		}
 
-		public bool ReconnectOnPacketLoss
-		{
-			get;
-			set;
-		}
+        public decimal ReconnectDelay
+        {
+            get
+            {
+                return reconnectDelay;
+            }
 
-		public int CommandQueue
+            set
+            {
+                reconnectDelay = value;
+                if (value > 0)
+                {
+                    if (reconnectThread == null)
+                    {
+                        reconnectThread = new Thread(ThreadReconnect);
+                        reconnectThread.Start();
+                    }
+                }
+                else
+                {
+                    reconnectThread = null;
+                }
+            }
+        }
+        
+        public int CommandQueue
 		{
 			get
 			{
@@ -56,21 +77,6 @@ namespace BattleNET
 		public BattlEyeClient(BattlEyeLoginCredentials loginCredentials)
 		{
 			this.loginCredentials = loginCredentials;
-
-			keepRunning = true;
-
-			new Thread(delegate()
-			{
-				while (keepRunning)
-				{
-					if (loginAccepted && ReconnectOnPacketLoss && !Connected)
-					{
-						Connect();
-					}
-
-					Thread.Sleep(1000);
-				}
-			}).Start();
 		}
 
 		public BattlEyeConnectionResult Connect()
@@ -320,7 +326,7 @@ namespace BattleNET
 			socket.BeginReceive(state.Buffer, 0, StateObject.BufferSize, 0, new AsyncCallback(ReceiveCallback), state);
 
 			new Thread(delegate() {
-				while (socket.Connected && keepRunning)
+				while (keepRunning)
 				{
 					int timeoutClient = (int)(DateTime.Now - packetSent).TotalSeconds;
 					int timeoutServer = (int)(DateTime.Now - packetReceived).TotalSeconds;
@@ -368,10 +374,6 @@ namespace BattleNET
 
 					Thread.Sleep(1000);
 				}
-
-				//let the thread finish without further action
-				if (!keepRunning)
-					return;
 
 				if (!socket.Connected)
 				{
@@ -475,6 +477,19 @@ namespace BattleNET
 			if (BattlEyeDisconnected != null)
 				BattlEyeDisconnected(new BattlEyeDisconnectEventArgs(loginDetails, disconnectionType));
 		}
+        private void ThreadReconnect()
+        {
+            keepRunning = true;
+            while (keepRunning && (ReconnectDelay > 0))
+            {
+                if (loginAccepted && !Connected)
+                {
+                    Connect();
+                }
+
+                Thread.Sleep((int)(1000 * ReconnectDelay));
+            }
+        }
 
 		public event BattlEyeMessageEventHandler BattlEyeMessageReceived;
 		public event BattlEyeConnectEventHandler BattlEyeConnected;
