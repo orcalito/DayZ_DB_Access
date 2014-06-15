@@ -1339,27 +1339,58 @@ namespace DBAccess
                         line = sr.ReadLine();
                     } while (line.EndsWith("----") == false);
 
-                    do
+                    line = sr.ReadLine();
+
+                    // http://www.txt2re.com/
+                    string re = "(\\d+)\\s+((?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))(?![\\d]):(\\d+)\\s+(\\d+|\\-1)\\s+.*?((?:[a-z0-9]*)).*?((?:[a-z]+|\\?)).*?\\s+((?:.*))";
+
+                    Regex r = new Regex(re, RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
+                    while (line != null && line.StartsWith("(") == false)
                     {
-                        line = sr.ReadLine();
-                        if (line != null)
+                        Match m = r.Match(line);
+                        if (m.Success)
                         {
-                            if (line.Length>0 && line.StartsWith("(") == false)
+                            PlayerData entry = new PlayerData();
+                            entry.Id = int.Parse(m.Groups[1].ToString());
+                            entry.Name = m.Groups[7].ToString();
+                            entry.Guid = m.Groups[5].ToString();
+                            entry.Ip = m.Groups[2].ToString();
+                            if(entry.Name.Contains("(Lobby)"))
                             {
-                                line = ((line.Replace("  ", " ")).Replace("  ", " ")).Replace("  ", " ");
-                                string[] items = line.Trim().Split(' ', ':');
-
-                                PlayerData entry = new PlayerData();
-                                    entry.Id = int.Parse(items[0]);
-                                    entry.Name = items[5];
-                                    entry.Guid = items[4].Split('(')[0];
-                                    entry.Ip = items[1];
-                                    entry.Status = (items.GetLength(0) > 6) ? "Lobby" : "Ingame";
-
-                                players.Add(entry);
+                                entry.Name = entry.Name.Replace("(Lobby)", "").Trim();
+                                entry.Status = "Lobby";
                             }
+                            else
+                            {
+                                entry.Status = "Ingame";
+                            }
+
+                            players.Add(entry);
                         }
-                    } while (line!=null && line.StartsWith("(") == false);
+
+                        line = sr.ReadLine();
+                    }
+
+                    //    line = sr.ReadLine();
+                    //    if (line != null)
+                    //    {
+                    //        if (line.Length>0 && line.StartsWith("(") == false)
+                    //        {
+                    //            line = ((line.Replace("  ", " ")).Replace("  ", " ")).Replace("  ", " ");
+                    //            string[] items = line.Trim().Split(' ', ':');
+
+                    //            PlayerData entry = new PlayerData();
+                    //                entry.Id = int.Parse(items[0]);
+                    //                entry.Name = items[5];
+                    //                entry.Guid = items[4].Split('(')[0];
+                    //                entry.Ip = items[1];
+                    //                entry.Status = (items.GetLength(0) > 6) ? "Lobby" : "Ingame";
+
+                    //            players.Add(entry);
+                    //        }
+                    //    }
+                    //} while (line!=null && line.StartsWith("(") == false);
 
                     this.Invoke((System.Threading.ThreadStart)(delegate { UpdatePlayersOnline(); }));
                 }

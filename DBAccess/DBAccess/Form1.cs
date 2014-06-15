@@ -1176,12 +1176,16 @@ namespace DBAccess
         }
         private string LocalResolveIP(string ip)
         {
-            if (ip.CompareTo(localIP) == 0)
-                ip = "local IP";
-            else if (ip.CompareTo(mycfg.url) == 0)
+            DataRow found;
+
+            if (ip.CompareTo(mycfg.url) == 0)
                 ip = "server IP";
             else if (ip.CompareTo(mycfg.rcon_url) == 0)
                 ip = "rCon IP";
+            else if((found = PlayersOnline.Tables[0].Rows.FindFrom("IP", ip)) != null)
+                ip = found.Field<string>("Name");
+            else if (ip.CompareTo(localIP) == 0)
+                ip = "local IP";
 
             return ip;
         }
