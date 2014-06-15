@@ -27,8 +27,9 @@ namespace BattleNET
 		private BattlEyeLoginCredentials loginCredentials;
 		private Mutex mtxQueue = new Mutex();
 		private SortedDictionary<int, string[]> packetQueue;
-        private Thread reconnectThread = null;
         private decimal reconnectDelay = 0;
+        private Thread threadReconnect = null;
+        private Thread threadKeepAlive = null;
 
 		public bool Connected
 		{
@@ -50,15 +51,15 @@ namespace BattleNET
                 reconnectDelay = value;
                 if (value > 0)
                 {
-                    if (reconnectThread == null)
+                    if (threadReconnect == null)
                     {
-                        reconnectThread = new Thread(ThreadReconnect);
-                        reconnectThread.Start();
+                        threadReconnect = new Thread(ThreadReconnect);
+                        threadReconnect.Start();
                     }
                 }
                 else
                 {
-                    reconnectThread = null;
+                    threadReconnect = null;
                 }
             }
         }
@@ -289,6 +290,11 @@ namespace BattleNET
 		{
 			keepRunning = false;
 
+            while (threadReceiveIsRunning && threadReconnectIsRunning && threadKeepAliveIsRunning)
+            {
+                Thread.Sleep(125);
+            }
+
 			if (socket.Connected)
 			{
 				socket.Shutdown(SocketShutdown.Both);
@@ -325,7 +331,11 @@ namespace BattleNET
 
 			socket.BeginReceive(state.Buffer, 0, StateObject.BufferSize, 0, new AsyncCallback(ReceiveCallback), state);
 
-			new Thread(delegate() {
+            threadKeepAlive = new Thread(ThreadKeepAlive);
+            threadKeepAlive.Start();
+            
+            new Thread(delegate()
+            {
 				while (keepRunning)
 				{
 					int timeoutClient = (int)(DateTime.Now - packetSent).TotalSeconds;
@@ -372,7 +382,7 @@ namespace BattleNET
 						}
 					}
 
-					Thread.Sleep(1000);
+					Thread.Sleep(250);
 				}
 
 				if (!socket.Connected)
@@ -384,77 +394,79 @@ namespace BattleNET
 
 		private void ReceiveCallback(IAsyncResult ar)
 		{
-			try
-			{
-				StateObject state = (StateObject)ar.AsyncState;
-				Socket client = state.WorkSocket;
+            threadReceiveIsRunning = true;
 
+            StateObject state = (StateObject)ar.AsyncState;
+            Socket client = state.WorkSocket;
+
+            try
+			{
 				// this method can be called from the middle of a .Disconnect() call
 				// test with Debug > Exception > CLR exs on
-				if (!client.Connected)
-				{
-					return;
-				}
+                if (client.Connected)
+                {
+                    int bytesRead = client.EndReceive(ar);
 
-				int bytesRead = client.EndReceive(ar);
+                    if (state.Buffer[7] == 0x02)
+                    {
+                        SendAcknowledgePacket(Helpers.Bytes2String(new[] { state.Buffer[8] }));
+                        OnBattlEyeMessage(Helpers.Bytes2String(state.Buffer, 9, bytesRead - 9), 256);
+                    }
+                    else if (state.Buffer[7] == 0x01)
+                    {
+                        if (bytesRead > 9)
+                        {
+                            if (state.Buffer[7] == 0x01 && state.Buffer[9] == 0x00)
+                            {
+                                if (state.Buffer[11] == 0)
+                                {
+                                    state.PacketsTodo = state.Buffer[10];
+                                }
 
-				if (state.Buffer[7] == 0x02)
-				{
-					SendAcknowledgePacket(Helpers.Bytes2String(new[] { state.Buffer[8] }));
-					OnBattlEyeMessage(Helpers.Bytes2String(state.Buffer, 9, bytesRead - 9), 256);
-				}
-				else if (state.Buffer[7] == 0x01)
-				{
-					if (bytesRead > 9)
-					{
-						if (state.Buffer[7] == 0x01 && state.Buffer[9] == 0x00)
-						{
-							if (state.Buffer[11] == 0)
-							{
-								state.PacketsTodo = state.Buffer[10];
-							}
+                                if (state.PacketsTodo > 0)
+                                {
+                                    state.Message.Append(Helpers.Bytes2String(state.Buffer, 12, bytesRead - 12));
+                                    state.PacketsTodo--;
+                                }
 
-							if (state.PacketsTodo > 0)
-							{
-								state.Message.Append(Helpers.Bytes2String(state.Buffer, 12, bytesRead - 12));
-								state.PacketsTodo--;
-							}
+                                if (state.PacketsTodo == 0)
+                                {
+                                    OnBattlEyeMessage(state.Message.ToString(), state.Buffer[8]);
+                                    state.Message = new StringBuilder();
+                                    state.PacketsTodo = 0;
+                                }
+                            }
+                            else
+                            {
+                                // Temporary fix to avoid infinite loops with multi-packet server messages
+                                state.Message = new StringBuilder();
+                                state.PacketsTodo = 0;
 
-							if (state.PacketsTodo == 0)
-							{
-								OnBattlEyeMessage(state.Message.ToString(), state.Buffer[8]);
-								state.Message = new StringBuilder();
-								state.PacketsTodo = 0;
-							}
-						}
-						else
-						{
-							// Temporary fix to avoid infinite loops with multi-packet server messages
-							state.Message = new StringBuilder();
-							state.PacketsTodo = 0;
+                                OnBattlEyeMessage(Helpers.Bytes2String(state.Buffer, 9, bytesRead - 9), state.Buffer[8]);
+                            }
+                        }
 
-							OnBattlEyeMessage(Helpers.Bytes2String(state.Buffer, 9, bytesRead - 9), state.Buffer[8]);
-						}
-					}
+                        mtxQueue.WaitOne();
+                        if (packetQueue.ContainsKey(state.Buffer[8]))
+                        {
+                            packetQueue.Remove(state.Buffer[8]);
+                        }
+                        mtxQueue.ReleaseMutex();
+                    }
 
-					mtxQueue.WaitOne();
-					if (packetQueue.ContainsKey(state.Buffer[8]))
-					{
-						packetQueue.Remove(state.Buffer[8]);
-					}
-					mtxQueue.ReleaseMutex();
-				}
-
-				packetReceived = DateTime.Now;
-
-				if(keepRunning)
-					client.BeginReceive(state.Buffer, 0, StateObject.BufferSize, 0, new AsyncCallback(ReceiveCallback), state);
+                    packetReceived = DateTime.Now;
+                }
 			}
 			catch
 			{
 				// do nothing
 			}
-		}
+
+            if (keepRunning)
+                client.BeginReceive(state.Buffer, 0, StateObject.BufferSize, 0, new AsyncCallback(ReceiveCallback), state);
+            else
+                threadReceiveIsRunning = false;
+        }
 
 		private void OnBattlEyeMessage(string message, int id)
 		{
@@ -479,6 +491,7 @@ namespace BattleNET
 		}
         private void ThreadReconnect()
         {
+            threadReconnectIsRunning = true;
             keepRunning = true;
             while (keepRunning && (ReconnectDelay > 0))
             {
@@ -489,7 +502,71 @@ namespace BattleNET
 
                 Thread.Sleep((int)(1000 * ReconnectDelay));
             }
+            threadReconnectIsRunning = false;
         }
+        private void ThreadKeepAlive()
+        {
+            threadKeepAliveIsRunning = true;
+            while (keepRunning)
+            {
+                int timeoutClient = (int)(DateTime.Now - packetSent).TotalSeconds;
+                int timeoutServer = (int)(DateTime.Now - packetReceived).TotalSeconds;
+
+                if (timeoutClient >= 5)
+                {
+                    if (timeoutServer >= 20)
+                    {
+                        Disconnect(BattlEyeDisconnectionType.ConnectionLost);
+                        keepRunning = true;
+                    }
+                    else
+                    {
+                        if (packetQueue.Count == 0)
+                        {
+                            SendCommandPacket(null, false);
+                        }
+                    }
+                }
+
+                if (socket.Connected && socket.Available == 0)
+                {
+                    try
+                    {
+                        mtxQueue.WaitOne();
+                        if (packetQueue.Count > 0)
+                        {
+                            int key = packetQueue.First().Key;
+                            string value = packetQueue[key][0];
+                            DateTime date = DateTime.Parse(packetQueue[key][1]);
+                            int timeDiff = (int)(DateTime.Now - date).TotalSeconds;
+                            if (timeDiff > 5)
+                            {
+                                SendCommandPacket(value, false);
+                                packetQueue.Remove(key);
+                            }
+                        }
+                        mtxQueue.ReleaseMutex();
+                    }
+                    catch
+                    {
+                        // Prevent possible crash when packet is received at the same moment it's trying to resend it.
+                    }
+                }
+
+                Thread.Sleep(250);
+            }
+
+            if (!socket.Connected)
+            {
+                OnDisconnect(loginCredentials, BattlEyeDisconnectionType.ConnectionLost);
+            }
+            threadKeepAliveIsRunning = false;
+        }
+
+        private bool threadReceiveIsRunning = false;
+        private bool threadReconnectIsRunning = false;
+        private bool threadKeepAliveIsRunning = false;
+
 
 		public event BattlEyeMessageEventHandler BattlEyeMessageReceived;
 		public event BattlEyeConnectEventHandler BattlEyeConnected;

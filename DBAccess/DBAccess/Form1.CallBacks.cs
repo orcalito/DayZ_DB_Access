@@ -377,7 +377,7 @@ namespace DBAccess
                             foreach (iconDB idb in listIcons)
                             {
                                 if ((idb.type == UIDType.TypePlayer) || (idb.type == UIDType.TypeVehicle))
-                                    GetUIDGraph(idb.uid).DisplayInMap(e.Graphics, virtualMap);
+                                    GetUIDGraph(idb.uid).DisplayOnMap(e.Graphics, virtualMap);
                             }
                         }
 
@@ -399,7 +399,7 @@ namespace DBAccess
                     }
 
                     if (!IsMapHelperEnabled && bCartographer)
-                        cartographer.DisplayInMap(e.Graphics, virtualMap);
+                        cartographer.DisplayOnMap(e.Graphics, virtualMap);
                 }
             }
             catch (Exception ex)
@@ -582,6 +582,12 @@ namespace DBAccess
 
                             splitContainer1.Panel1.Invalidate();
                             prevNearest = nearest;
+
+                            if (nearest != null && listIcons[listIcons.Count - 1] != nearest)
+                            {
+                                listIcons.Remove(nearest);
+                                listIcons.Add(nearest);
+                            }
                         }
                     }
                 }
@@ -760,15 +766,25 @@ namespace DBAccess
                 switch (resultBE)
                 {
                     case BattlEyeConnectionResult.ConnectionFailed:
-                        rCon = null;
-                        MessageBox.Show("Connection to server failed", "BattlEye");
-                        break;
-
                     case BattlEyeConnectionResult.InvalidLogin:
                         rCon = null;
-                        MessageBox.Show("Invalid rCon login", "BattlEye");
                         break;
                 }
+            }
+
+            bool bDBconnected = myDB.Connected;
+            bool bBEconnected = (rCon != null);
+
+            led_database = (bDBconnected) ? LedStatus.On : LedStatus.Off;
+            led_battleye = (bBEconnected) ? LedStatus.On : LedStatus.Off;
+
+            if (!bDBconnected || !bBEconnected)
+            {
+                string header = (!bDBconnected) ? "Database " : "";
+                header += (!bBEconnected) ? "BattlEye" : "";
+                string db_error = (!bDBconnected) ? "Unable to connect to Database.\n" : "";
+                string be_error = (!bBEconnected) ? (resultBE == BattlEyeConnectionResult.InvalidLogin) ? "Invalid rCon login" : "Unable to connect to BattlEye.\n" : "";
+                MessageBox.Show(db_error + be_error, header);
             }
 
             if (myDB.Connected && resultBE != BattlEyeConnectionResult.ConnectionFailed)
@@ -834,9 +850,6 @@ namespace DBAccess
                 panelCnx.Enabled = false;
                 panelCnx.Visible = false;
             }
-
-            led_database = (myDB.Connected) ? LedStatus.On : LedStatus.Off;
-            led_battleye = (rCon!=null && rCon.Connected) ? LedStatus.On : LedStatus.Off;
 
             this.Cursor = Cursors.Arrow;
         }

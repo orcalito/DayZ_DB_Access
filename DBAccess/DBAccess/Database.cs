@@ -142,10 +142,10 @@ namespace DBAccess
             //  "Server=localhost;Database=testdb;Uid=root;Pwd=pass;";
             string strCnx = "Server=" + login.Server + ";Port=" + login.Port + ";Database=" + login.DBname + ";Uid=" + login.Username + ";Pwd=" + login.Password + ";";
 
-            sqlCnx = new MySqlConnection(strCnx);
-
             try
             {
+                sqlCnx = new MySqlConnection(strCnx);
+
                 sqlCnx.Open();
 
                 DetermineGameSchema();
@@ -160,17 +160,11 @@ namespace DBAccess
 
                 this.Connected = true;
 
-                try
-                {
-                    Connected = schema.OnConnection();
+                Connected = schema.OnConnection();
                     
-                    Refresh();
+                Refresh();
 
-                    loginAccepted = true;
-                }
-                catch
-                {
-                }
+                loginAccepted = true;
             }
             catch
             {

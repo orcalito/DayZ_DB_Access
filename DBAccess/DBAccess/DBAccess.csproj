@@ -75,10 +75,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="MySql.Data, Version=6.7.4.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL">
-      <HintPath>bin\Release\MySql.Data.dll</HintPath>
+      <HintPath>..\..\..\..\..\Dropbox\DDBA\DBAccess\DBAccess\bin\Release\MySql.Data.dll</HintPath>
     </Reference>
     <Reference Include="MySql.Web, Version=6.7.4.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL">
-      <HintPath>bin\Release\MySql.Web.dll</HintPath>
+      <HintPath>..\..\..\..\..\Dropbox\DDBA\DBAccess\DBAccess\bin\Release\MySql.Web.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

@@ -137,7 +137,7 @@ namespace DBAccess
                     paths.Last().points.Add(pos);
             }
         }
-        public void DisplayInMap(Graphics gfx, VirtualMap map)
+        public void DisplayOnMap(Graphics gfx, VirtualMap map)
         {
             foreach(PathDef def in paths)
             {
