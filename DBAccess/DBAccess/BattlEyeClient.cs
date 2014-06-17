@@ -333,63 +333,6 @@ namespace BattleNET
 
             threadKeepAlive = new Thread(ThreadKeepAlive);
             threadKeepAlive.Start();
-            
-            new Thread(delegate()
-            {
-				while (keepRunning)
-				{
-					int timeoutClient = (int)(DateTime.Now - packetSent).TotalSeconds;
-					int timeoutServer = (int)(DateTime.Now - packetReceived).TotalSeconds;
-
-					if (timeoutClient >= 5)
-					{
-						if (timeoutServer >= 20)
-						{
-							Disconnect(BattlEyeDisconnectionType.ConnectionLost);
-							keepRunning = true;
-						}
-						else
-						{
-							if (packetQueue.Count == 0)
-							{
-								SendCommandPacket(null, false);
-							}
-						}
-					}
-
-					if (socket.Connected && socket.Available == 0)
-					{
-						try
-						{
-							mtxQueue.WaitOne();
-							if (packetQueue.Count > 0)
-							{
-								int key = packetQueue.First().Key;
-								string value = packetQueue[key][0];
-								DateTime date = DateTime.Parse(packetQueue[key][1]);
-								int timeDiff = (int)(DateTime.Now - date).TotalSeconds;
-								if (timeDiff > 5)
-								{
-									SendCommandPacket(value, false);
-									packetQueue.Remove(key);
-								}
-							}
-							mtxQueue.ReleaseMutex();
-						}
-						catch
-						{
-							// Prevent possible crash when packet is received at the same moment it's trying to resend it.
-						}
-					}
-
-					Thread.Sleep(250);
-				}
-
-				if (!socket.Connected)
-				{
-					OnDisconnect(loginCredentials, BattlEyeDisconnectionType.ConnectionLost);
-				}
-			}).Start();
 		}
 
 		private void ReceiveCallback(IAsyncResult ar)
@@ -456,16 +399,17 @@ namespace BattleNET
 
                     packetReceived = DateTime.Now;
                 }
-			}
-			catch
+
+                if (keepRunning)
+                    client.BeginReceive(state.Buffer, 0, StateObject.BufferSize, 0, new AsyncCallback(ReceiveCallback), state);
+                else
+                    threadReceiveIsRunning = false;
+            }
+			catch(Exception ex)
 			{
 				// do nothing
+                System.Diagnostics.Debug.Assert(false);
 			}
-
-            if (keepRunning)
-                client.BeginReceive(state.Buffer, 0, StateObject.BufferSize, 0, new AsyncCallback(ReceiveCallback), state);
-            else
-                threadReceiveIsRunning = false;
         }
 
 		private void OnBattlEyeMessage(string message, int id)
