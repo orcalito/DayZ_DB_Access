@@ -668,7 +668,7 @@ namespace DBAccess
         }
         public override bool QueryHealPlayer(string uid)
         {
-            return 1 == db.ExecuteSqlNonQuery("UPDATE survivor SET medical='[false,false,false,false,false,false,true,12000,[],[0,0],0,[0,0]]' WHERE (unique_id=" + uid + " AND is_dead=0)");
+            return 1 == db.ExecuteSqlNonQuery("UPDATE survivor SET medical='[false,false,false,false,false,false,true,12000,[],[0,0],0,[0,0]]' WHERE (unique_id='" + uid + "' AND is_dead='0')");
         }
         public override bool QueryRepairAndRefuel(string uid)
         {
@@ -1014,23 +1014,23 @@ namespace DBAccess
         }
         public override bool QueryUpdatePlayerPosition(string worldspace, string uid)
         {
-            return 1 == db.ExecuteSqlNonQuery("UPDATE character_data SET Worldspace=" + worldspace + " WHERE (PlayerUID=" + uid + " AND Alive=1 AND InstanceID=" + InstanceId + ") ORDER BY CharacterID DESC LIMIT 1");
+            return 1 == db.ExecuteSqlNonQuery("UPDATE character_data SET Worldspace=" + worldspace + " WHERE (PlayerUID='" + uid + "' AND Alive='1' AND InstanceID='" + InstanceId + "') ORDER BY CharacterID DESC LIMIT 1");
         }
         public override bool QueryHealPlayer(string uid)
         {
-            return 1 == db.ExecuteSqlNonQuery("UPDATE character_data SET Medical='[false,false,false,false,false,false,true,12000,[],[0,0],0,[0,0]]' WHERE (PlayerUID=" + uid + " AND Alive=1 AND InstanceID=" + InstanceId + ")");
+            return 1 == db.ExecuteSqlNonQuery("UPDATE character_data SET Medical='[false,false,false,false,false,false,true,12000,[],[0,0],0,[0,0]]' WHERE (PlayerUID='" + uid + "' AND Alive='1' AND InstanceID='" + InstanceId + "')");
         }
         public override bool QueryRepairAndRefuel(string uid)
         {
-            return 1 == db.ExecuteSqlNonQuery("UPDATE object_data SET Hitpoints='[]',Fuel='1',Damage='0' WHERE (ObjectID=" + uid + " AND Instance=" + InstanceId + ")");
+            return 1 == db.ExecuteSqlNonQuery("UPDATE object_data SET Hitpoints='[]',Fuel='1',Damage='0' WHERE (ObjectID='" + uid + "' AND Instance='" + InstanceId + "')");
         }
         public override bool QueryDeleteVehicle(string uid)
         {
-            return 1 == db.ExecuteSqlNonQuery("DELETE FROM object_data WHERE (ObjectID=" + uid + " AND Instance=" + InstanceId + ")");
+            return 1 == db.ExecuteSqlNonQuery("DELETE FROM object_data WHERE (ObjectID='" + uid + "' AND Instance='" + InstanceId + "')");
         }
         public override int QueryRemoveBodies(int time_limit)
         {
-            return db.ExecuteSqlNonQuery("DELETE FROM character_data WHERE InstanceID=" + InstanceId + " AND Alive=0 AND LastLogin < now() - interval " + time_limit + " day");
+            return db.ExecuteSqlNonQuery("DELETE FROM character_data WHERE InstanceID='" + InstanceId + "' AND Alive='0' AND LastLogin < now() - interval " + time_limit + " day");
         }
         public override bool OnConnection()
         {
