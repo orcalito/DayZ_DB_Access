@@ -25,6 +25,9 @@ namespace DBAccess
 
         public abstract bool QueryUpdatePlayerPosition(string worldspace, string uid);
         public abstract bool QueryHealPlayer(string uid);
+        public abstract bool QueryRevivePlayer(string uid, string char_id);
+        public abstract bool QuerySavePlayerState(string uid);
+        public abstract bool QueryRestorePlayerState(string uid);
         public abstract bool QueryRepairAndRefuel(string uid);
         public abstract bool QueryDeleteVehicle(string uid);
         public abstract bool QueryDeleteSpawn(string uid);
@@ -45,6 +48,7 @@ namespace DBAccess
         public DataSet dsDeadPlayers = new DataSet();
         public DataSet dsVehicles = new DataSet();
         public DataSet dsSpawnPoints = new DataSet();
+        public DataSet dsPlayerStates = new DataSet();
     }
 
     public class myDatabase
@@ -116,6 +120,7 @@ namespace DBAccess
         public DataSet PlayersDead  { get { return schema.dsDeadPlayers; } }
         public DataSet Vehicles     { get { return schema.dsVehicles; } }
         public DataSet SpawnPoints  { get { return schema.dsSpawnPoints; } }
+        public DataSet PlayerStates { get { return schema.dsPlayerStates; } }
         public MySqlConnection Cnx { get { return sqlCnx; } }
         public void AccessDB(bool state)
         {
@@ -142,10 +147,10 @@ namespace DBAccess
             //  "Server=localhost;Database=testdb;Uid=root;Pwd=pass;";
             string strCnx = "Server=" + login.Server + ";Port=" + login.Port + ";Database=" + login.DBname + ";Uid=" + login.Username + ";Pwd=" + login.Password + ";";
 
-            sqlCnx = new MySqlConnection(strCnx);
-
             try
             {
+                sqlCnx = new MySqlConnection(strCnx);
+
                 sqlCnx.Open();
 
                 DetermineGameSchema();
@@ -157,20 +162,15 @@ namespace DBAccess
                 schema.dsDeployableTypes = login.Cfg.deployable_types;
                 schema.FilterLastUpdated = login.Cfg.filter_last_updated;
                 schema.OnlineTimeLimit = int.Parse(login.Cfg.online_time_limit);
+                schema.dsPlayerStates = login.Cfg.player_state;
 
                 this.Connected = true;
 
-                try
-                {
-                    Connected = schema.OnConnection();
+                Connected = schema.OnConnection();
                     
-                    Refresh();
+                Refresh();
 
-                    loginAccepted = true;
-                }
-                catch
-                {
-                }
+                loginAccepted = true;
             }
             catch
             {
@@ -191,6 +191,7 @@ namespace DBAccess
             schema.dsAlivePlayers.Clear();
             schema.dsVehicles.Clear();
             schema.dsSpawnPoints.Clear();
+            schema.dsPlayerStates.Clear();
             schema.dsDeployables.Clear();
             schema = new NullSchema(null);
 
@@ -531,6 +532,36 @@ namespace DBAccess
             }
             return res;
         }
+        public bool RevivePlayer(string uid, string char_id)
+        {
+            bool res = false;
+
+            if (Connected)
+            {
+                res = schema.QueryRevivePlayer(uid, char_id);
+            }
+            return res;
+        }
+        public bool SavePlayerState(string uid)
+        {
+            bool res = false;
+
+            if (Connected)
+            {
+                res = schema.QuerySavePlayerState(uid);
+            }
+            return res;
+        }
+        public bool RestorePlayerState(string uid)
+        {
+            bool res = false;
+
+            if (Connected)
+            {
+                res = schema.QueryRestorePlayerState(uid);
+            }
+            return res;
+        }
         public bool RepairAndRefuelVehicle(string uid)
         {
             bool res = false;
@@ -619,15 +650,25 @@ namespace DBAccess
         }
         private void ThreadReconnect()
         {
+            long remaining_ticks = (long)(ReconnectDelay * 10000000);
+
             keepRunning = true;
+
             while (keepRunning && (ReconnectDelay > 0))
             {
-                if (loginAccepted && !Connected)
-                {
-                    Connect(loginData);
-                }
+                long last_ticks = DateTime.Now.Ticks;
+                Thread.Sleep(250);
+                remaining_ticks -= (DateTime.Now.Ticks - last_ticks);
 
-                Thread.Sleep((int)(1000 * ReconnectDelay));
+                if (remaining_ticks <= 0)
+                {
+                    remaining_ticks = (long)(ReconnectDelay * 10000000);
+
+                    if (loginAccepted && !Connected)
+                    {
+                        Connect(loginData);
+                    }
+                }
             }
         }
 
@@ -650,6 +691,9 @@ namespace DBAccess
         public override string BuildQueryInstanceList() { return ""; }
         public override bool QueryUpdatePlayerPosition(string worldspace, string uid) { return true; }
         public override bool QueryHealPlayer(string uid) { return true; }
+        public override bool QueryRevivePlayer(string uid, string char_id) { return true; }
+        public override bool QuerySavePlayerState(string uid) { return true; }
+        public override bool QueryRestorePlayerState(string uid) { return true; }
         public override bool QueryRepairAndRefuel(string uid) { return true; }
         public override bool QueryDeleteVehicle(string uid) { return true; }
         public override bool QueryDeleteSpawn(string uid) { return true; }
@@ -674,7 +718,19 @@ namespace DBAccess
         }
         public override bool QueryHealPlayer(string uid)
         {
-            return 1 == db.ExecuteSqlNonQuery("UPDATE survivor SET medical='[false,false,false,false,false,false,true,12000,[],[0,0],0,[0,0]]' WHERE (unique_id=" + uid + " AND is_dead=0)");
+            return 1 == db.ExecuteSqlNonQuery("UPDATE survivor SET medical='[false,false,false,false,false,false,true,12000,[],[0,0],0,[0,0]]' WHERE (unique_id='" + uid + "' AND is_dead='0')");
+        }
+        public override bool QueryRevivePlayer(string uid, string char_id)
+        {
+            return true;
+        }
+        public override bool QuerySavePlayerState(string uid)
+        {
+            return true;
+        }
+        public override bool QueryRestorePlayerState(string uid)
+        {
+            return true;
         }
         public override bool QueryRepairAndRefuel(string uid)
         {
@@ -1020,23 +1076,81 @@ namespace DBAccess
         }
         public override bool QueryUpdatePlayerPosition(string worldspace, string uid)
         {
-            return 1 == db.ExecuteSqlNonQuery("UPDATE character_data SET Worldspace=" + worldspace + " WHERE (PlayerUID=" + uid + " AND Alive=1 AND InstanceID=" + InstanceId + ") ORDER BY CharacterID DESC LIMIT 1");
+            return 1 == db.ExecuteSqlNonQuery("UPDATE character_data SET Worldspace=" + worldspace + " WHERE (PlayerUID='" + uid + "' AND Alive='1' AND InstanceID='" + InstanceId + "') ORDER BY CharacterID DESC LIMIT 1");
         }
         public override bool QueryHealPlayer(string uid)
         {
-            return 1 == db.ExecuteSqlNonQuery("UPDATE character_data SET Medical='[false,false,false,false,false,false,true,12000,[],[0,0],0,[0,0]]' WHERE (PlayerUID=" + uid + " AND Alive=1 AND InstanceID=" + InstanceId + ")");
+            return 1 == db.ExecuteSqlNonQuery("UPDATE character_data SET Medical='[false,false,false,false,false,false,true,12000,[],[0,0],0,[0,0]]' WHERE (PlayerUID='" + uid + "' AND Alive='1' AND InstanceID='" + InstanceId + "')");
+        }
+        public override bool QueryRevivePlayer(string uid, string char_id)
+        {
+            db.ExecuteSqlNonQuery("UPDATE character_data SET Alive='0' WHERE (PlayerUID='" + uid + "' AND Alive='1' AND InstanceID='" + InstanceId + "')");
+            return 1 == db.ExecuteSqlNonQuery("UPDATE character_data SET Alive='1' WHERE (CharacterID='"+char_id+"' AND PlayerUID='" + uid + "' AND Alive='0' AND InstanceID='" + InstanceId + "')");
+        }
+        public override bool QuerySavePlayerState(string uid)
+        {
+            MySqlCommand cmd = db.Cnx.CreateCommand();
+            MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
+
+            cmd.CommandText = "SELECT Inventory, Backpack FROM character_data WHERE (PlayerUID='" + uid + "' AND Alive='1' AND InstanceID=" + InstanceId + ")";
+
+            DataSet _dsAlivePlayers = new DataSet();
+
+            db.AccessDB(true);
+            try
+            {
+                _dsAlivePlayers.Clear();
+                adapter.Fill(_dsAlivePlayers);
+            }
+            catch
+            {
+            }
+            db.AccessDB(false);
+
+            db.UseDS(true);
+            try
+            {
+                if (_dsAlivePlayers.Tables.Count == 1 && _dsAlivePlayers.Tables[0].Rows.Count == 1)
+                {
+                    DataRow to = (dsPlayerStates.Tables[0].Rows.Count > 0) ? dsPlayerStates.Tables[0].Rows.Find(uid) : null;
+                    DataRow from = _dsAlivePlayers.Tables[0].Rows[0];
+                    if (to == null)
+                    {
+                        dsPlayerStates.Tables[0].Rows.Add(uid, from.Field<string>("Inventory"), from.Field<string>("Backpack"));
+                    }
+                    else
+                    {
+                        to.SetField<string>("Inventory", from.Field<string>("Inventory"));
+                        to.SetField<string>("Backpack", from.Field<string>("Backpack"));
+                    }
+                }
+            }
+            catch
+            {
+            }
+            db.UseDS(false);
+
+            return true;
+        }
+        public override bool QueryRestorePlayerState(string uid)
+        {
+            DataRow row = dsPlayerStates.Tables[0].Rows.Find(uid);
+            if(row == null)
+                return false;
+
+            return 1 == db.ExecuteSqlNonQuery("UPDATE character_data SET Inventory='" + row.Field<string>("Inventory") + "', Backpack='" + row.Field<string>("Backpack") + "' WHERE (PlayerUID='" + uid + "' AND Alive='1' AND InstanceID='" + InstanceId + "')");
         }
         public override bool QueryRepairAndRefuel(string uid)
         {
-            return 1 == db.ExecuteSqlNonQuery("UPDATE object_data SET Hitpoints='[]',Fuel='1',Damage='0' WHERE (ObjectID=" + uid + " AND Instance=" + InstanceId + ")");
+            return 1 == db.ExecuteSqlNonQuery("UPDATE object_data SET Hitpoints='[]',Fuel='1',Damage='0' WHERE (ObjectID='" + uid + "' AND Instance='" + InstanceId + "')");
         }
         public override bool QueryDeleteVehicle(string uid)
         {
-            return 1 == db.ExecuteSqlNonQuery("DELETE FROM object_data WHERE (ObjectID=" + uid + " AND Instance=" + InstanceId + ")");
+            return 1 == db.ExecuteSqlNonQuery("DELETE FROM object_data WHERE (ObjectID='" + uid + "' AND Instance='" + InstanceId + "')");
         }
         public override int QueryRemoveBodies(int time_limit)
         {
-            return db.ExecuteSqlNonQuery("DELETE FROM character_data WHERE InstanceID=" + InstanceId + " AND Alive=0 AND LastLogin < now() - interval " + time_limit + " day");
+            return db.ExecuteSqlNonQuery("DELETE FROM character_data WHERE InstanceID='" + InstanceId + "' AND Alive='0' AND LastLogin < now() - interval " + time_limit + " day");
         }
         public override bool OnConnection()
         {

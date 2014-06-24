@@ -54,6 +54,7 @@ namespace DBAccess
             worlds_def = new DataSet();
             vehicle_types = new DataSet();
             deployable_types = new DataSet();
+            player_state = new DataSet();
         }
         public string url;
         public string port;
@@ -81,6 +82,7 @@ namespace DBAccess
         public DataSet worlds_def { get; set; }
         public DataSet vehicle_types { get; set; }
         public DataSet deployable_types { get; set; }
+        public DataSet player_state { get; set; }
         //
         //[XmlIgnore]
     }
@@ -133,11 +135,11 @@ namespace DBAccess
             }
             if (pos != InvalidPos)
             {
-                if ((paths.Last().points.Count == 0) || (Tool.Point.Distance(pos, paths.Last().points.Last()) > 0.001f))
+                if((paths.Last().points.Count == 0) || (Tool.Point.Distance(pos, paths.Last().points.Last()) > 0.001f))
                     paths.Last().points.Add(pos);
             }
         }
-        public void DisplayInMap(Graphics gfx, VirtualMap map)
+        public void DisplayOnMap(Graphics gfx, VirtualMap map)
         {
             foreach(PathDef def in paths)
             {

@@ -22,7 +22,7 @@ namespace DBAccess
     public partial class MainWindow : Form
     {
         #region Fields
-        static ModuleVersion curCfgVersion = new ModuleVersion(4, 1);
+        static ModuleVersion curCfgVersion = new ModuleVersion(5, 0);
 
         private static int bUserAction = 0;
         //
@@ -133,6 +133,7 @@ namespace DBAccess
 
         private System.Drawing.Imaging.ImageAttributes attrSelected = new System.Drawing.Imaging.ImageAttributes();
         private System.Drawing.Imaging.ImageAttributes attrUnselected = new System.Drawing.Imaging.ImageAttributes();
+        private Dictionary<string, System.Drawing.Imaging.ImageAttributes> attrColorPlayers = new Dictionary<string, System.Drawing.Imaging.ImageAttributes>();
         internal InterpolationMode gfxIntplMode = InterpolationMode.NearestNeighbor;
 
         #endregion
@@ -459,11 +460,13 @@ namespace DBAccess
                         iconPlayers.Add(icon);
                     }
 
+                    bool isOnline = (rowOnline.Field<string>("Status") == "Ingame");
+
                     idb.icon = iconPlayers[idx];
-                    idb.icon.image = (rowOnline.Field<string>("Status") == "Ingame") ? global::DBAccess.Properties.Resources.iconOnline : global::DBAccess.Properties.Resources.iconLobby;
+                    idb.icon.image = isOnline ? global::DBAccess.Properties.Resources.iconOnline : global::DBAccess.Properties.Resources.iconLobby;
                     idb.icon.Size = idb.icon.image.Size;
                     idb.icon.iconDB = idb;
-                    idb.icon.contextMenuStrip = null;
+                    idb.icon.contextMenuStrip = isOnline ? null : contextMenuStripPlayerMenu;
 
                     //toolTip1.SetToolTip(idb.icon, row.Field<string>("name"));
 
@@ -540,7 +543,7 @@ namespace DBAccess
                 idb.icon.image = global::DBAccess.Properties.Resources.iconDead;
                 idb.icon.Size = idb.icon.image.Size;
                 idb.icon.iconDB = idb;
-                idb.icon.contextMenuStrip = null;
+                idb.icon.contextMenuStrip = contextMenuStripDeadMenu;
 
                 listIcons.Add(idb);
 
@@ -576,47 +579,8 @@ namespace DBAccess
 
                     idb.icon = iconVehicles[idx];
 
-                    if (damage < 1.0f)
-                    {
-                        string classname = (rowT != null) ? rowT.Field<string>("Type") : "";
-                        switch (classname)
-                        {
-                            case "Air": idb.icon.image = global::DBAccess.Properties.Resources.air; break;
-                            case "Atv": idb.icon.image = global::DBAccess.Properties.Resources.atv; break;
-                            case "Bicycle": idb.icon.image = global::DBAccess.Properties.Resources.bike; break;
-                            case "Boat": idb.icon.image = global::DBAccess.Properties.Resources.boat; break;
-                            case "Bus": idb.icon.image = global::DBAccess.Properties.Resources.bus; break;
-                            case "Car": idb.icon.image = global::DBAccess.Properties.Resources.car; break;
-                            case "Helicopter": idb.icon.image = global::DBAccess.Properties.Resources.helicopter; break;
-                            case "Motorcycle": idb.icon.image = global::DBAccess.Properties.Resources.motorcycle; break;
-                            case "Tractor": idb.icon.image = global::DBAccess.Properties.Resources.tractor; break;
-                            case "Truck": idb.icon.image = global::DBAccess.Properties.Resources.truck; break;
-                            case "UAZ": idb.icon.image = global::DBAccess.Properties.Resources.uaz; break;
-                            default: idb.icon.image = global::DBAccess.Properties.Resources.car; break;
-                        }
-                    }
-                    else
-                    {
-                        string classname = (rowT != null) ? rowT.Field<string>("Type") : "";
-                        switch (classname)
-                        {
-                            case "Air": idb.icon.image = global::DBAccess.Properties.Resources.air_crashed; break;
-                            case "Atv": idb.icon.image = global::DBAccess.Properties.Resources.atv_crashed; break;
-                            case "Bicycle": idb.icon.image = global::DBAccess.Properties.Resources.bike_crashed; break;
-                            case "Boat": idb.icon.image = global::DBAccess.Properties.Resources.boat_crashed; break;
-                            case "Bus": idb.icon.image = global::DBAccess.Properties.Resources.bus_crashed; break;
-                            case "Car": idb.icon.image = global::DBAccess.Properties.Resources.car_crashed; break;
-                            case "Helicopter": idb.icon.image = global::DBAccess.Properties.Resources.helicopter_crashed; break;
-                            case "Motorcycle": idb.icon.image = global::DBAccess.Properties.Resources.motorcycle_crashed; break;
-                            case "Tractor": idb.icon.image = global::DBAccess.Properties.Resources.tractor_crashed; break;
-                            case "Truck": idb.icon.image = global::DBAccess.Properties.Resources.truck_crashed; break;
-                            case "UAZ": idb.icon.image = global::DBAccess.Properties.Resources.uaz_crashed; break;
-                            default: idb.icon.image = global::DBAccess.Properties.Resources.car_crashed; break;
-                        }
-                    }
-
-                    Control tr = new Control();
-                    tr.ContextMenuStrip = null;
+                    string classname = (rowT != null) ? rowT.Field<string>("Type") : "";
+                    idb.icon.image = GetBitmapFromClass(classname, false, (damage >= 1.0f));
                     idb.icon.iconDB = idb;
                     idb.icon.Size = idb.icon.image.Size;
                     idb.icon.contextMenuStrip = contextMenuStripVehicle;
@@ -631,6 +595,33 @@ namespace DBAccess
                     idx++;
                 }
             }
+        }
+
+        private static Bitmap GetBitmapFromClass(string classname, bool def_is_unknown, bool crashed)
+        {
+            switch (classname)
+            {
+                case "Air": return (!crashed) ? global::DBAccess.Properties.Resources.air : global::DBAccess.Properties.Resources.air_crashed;
+                case "Atv": return (!crashed) ? global::DBAccess.Properties.Resources.atv : global::DBAccess.Properties.Resources.atv_crashed;
+                case "Bicycle": return (!crashed) ? global::DBAccess.Properties.Resources.bike : global::DBAccess.Properties.Resources.bike_crashed;
+                case "Boat": return (!crashed) ? global::DBAccess.Properties.Resources.boat : global::DBAccess.Properties.Resources.boat_crashed;
+                case "Bus": return (!crashed) ? global::DBAccess.Properties.Resources.bus : global::DBAccess.Properties.Resources.bus_crashed;
+                case "Car": return (!crashed) ? global::DBAccess.Properties.Resources.car : global::DBAccess.Properties.Resources.car_crashed;
+                case "Helicopter": return (!crashed) ? global::DBAccess.Properties.Resources.helicopter : global::DBAccess.Properties.Resources.helicopter_crashed;
+                case "Motorcycle": return (!crashed) ?  global::DBAccess.Properties.Resources.motorcycle : global::DBAccess.Properties.Resources.motorcycle_crashed;
+                case "Tractor": return (!crashed) ?  global::DBAccess.Properties.Resources.tractor : global::DBAccess.Properties.Resources.tractor_crashed;
+                case "Truck": return (!crashed) ?  global::DBAccess.Properties.Resources.truck : global::DBAccess.Properties.Resources.truck_crashed;
+                case "UAZ": return (!crashed) ?  global::DBAccess.Properties.Resources.uaz : global::DBAccess.Properties.Resources.uaz_crashed;
+                case "Tent": return global::DBAccess.Properties.Resources.tent;
+                case "Stach": return global::DBAccess.Properties.Resources.stach;
+                case "SmallBuild": return global::DBAccess.Properties.Resources.small_build;
+                case "LargeBuild": return global::DBAccess.Properties.Resources.large_build;
+            }
+
+            if(def_is_unknown)
+                return global::DBAccess.Properties.Resources.unknown;
+
+            return (!crashed) ? global::DBAccess.Properties.Resources.car : global::DBAccess.Properties.Resources.car_crashed;
         }
         private void BuildSpawnIcons()
         {
@@ -663,19 +654,8 @@ namespace DBAccess
                     idb.icon = iconVehicles[idx];
 
                     string classname = (rowT != null) ? rowT.Field<string>("Type") : "";
-                    switch (classname)
-                    {
-                        case "Air": idb.icon.image = global::DBAccess.Properties.Resources.air; break;
-                        case "Bicycle": idb.icon.image = global::DBAccess.Properties.Resources.bike; break;
-                        case "Boat": idb.icon.image = global::DBAccess.Properties.Resources.boat; break;
-                        case "Bus": idb.icon.image = global::DBAccess.Properties.Resources.bus; break;
-                        case "Car": idb.icon.image = global::DBAccess.Properties.Resources.car; break;
-                        case "Helicopter": idb.icon.image = global::DBAccess.Properties.Resources.helicopter; break;
-                        case "Motorcycle": idb.icon.image = global::DBAccess.Properties.Resources.motorcycle; break;
-                        case "Truck": idb.icon.image = global::DBAccess.Properties.Resources.truck; break;
-                        default: idb.icon.image = global::DBAccess.Properties.Resources.car; break;
-                    }
 
+                    idb.icon.image = GetBitmapFromClass(classname, false, false);
                     idb.icon.iconDB = idb;
                     idb.icon.Size = idb.icon.image.Size;
                     idb.icon.contextMenuStrip = contextMenuStripSpawn;
@@ -719,20 +699,7 @@ namespace DBAccess
                     idb.icon.contextMenuStrip = null;
 
                     string classname = (rowT != null) ? rowT.Field<string>("Type") : "";
-                    switch (classname)
-                    {
-                        case "Tent": idb.icon.image = global::DBAccess.Properties.Resources.tent; break;
-                        case "Stach": idb.icon.image = global::DBAccess.Properties.Resources.stach; break;
-                        case "SmallBuild": idb.icon.image = global::DBAccess.Properties.Resources.small_build; break;
-                        case "LargeBuild": idb.icon.image = global::DBAccess.Properties.Resources.large_build; break;
-                        case "Car": idb.icon.image = global::DBAccess.Properties.Resources.car; break;
-                        case "Truck": idb.icon.image = global::DBAccess.Properties.Resources.truck; break;
-                        case "Helicopter": idb.icon.image = global::DBAccess.Properties.Resources.helicopter; break;
-                        case "Air": idb.icon.image = global::DBAccess.Properties.Resources.air; break;
-                        case "Boat": idb.icon.image = global::DBAccess.Properties.Resources.boat; break;
-                        default: idb.icon.image = global::DBAccess.Properties.Resources.unknown; break;
-                    }
-
+                    idb.icon.image = GetBitmapFromClass(classname, true, false);
                     idb.icon.Size = idb.icon.image.Size;
 
                     listIcons.Add(idb);
@@ -943,7 +910,7 @@ namespace DBAccess
                 table.Columns.Add(new DataColumn("Type", typeof(string)));
                 table.Columns.Add(new DataColumn("Show", typeof(bool)));
                 DataColumn[] keys = new DataColumn[1];
-                keys[0] = mycfg.deployable_types.Tables[0].Columns[0];
+                keys[0] = table.Columns[0];
                 mycfg.deployable_types.Tables[0].PrimaryKey = keys;
             }
 
@@ -952,6 +919,19 @@ namespace DBAccess
 
             foreach (DataRow row in mycfg.deployable_types.Tables[0].Rows)
                 row.SetField<bool>("Show", true);
+
+            // -> v5.0
+            if (mycfg.cfgVersion < new ModuleVersion(5,0))
+            {
+                mycfg.player_state = new DataSet();
+                DataTable table = mycfg.player_state.Tables.Add();
+                table.Columns.Add(new DataColumn("UID", typeof(string)));
+                table.Columns.Add(new DataColumn("Inventory", typeof(string)));
+                table.Columns.Add(new DataColumn("Backpack", typeof(string)));
+                DataColumn[] keys = new DataColumn[1];
+                keys[0] = table.Columns[0];
+                mycfg.player_state.Tables[0].PrimaryKey = keys;
+            }
 
             try
             {
@@ -1176,15 +1156,43 @@ namespace DBAccess
         }
         private string LocalResolveIP(string ip)
         {
-            if (ip.CompareTo(localIP) == 0)
-                ip = "local IP";
-            else if (ip.CompareTo(mycfg.url) == 0)
+            DataRow found;
+
+            if (ip.CompareTo(mycfg.url) == 0)
                 ip = "server IP";
             else if (ip.CompareTo(mycfg.rcon_url) == 0)
                 ip = "rCon IP";
+            else if((found = PlayersOnline.Tables[0].Rows.FindFrom("IP", ip)) != null)
+                ip = found.Field<string>("Name");
+            else if (ip.CompareTo(localIP) == 0)
+                ip = "local IP";
 
             return ip;
         }
+        private System.Drawing.Imaging.ImageAttributes GetPlayerColor(string uid)
+        {
+            System.Drawing.Imaging.ImageAttributes value = null;
+            if (attrColorPlayers.TryGetValue(uid, out value) == false)
+                attrColorPlayers[uid] = value = new System.Drawing.Imaging.ImageAttributes();
+
+            uint crc = CRC32.Compute(Helpers.String2Bytes(uid));
+            Random rand = new Random();
+            float r = (float)((crc & 255) / 255.0f) * 0.5f;
+            float g = (float)(((crc >> 8) & 255) / 255.0f) * 0.5f;
+            float b = (float)(((crc >> 16) & 255) / 255.0f) * 0.5f;
+            float[][] matrix =
+            { 
+                new float[] {r+0.5f,  0,  0,  0,  0},
+                new float[] {0,  g+0.5f,  0,  0,  0},
+                new float[] {0,  0,  b+0.5f,  0,  0},
+                new float[] {0,  0,  0,  1,  0},
+                new float[] {0,  0,  0,  0,  1}  
+            };
+            value.SetColorMatrix(new System.Drawing.Imaging.ColorMatrix(matrix));
+
+            return value;
+        }
+
         private void buttonConnect_Click(object sender, EventArgs e)
         {
             cb_buttonConnect_Click(sender, e);
@@ -1353,6 +1361,31 @@ namespace DBAccess
         private void textBoxrConAdminName_TextChanged(object sender, EventArgs e)
         {
             mycfg.rcon_adminname = textBoxrConAdminName.Text;
+        }
+
+        private void toolStripMenuItemHealPlayer_Click(object sender, EventArgs e)
+        {
+            cb_toolStripMenuItemHealPlayer_Click(sender, e);
+        }
+
+        private void contextMenuStripItemPlayerMenu_Opening(object sender, CancelEventArgs e)
+        {
+            cb_contextMenuStripItemPlayerMenu_Opening(sender, e);
+        }
+
+        private void toolStripMenuItemRevivePlayer_Click(object sender, EventArgs e)
+        {
+            cb_toolStripMenuItemRevivePlayer_Click(sender, e);
+        }
+
+        private void toolStripMenuItemSavePlayerState_Click(object sender, EventArgs e)
+        {
+            cb_toolStripMenuItemSavePlayerState_Click(sender, e);
+        }
+
+        private void toolStripMenuItemRestorePlayerState_Click(object sender, EventArgs e)
+        {
+            cb_toolStripMenuItemRestorePlayerState_Click(sender, e);
         }
     }
 }

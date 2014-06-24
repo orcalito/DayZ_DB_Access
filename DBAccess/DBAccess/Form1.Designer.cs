@@ -45,9 +45,27 @@
             this.toolStripMenuItemDeleteSpawn = new System.Windows.Forms.ToolStripMenuItem();
             this.bgWorkerDatabase = new System.ComponentModel.BackgroundWorker();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+            this.textBoxrConURL = new System.Windows.Forms.TextBox();
+            this.textBoxDBBaseName = new System.Windows.Forms.TextBox();
+            this.trackBarMagLevel = new System.Windows.Forms.TrackBar();
+            this.trackBarLastUpdated = new System.Windows.Forms.TrackBar();
+            this.buttonSelectCustom3 = new System.Windows.Forms.Button();
+            this.buttonSelectCustom2 = new System.Windows.Forms.Button();
+            this.buttonSelectCustom1 = new System.Windows.Forms.Button();
+            this.buttonCustom3 = new System.Windows.Forms.Button();
+            this.buttonCustom2 = new System.Windows.Forms.Button();
+            this.buttonCustom1 = new System.Windows.Forms.Button();
+            this.textBoxOldTentLimit = new System.Windows.Forms.TextBox();
+            this.buttonRemoveTents = new System.Windows.Forms.Button();
+            this.textBoxOldBodyLimit = new System.Windows.Forms.TextBox();
+            this.textBoxVehicleMax = new System.Windows.Forms.TextBox();
+            this.buttonRemoveBodies = new System.Windows.Forms.Button();
+            this.comboSelectInstance = new System.Windows.Forms.ComboBox();
+            this.comboSelectEpochWorld = new System.Windows.Forms.ComboBox();
+            this.cbCartographer = new System.Windows.Forms.CheckBox();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.contextMenuStripVehicle = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.repairRefuelVehicleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItemRepairRefuelVehicle = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItemDeleteVehicle = new System.Windows.Forms.ToolStripMenuItem();
             this.bgWorkerMapZoom = new System.ComponentModel.BackgroundWorker();
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
@@ -89,27 +107,13 @@
             this.toolStripStatusLabelCnx = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripContainer2 = new System.Windows.Forms.ToolStripContainer();
             this.toolStripContainer1 = new System.Windows.Forms.ToolStripContainer();
-            this.contextMenuPlayersOnline = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.messageToPlayerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.kickPlayerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripContainer3 = new System.Windows.Forms.ToolStripContainer();
-            this.bgWorkerLoadTiles = new System.ComponentModel.BackgroundWorker();
-            this.contextMenuStripPlayerMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.toolStripMenuItemHeal = new System.Windows.Forms.ToolStripMenuItem();
-            this.bgWorkerFocus = new System.ComponentModel.BackgroundWorker();
-            this.bgWorkerBattlEye = new System.ComponentModel.BackgroundWorker();
-            this.bgWorkerRefreshLeds = new System.ComponentModel.BackgroundWorker();
             this.splitContainerGlobal = new System.Windows.Forms.SplitContainer();
-            this.splitContainerChat = new System.Windows.Forms.SplitContainer();
-            this.richTextBoxChat = new System.Windows.Forms.RichTextBox();
-            this.textBoxChatInput = new System.Windows.Forms.TextBox();
             this.splitContainer1 = new DBAccess.MySplitContainer();
             this.panelCnx = new System.Windows.Forms.Panel();
             this.groupBoxrCon = new System.Windows.Forms.GroupBox();
             this.numericUpDownrConPort = new System.Windows.Forms.NumericUpDown();
             this.textBoxrConPassword = new System.Windows.Forms.TextBox();
             this.label8 = new System.Windows.Forms.Label();
-            this.textBoxrConURL = new System.Windows.Forms.TextBox();
             this.label9 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
             this.groupBoxDB = new System.Windows.Forms.GroupBox();
@@ -124,7 +128,6 @@
             this.label3 = new System.Windows.Forms.Label();
             this.textBoxDBUser = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
-            this.textBoxDBBaseName = new System.Windows.Forms.TextBox();
             this.buttonConnect = new System.Windows.Forms.Button();
             this.dataGridViewTraders = new System.Windows.Forms.DataGridView();
             this.dataGridViewMaps = new System.Windows.Forms.DataGridView();
@@ -136,25 +139,12 @@
             this.tabPageDisplay = new System.Windows.Forms.TabPage();
             this.label11 = new System.Windows.Forms.Label();
             this.labelMagLevel = new System.Windows.Forms.Label();
-            this.trackBarMagLevel = new System.Windows.Forms.TrackBar();
             this.label2 = new System.Windows.Forms.Label();
             this.labelLastUpdate = new System.Windows.Forms.Label();
-            this.trackBarLastUpdated = new System.Windows.Forms.TrackBar();
             this.groupBoxInfo = new System.Windows.Forms.GroupBox();
             this.propertyGrid1 = new System.Windows.Forms.PropertyGrid();
             this.tabPageScripts = new System.Windows.Forms.TabPage();
-            this.buttonSelectCustom3 = new System.Windows.Forms.Button();
-            this.buttonSelectCustom2 = new System.Windows.Forms.Button();
-            this.buttonSelectCustom1 = new System.Windows.Forms.Button();
-            this.buttonCustom3 = new System.Windows.Forms.Button();
-            this.buttonCustom2 = new System.Windows.Forms.Button();
-            this.buttonCustom1 = new System.Windows.Forms.Button();
-            this.textBoxOldTentLimit = new System.Windows.Forms.TextBox();
-            this.buttonRemoveTents = new System.Windows.Forms.Button();
             this.textBoxCmdStatus = new System.Windows.Forms.TextBox();
-            this.textBoxOldBodyLimit = new System.Windows.Forms.TextBox();
-            this.textBoxVehicleMax = new System.Windows.Forms.TextBox();
-            this.buttonRemoveBodies = new System.Windows.Forms.Button();
             this.buttonSpawnNew = new System.Windows.Forms.Button();
             this.buttonBackup = new System.Windows.Forms.Button();
             this.buttonRemoveDestroyed = new System.Windows.Forms.Button();
@@ -171,6 +161,9 @@
             this.tabPagePlayers = new System.Windows.Forms.TabPage();
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
             this.dataGridViewPlayers = new System.Windows.Forms.DataGridView();
+            this.contextMenuPlayersOnline = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.toolStripMenuItemMessageToPlayer = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItemKickPlayer = new System.Windows.Forms.ToolStripMenuItem();
             this.dataGridViewAdmins = new System.Windows.Forms.DataGridView();
             this.tabPageSetup = new System.Windows.Forms.TabPage();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
@@ -182,33 +175,37 @@
             this.numericDBRefreshRate = new System.Windows.Forms.NumericUpDown();
             this.label15 = new System.Windows.Forms.Label();
             this.label12 = new System.Windows.Forms.Label();
-            this.comboSelectInstance = new System.Windows.Forms.ComboBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.comboSelectEpochWorld = new System.Windows.Forms.ComboBox();
             this.label14 = new System.Windows.Forms.Label();
-            this.cbCartographer = new System.Windows.Forms.CheckBox();
+            this.splitContainerChat = new System.Windows.Forms.SplitContainer();
+            this.richTextBoxChat = new System.Windows.Forms.RichTextBox();
+            this.textBoxChatInput = new System.Windows.Forms.TextBox();
+            this.toolStripContainer3 = new System.Windows.Forms.ToolStripContainer();
+            this.bgWorkerLoadTiles = new System.ComponentModel.BackgroundWorker();
+            this.contextMenuStripPlayerMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.toolStripMenuItemHeal = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItemSavePlayerState = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItemRestorePlayerState = new System.Windows.Forms.ToolStripMenuItem();
+            this.bgWorkerFocus = new System.ComponentModel.BackgroundWorker();
+            this.bgWorkerBattlEye = new System.ComponentModel.BackgroundWorker();
+            this.bgWorkerRefreshLeds = new System.ComponentModel.BackgroundWorker();
+            this.contextMenuStripDeadMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.toolStripMenuItemRevivePlayer = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.dataSetBindingSource)).BeginInit();
             this.contextMenuStripResetTypes.SuspendLayout();
             this.contextMenuStripSpawn.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.trackBarMagLevel)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.trackBarLastUpdated)).BeginInit();
             this.contextMenuStripVehicle.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             this.toolStripContainer2.ContentPanel.SuspendLayout();
             this.toolStripContainer2.SuspendLayout();
             this.toolStripContainer1.ContentPanel.SuspendLayout();
             this.toolStripContainer1.SuspendLayout();
-            this.contextMenuPlayersOnline.SuspendLayout();
-            this.toolStripContainer3.BottomToolStripPanel.SuspendLayout();
-            this.toolStripContainer3.ContentPanel.SuspendLayout();
-            this.toolStripContainer3.SuspendLayout();
-            this.contextMenuStripPlayerMenu.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainerGlobal)).BeginInit();
             this.splitContainerGlobal.Panel1.SuspendLayout();
             this.splitContainerGlobal.Panel2.SuspendLayout();
             this.splitContainerGlobal.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainerChat)).BeginInit();
-            this.splitContainerChat.Panel1.SuspendLayout();
-            this.splitContainerChat.Panel2.SuspendLayout();
-            this.splitContainerChat.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -223,8 +220,6 @@
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewMaps)).BeginInit();
             this.tabControl1.SuspendLayout();
             this.tabPageDisplay.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.trackBarMagLevel)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.trackBarLastUpdated)).BeginInit();
             this.groupBoxInfo.SuspendLayout();
             this.tabPageScripts.SuspendLayout();
             this.tabPageVehicles.SuspendLayout();
@@ -237,6 +232,7 @@
             this.splitContainer2.Panel2.SuspendLayout();
             this.splitContainer2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewPlayers)).BeginInit();
+            this.contextMenuPlayersOnline.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewAdmins)).BeginInit();
             this.tabPageSetup.SuspendLayout();
             this.groupBox3.SuspendLayout();
@@ -244,6 +240,15 @@
             this.groupBox2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericDBRefreshRate)).BeginInit();
             this.groupBox1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainerChat)).BeginInit();
+            this.splitContainerChat.Panel1.SuspendLayout();
+            this.splitContainerChat.Panel2.SuspendLayout();
+            this.splitContainerChat.SuspendLayout();
+            this.toolStripContainer3.BottomToolStripPanel.SuspendLayout();
+            this.toolStripContainer3.ContentPanel.SuspendLayout();
+            this.toolStripContainer3.SuspendLayout();
+            this.contextMenuStripPlayerMenu.SuspendLayout();
+            this.contextMenuStripDeadMenu.SuspendLayout();
             this.SuspendLayout();
             // 
             // BottomToolStripPanel
@@ -345,6 +350,212 @@
             // 
             this.toolTip1.AutomaticDelay = 250;
             // 
+            // textBoxrConURL
+            // 
+            this.textBoxrConURL.Location = new System.Drawing.Point(41, 18);
+            this.textBoxrConURL.MaxLength = 256;
+            this.textBoxrConURL.Name = "textBoxrConURL";
+            this.textBoxrConURL.Size = new System.Drawing.Size(162, 20);
+            this.textBoxrConURL.TabIndex = 8;
+            this.toolTip1.SetToolTip(this.textBoxrConURL, "optional URL for simulation purpose");
+            // 
+            // textBoxDBBaseName
+            // 
+            this.textBoxDBBaseName.Location = new System.Drawing.Point(41, 42);
+            this.textBoxDBBaseName.MaxLength = 256;
+            this.textBoxDBBaseName.Name = "textBoxDBBaseName";
+            this.textBoxDBBaseName.Size = new System.Drawing.Size(162, 20);
+            this.textBoxDBBaseName.TabIndex = 2;
+            this.toolTip1.SetToolTip(this.textBoxDBBaseName, "Base name in mySQL");
+            // 
+            // trackBarMagLevel
+            // 
+            this.trackBarMagLevel.LargeChange = 1;
+            this.trackBarMagLevel.Location = new System.Drawing.Point(82, 37);
+            this.trackBarMagLevel.Maximum = 6;
+            this.trackBarMagLevel.Name = "trackBarMagLevel";
+            this.trackBarMagLevel.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.trackBarMagLevel.Size = new System.Drawing.Size(144, 45);
+            this.trackBarMagLevel.TabIndex = 2;
+            this.trackBarMagLevel.TickFrequency = 5;
+            this.trackBarMagLevel.TickStyle = System.Windows.Forms.TickStyle.TopLeft;
+            this.toolTip1.SetToolTip(this.trackBarMagLevel, "Map maximal level of zoom");
+            this.trackBarMagLevel.Value = this.trackBarMagLevel.Maximum;
+            this.trackBarMagLevel.ValueChanged += new System.EventHandler(this.trackBarMagLevel_ValueChanged);
+            // 
+            // trackBarLastUpdated
+            // 
+            this.trackBarLastUpdated.LargeChange = 7;
+            this.trackBarLastUpdated.Location = new System.Drawing.Point(82, 7);
+            this.trackBarLastUpdated.Maximum = 30;
+            this.trackBarLastUpdated.Minimum = 1;
+            this.trackBarLastUpdated.Name = "trackBarLastUpdated";
+            this.trackBarLastUpdated.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.trackBarLastUpdated.Size = new System.Drawing.Size(144, 45);
+            this.trackBarLastUpdated.TabIndex = 1;
+            this.trackBarLastUpdated.TickFrequency = 5;
+            this.trackBarLastUpdated.TickStyle = System.Windows.Forms.TickStyle.TopLeft;
+            this.toolTip1.SetToolTip(this.trackBarLastUpdated, "Filters items not updated since X days");
+            this.trackBarLastUpdated.Value = this.trackBarLastUpdated.Maximum;
+            this.trackBarLastUpdated.ValueChanged += new System.EventHandler(this.trackBarLastUpdated_ValueChanged);
+            // 
+            // buttonSelectCustom3
+            // 
+            this.buttonSelectCustom3.Location = new System.Drawing.Point(161, 209);
+            this.buttonSelectCustom3.Name = "buttonSelectCustom3";
+            this.buttonSelectCustom3.Size = new System.Drawing.Size(32, 23);
+            this.buttonSelectCustom3.TabIndex = 14;
+            this.buttonSelectCustom3.Text = "...";
+            this.toolTip1.SetToolTip(this.buttonSelectCustom3, "Change association");
+            this.buttonSelectCustom3.UseVisualStyleBackColor = true;
+            this.buttonSelectCustom3.Click += new System.EventHandler(this.buttonSelectCustom_Click);
+            // 
+            // buttonSelectCustom2
+            // 
+            this.buttonSelectCustom2.Location = new System.Drawing.Point(161, 180);
+            this.buttonSelectCustom2.Name = "buttonSelectCustom2";
+            this.buttonSelectCustom2.Size = new System.Drawing.Size(32, 23);
+            this.buttonSelectCustom2.TabIndex = 12;
+            this.buttonSelectCustom2.Text = "...";
+            this.toolTip1.SetToolTip(this.buttonSelectCustom2, "Change association");
+            this.buttonSelectCustom2.UseVisualStyleBackColor = true;
+            this.buttonSelectCustom2.Click += new System.EventHandler(this.buttonSelectCustom_Click);
+            // 
+            // buttonSelectCustom1
+            // 
+            this.buttonSelectCustom1.Location = new System.Drawing.Point(161, 151);
+            this.buttonSelectCustom1.Name = "buttonSelectCustom1";
+            this.buttonSelectCustom1.Size = new System.Drawing.Size(32, 23);
+            this.buttonSelectCustom1.TabIndex = 10;
+            this.buttonSelectCustom1.Text = "...";
+            this.toolTip1.SetToolTip(this.buttonSelectCustom1, "Change association");
+            this.buttonSelectCustom1.UseVisualStyleBackColor = true;
+            this.buttonSelectCustom1.Click += new System.EventHandler(this.buttonSelectCustom_Click);
+            // 
+            // buttonCustom3
+            // 
+            this.buttonCustom3.Location = new System.Drawing.Point(7, 209);
+            this.buttonCustom3.Name = "buttonCustom3";
+            this.buttonCustom3.Size = new System.Drawing.Size(148, 23);
+            this.buttonCustom3.TabIndex = 13;
+            this.buttonCustom3.Text = "<Custom 3>";
+            this.toolTip1.SetToolTip(this.buttonCustom3, "Custom SQL or BAT file");
+            this.buttonCustom3.UseVisualStyleBackColor = true;
+            this.buttonCustom3.Click += new System.EventHandler(this.buttonCustom_Click);
+            // 
+            // buttonCustom2
+            // 
+            this.buttonCustom2.Location = new System.Drawing.Point(7, 180);
+            this.buttonCustom2.Name = "buttonCustom2";
+            this.buttonCustom2.Size = new System.Drawing.Size(148, 23);
+            this.buttonCustom2.TabIndex = 11;
+            this.buttonCustom2.Text = "<Custom 2>";
+            this.toolTip1.SetToolTip(this.buttonCustom2, "Custom SQL or BAT file");
+            this.buttonCustom2.UseVisualStyleBackColor = true;
+            this.buttonCustom2.Click += new System.EventHandler(this.buttonCustom_Click);
+            // 
+            // buttonCustom1
+            // 
+            this.buttonCustom1.Location = new System.Drawing.Point(7, 151);
+            this.buttonCustom1.Name = "buttonCustom1";
+            this.buttonCustom1.Size = new System.Drawing.Size(148, 23);
+            this.buttonCustom1.TabIndex = 9;
+            this.buttonCustom1.Text = "<Custom 1>";
+            this.toolTip1.SetToolTip(this.buttonCustom1, "Custom SQL or BAT file");
+            this.buttonCustom1.UseVisualStyleBackColor = true;
+            this.buttonCustom1.Click += new System.EventHandler(this.buttonCustom_Click);
+            // 
+            // textBoxOldTentLimit
+            // 
+            this.textBoxOldTentLimit.Location = new System.Drawing.Point(160, 124);
+            this.textBoxOldTentLimit.MaxLength = 4;
+            this.textBoxOldTentLimit.Name = "textBoxOldTentLimit";
+            this.textBoxOldTentLimit.Size = new System.Drawing.Size(47, 20);
+            this.textBoxOldTentLimit.TabIndex = 8;
+            this.textBoxOldTentLimit.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.toolTip1.SetToolTip(this.textBoxOldTentLimit, "Day limit");
+            // 
+            // buttonRemoveTents
+            // 
+            this.buttonRemoveTents.Location = new System.Drawing.Point(6, 122);
+            this.buttonRemoveTents.Name = "buttonRemoveTents";
+            this.buttonRemoveTents.Size = new System.Drawing.Size(148, 23);
+            this.buttonRemoveTents.TabIndex = 7;
+            this.buttonRemoveTents.Text = "Remove tents";
+            this.toolTip1.SetToolTip(this.buttonRemoveTents, "Remove tents from DB\r\nolder than X days");
+            this.buttonRemoveTents.UseVisualStyleBackColor = true;
+            this.buttonRemoveTents.Click += new System.EventHandler(this.buttonRemoveTents_Click);
+            // 
+            // textBoxOldBodyLimit
+            // 
+            this.textBoxOldBodyLimit.Location = new System.Drawing.Point(160, 95);
+            this.textBoxOldBodyLimit.MaxLength = 4;
+            this.textBoxOldBodyLimit.Name = "textBoxOldBodyLimit";
+            this.textBoxOldBodyLimit.Size = new System.Drawing.Size(47, 20);
+            this.textBoxOldBodyLimit.TabIndex = 6;
+            this.textBoxOldBodyLimit.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.toolTip1.SetToolTip(this.textBoxOldBodyLimit, "Day limit");
+            // 
+            // textBoxVehicleMax
+            // 
+            this.textBoxVehicleMax.ImeMode = System.Windows.Forms.ImeMode.On;
+            this.textBoxVehicleMax.Location = new System.Drawing.Point(160, 66);
+            this.textBoxVehicleMax.MaxLength = 4;
+            this.textBoxVehicleMax.Name = "textBoxVehicleMax";
+            this.textBoxVehicleMax.Size = new System.Drawing.Size(47, 20);
+            this.textBoxVehicleMax.TabIndex = 4;
+            this.textBoxVehicleMax.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.toolTip1.SetToolTip(this.textBoxVehicleMax, "Expected vehicle count");
+            // 
+            // buttonRemoveBodies
+            // 
+            this.buttonRemoveBodies.Location = new System.Drawing.Point(6, 93);
+            this.buttonRemoveBodies.Name = "buttonRemoveBodies";
+            this.buttonRemoveBodies.Size = new System.Drawing.Size(148, 23);
+            this.buttonRemoveBodies.TabIndex = 5;
+            this.buttonRemoveBodies.Text = "Remove bodies";
+            this.toolTip1.SetToolTip(this.buttonRemoveBodies, "Remove dead survivors from the DB\r\nolder than X days.");
+            this.buttonRemoveBodies.UseVisualStyleBackColor = true;
+            this.buttonRemoveBodies.Click += new System.EventHandler(this.buttonRemoveBodies_Click);
+            // 
+            // comboSelectInstance
+            // 
+            this.comboSelectInstance.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboSelectInstance.Enabled = false;
+            this.comboSelectInstance.FormattingEnabled = true;
+            this.comboSelectInstance.Location = new System.Drawing.Point(125, 19);
+            this.comboSelectInstance.Name = "comboSelectInstance";
+            this.comboSelectInstance.Size = new System.Drawing.Size(57, 21);
+            this.comboSelectInstance.TabIndex = 107;
+            this.toolTip1.SetToolTip(this.comboSelectInstance, "Instance IDs found in DB");
+            this.comboSelectInstance.SelectedValueChanged += new System.EventHandler(this.comboSelectInstance_SelectedValueChanged);
+            // 
+            // comboSelectEpochWorld
+            // 
+            this.comboSelectEpochWorld.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboSelectEpochWorld.FormattingEnabled = true;
+            this.comboSelectEpochWorld.Location = new System.Drawing.Point(125, 19);
+            this.comboSelectEpochWorld.Name = "comboSelectEpochWorld";
+            this.comboSelectEpochWorld.Size = new System.Drawing.Size(57, 21);
+            this.comboSelectEpochWorld.TabIndex = 109;
+            this.toolTip1.SetToolTip(this.comboSelectEpochWorld, "Effective next launch");
+            this.comboSelectEpochWorld.SelectedValueChanged += new System.EventHandler(this.comboSelectEpochWorld_SelectedValueChanged);
+            // 
+            // cbCartographer
+            // 
+            this.cbCartographer.AutoSize = true;
+            this.cbCartographer.Enabled = false;
+            this.cbCartographer.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.cbCartographer.ForeColor = System.Drawing.Color.Black;
+            this.cbCartographer.Location = new System.Drawing.Point(6, 6);
+            this.cbCartographer.Name = "cbCartographer";
+            this.cbCartographer.Size = new System.Drawing.Size(78, 17);
+            this.cbCartographer.TabIndex = 111;
+            this.cbCartographer.Text = "Cartograph";
+            this.toolTip1.SetToolTip(this.cbCartographer, "internal use, will be removed later");
+            this.cbCartographer.UseVisualStyleBackColor = true;
+            this.cbCartographer.CheckedChanged += new System.EventHandler(this.cbCartographer_CheckedChanged);
+            // 
             // openFileDialog1
             // 
             this.openFileDialog1.FileName = "openFileDialog1";
@@ -352,17 +563,17 @@
             // contextMenuStripVehicle
             // 
             this.contextMenuStripVehicle.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.repairRefuelVehicleToolStripMenuItem,
+            this.toolStripMenuItemRepairRefuelVehicle,
             this.toolStripMenuItemDeleteVehicle});
             this.contextMenuStripVehicle.Name = "contextMenuStripVehicle";
             this.contextMenuStripVehicle.Size = new System.Drawing.Size(207, 48);
             // 
-            // repairRefuelVehicleToolStripMenuItem
+            // toolStripMenuItemRepairRefuelVehicle
             // 
-            this.repairRefuelVehicleToolStripMenuItem.Name = "repairRefuelVehicleToolStripMenuItem";
-            this.repairRefuelVehicleToolStripMenuItem.Size = new System.Drawing.Size(206, 22);
-            this.repairRefuelVehicleToolStripMenuItem.Text = "Repair and Refuel vehicle";
-            this.repairRefuelVehicleToolStripMenuItem.Click += new System.EventHandler(this.cb_repairRefuelVehicleToolStripMenuItem_Click);
+            this.toolStripMenuItemRepairRefuelVehicle.Name = "toolStripMenuItemRepairRefuelVehicle";
+            this.toolStripMenuItemRepairRefuelVehicle.Size = new System.Drawing.Size(206, 22);
+            this.toolStripMenuItemRepairRefuelVehicle.Text = "Repair and Refuel vehicle";
+            this.toolStripMenuItemRepairRefuelVehicle.Click += new System.EventHandler(this.cb_repairRefuelVehicleToolStripMenuItem_Click);
             // 
             // toolStripMenuItemDeleteVehicle
             // 
@@ -764,85 +975,6 @@
             this.toolStripContainer1.Text = "toolStripContainer1";
             this.toolStripContainer1.TopToolStripPanelVisible = false;
             // 
-            // contextMenuPlayersOnline
-            // 
-            this.contextMenuPlayersOnline.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.messageToPlayerToolStripMenuItem,
-            this.kickPlayerToolStripMenuItem});
-            this.contextMenuPlayersOnline.Name = "contextMenuPlayersOnline";
-            this.contextMenuPlayersOnline.Size = new System.Drawing.Size(170, 48);
-            // 
-            // messageToPlayerToolStripMenuItem
-            // 
-            this.messageToPlayerToolStripMenuItem.Name = "messageToPlayerToolStripMenuItem";
-            this.messageToPlayerToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
-            this.messageToPlayerToolStripMenuItem.Text = "Message to player";
-            this.messageToPlayerToolStripMenuItem.Click += new System.EventHandler(this.messageToPlayerToolStripMenuItem_Click);
-            // 
-            // kickPlayerToolStripMenuItem
-            // 
-            this.kickPlayerToolStripMenuItem.Name = "kickPlayerToolStripMenuItem";
-            this.kickPlayerToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
-            this.kickPlayerToolStripMenuItem.Text = "Kick player";
-            this.kickPlayerToolStripMenuItem.Click += new System.EventHandler(this.kickPlayerToolStripMenuItem_Click);
-            // 
-            // toolStripContainer3
-            // 
-            // 
-            // toolStripContainer3.BottomToolStripPanel
-            // 
-            this.toolStripContainer3.BottomToolStripPanel.Controls.Add(this.statusStrip1);
-            // 
-            // toolStripContainer3.ContentPanel
-            // 
-            this.toolStripContainer3.ContentPanel.AutoScroll = true;
-            this.toolStripContainer3.ContentPanel.Controls.Add(this.toolStripContainer2);
-            this.toolStripContainer3.ContentPanel.Size = new System.Drawing.Size(933, 401);
-            this.toolStripContainer3.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.toolStripContainer3.LeftToolStripPanelVisible = false;
-            this.toolStripContainer3.Location = new System.Drawing.Point(0, 0);
-            this.toolStripContainer3.Name = "toolStripContainer3";
-            this.toolStripContainer3.RightToolStripPanelVisible = false;
-            this.toolStripContainer3.Size = new System.Drawing.Size(933, 442);
-            this.toolStripContainer3.TabIndex = 5;
-            this.toolStripContainer3.Text = "toolStripContainer3";
-            this.toolStripContainer3.TopToolStripPanelVisible = false;
-            // 
-            // bgWorkerLoadTiles
-            // 
-            this.bgWorkerLoadTiles.WorkerSupportsCancellation = true;
-            this.bgWorkerLoadTiles.DoWork += new System.ComponentModel.DoWorkEventHandler(this.cb_bgWorkerLoadTiles_DoWork);
-            // 
-            // contextMenuStripPlayerMenu
-            // 
-            this.contextMenuStripPlayerMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripMenuItemHeal});
-            this.contextMenuStripPlayerMenu.Name = "contextMenuStripPlayer";
-            this.contextMenuStripPlayerMenu.Size = new System.Drawing.Size(134, 26);
-            this.contextMenuStripPlayerMenu.Opening += new System.ComponentModel.CancelEventHandler(this.contextMenuStripItemPlayerMenu_Opening);
-            // 
-            // toolStripMenuItemHeal
-            // 
-            this.toolStripMenuItemHeal.Name = "toolStripMenuItemHeal";
-            this.toolStripMenuItemHeal.Size = new System.Drawing.Size(133, 22);
-            this.toolStripMenuItemHeal.Text = "Heal player";
-            this.toolStripMenuItemHeal.Click += new System.EventHandler(this.toolStripMenuItemHealPlayer_Click);
-            // 
-            // bgWorkerFocus
-            // 
-            this.bgWorkerFocus.WorkerSupportsCancellation = true;
-            this.bgWorkerFocus.DoWork += new System.ComponentModel.DoWorkEventHandler(this.cb_bgWorkerFocus_DoWork);
-            // 
-            // bgWorkerBattlEye
-            // 
-            this.bgWorkerBattlEye.WorkerSupportsCancellation = true;
-            this.bgWorkerBattlEye.DoWork += new System.ComponentModel.DoWorkEventHandler(this.bgWorkerRefreshBattEye_DoWork);
-            // 
-            // bgWorkerRefreshLeds
-            // 
-            this.bgWorkerRefreshLeds.WorkerSupportsCancellation = true;
-            this.bgWorkerRefreshLeds.DoWork += new System.ComponentModel.DoWorkEventHandler(this.bgWorkerRefreshLeds_DoWork);
-            // 
             // splitContainerGlobal
             // 
             this.splitContainerGlobal.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -860,49 +992,6 @@
             this.splitContainerGlobal.Size = new System.Drawing.Size(933, 401);
             this.splitContainerGlobal.SplitterDistance = 313;
             this.splitContainerGlobal.TabIndex = 2;
-            // 
-            // splitContainerChat
-            // 
-            this.splitContainerChat.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.splitContainerChat.FixedPanel = System.Windows.Forms.FixedPanel.Panel2;
-            this.splitContainerChat.IsSplitterFixed = true;
-            this.splitContainerChat.Location = new System.Drawing.Point(0, 0);
-            this.splitContainerChat.Name = "splitContainerChat";
-            this.splitContainerChat.Orientation = System.Windows.Forms.Orientation.Horizontal;
-            // 
-            // splitContainerChat.Panel1
-            // 
-            this.splitContainerChat.Panel1.Controls.Add(this.richTextBoxChat);
-            // 
-            // splitContainerChat.Panel2
-            // 
-            this.splitContainerChat.Panel2.Controls.Add(this.textBoxChatInput);
-            this.splitContainerChat.Size = new System.Drawing.Size(933, 84);
-            this.splitContainerChat.SplitterDistance = 55;
-            this.splitContainerChat.TabIndex = 2;
-            // 
-            // richTextBoxChat
-            // 
-            this.richTextBoxChat.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.richTextBoxChat.Location = new System.Drawing.Point(0, 0);
-            this.richTextBoxChat.Name = "richTextBoxChat";
-            this.richTextBoxChat.ReadOnly = true;
-            this.richTextBoxChat.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
-            this.richTextBoxChat.Size = new System.Drawing.Size(933, 55);
-            this.richTextBoxChat.TabIndex = 1;
-            this.richTextBoxChat.Text = "";
-            this.richTextBoxChat.TextChanged += new System.EventHandler(this.richTextBoxChat_TextChanged);
-            // 
-            // textBoxChatInput
-            // 
-            this.textBoxChatInput.AcceptsReturn = true;
-            this.textBoxChatInput.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.textBoxChatInput.Location = new System.Drawing.Point(0, 0);
-            this.textBoxChatInput.Multiline = true;
-            this.textBoxChatInput.Name = "textBoxChatInput";
-            this.textBoxChatInput.Size = new System.Drawing.Size(933, 25);
-            this.textBoxChatInput.TabIndex = 0;
-            this.textBoxChatInput.TextChanged += new System.EventHandler(this.textBoxChatInput_TextChanged);
             // 
             // splitContainer1
             // 
@@ -995,15 +1084,6 @@
             this.label8.Size = new System.Drawing.Size(30, 13);
             this.label8.TabIndex = 114;
             this.label8.Text = "Pass";
-            // 
-            // textBoxrConURL
-            // 
-            this.textBoxrConURL.Location = new System.Drawing.Point(41, 18);
-            this.textBoxrConURL.MaxLength = 256;
-            this.textBoxrConURL.Name = "textBoxrConURL";
-            this.textBoxrConURL.Size = new System.Drawing.Size(162, 20);
-            this.textBoxrConURL.TabIndex = 8;
-            this.toolTip1.SetToolTip(this.textBoxrConURL, "optional URL for simulation purpose");
             // 
             // label9
             // 
@@ -1168,15 +1248,6 @@
             this.label5.TabIndex = 103;
             this.label5.Text = "User";
             // 
-            // textBoxDBBaseName
-            // 
-            this.textBoxDBBaseName.Location = new System.Drawing.Point(41, 42);
-            this.textBoxDBBaseName.MaxLength = 256;
-            this.textBoxDBBaseName.Name = "textBoxDBBaseName";
-            this.textBoxDBBaseName.Size = new System.Drawing.Size(162, 20);
-            this.textBoxDBBaseName.TabIndex = 2;
-            this.toolTip1.SetToolTip(this.textBoxDBBaseName, "Base name in mySQL");
-            // 
             // buttonConnect
             // 
             this.buttonConnect.DialogResult = System.Windows.Forms.DialogResult.OK;
@@ -1310,21 +1381,6 @@
             this.labelMagLevel.Text = "-";
             this.labelMagLevel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
-            // trackBarMagLevel
-            // 
-            this.trackBarMagLevel.LargeChange = 1;
-            this.trackBarMagLevel.Location = new System.Drawing.Point(82, 37);
-            this.trackBarMagLevel.Maximum = 6;
-            this.trackBarMagLevel.Name = "trackBarMagLevel";
-            this.trackBarMagLevel.RightToLeft = System.Windows.Forms.RightToLeft.No;
-            this.trackBarMagLevel.Size = new System.Drawing.Size(144, 45);
-            this.trackBarMagLevel.TabIndex = 2;
-            this.trackBarMagLevel.TickFrequency = 5;
-            this.trackBarMagLevel.TickStyle = System.Windows.Forms.TickStyle.TopLeft;
-            this.toolTip1.SetToolTip(this.trackBarMagLevel, "Map maximal level of zoom");
-            this.trackBarMagLevel.Value = this.trackBarMagLevel.Maximum;
-            this.trackBarMagLevel.ValueChanged += new System.EventHandler(this.trackBarMagLevel_ValueChanged);
-            // 
             // label2
             // 
             this.label2.AutoSize = true;
@@ -1343,22 +1399,6 @@
             this.labelLastUpdate.TabIndex = 9;
             this.labelLastUpdate.Text = "-";
             this.labelLastUpdate.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            // 
-            // trackBarLastUpdated
-            // 
-            this.trackBarLastUpdated.LargeChange = 7;
-            this.trackBarLastUpdated.Location = new System.Drawing.Point(82, 7);
-            this.trackBarLastUpdated.Maximum = 30;
-            this.trackBarLastUpdated.Minimum = 1;
-            this.trackBarLastUpdated.Name = "trackBarLastUpdated";
-            this.trackBarLastUpdated.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.trackBarLastUpdated.Size = new System.Drawing.Size(144, 45);
-            this.trackBarLastUpdated.TabIndex = 1;
-            this.trackBarLastUpdated.TickFrequency = 5;
-            this.trackBarLastUpdated.TickStyle = System.Windows.Forms.TickStyle.TopLeft;
-            this.toolTip1.SetToolTip(this.trackBarLastUpdated, "Filters items not updated since X days");
-            this.trackBarLastUpdated.Value = this.trackBarLastUpdated.Maximum;
-            this.trackBarLastUpdated.ValueChanged += new System.EventHandler(this.trackBarLastUpdated_ValueChanged);
             // 
             // groupBoxInfo
             // 
@@ -1410,93 +1450,6 @@
             this.tabPageScripts.TabIndex = 2;
             this.tabPageScripts.Text = "Scripts";
             // 
-            // buttonSelectCustom3
-            // 
-            this.buttonSelectCustom3.Location = new System.Drawing.Point(161, 209);
-            this.buttonSelectCustom3.Name = "buttonSelectCustom3";
-            this.buttonSelectCustom3.Size = new System.Drawing.Size(32, 23);
-            this.buttonSelectCustom3.TabIndex = 14;
-            this.buttonSelectCustom3.Text = "...";
-            this.toolTip1.SetToolTip(this.buttonSelectCustom3, "Change association");
-            this.buttonSelectCustom3.UseVisualStyleBackColor = true;
-            this.buttonSelectCustom3.Click += new System.EventHandler(this.buttonSelectCustom_Click);
-            // 
-            // buttonSelectCustom2
-            // 
-            this.buttonSelectCustom2.Location = new System.Drawing.Point(161, 180);
-            this.buttonSelectCustom2.Name = "buttonSelectCustom2";
-            this.buttonSelectCustom2.Size = new System.Drawing.Size(32, 23);
-            this.buttonSelectCustom2.TabIndex = 12;
-            this.buttonSelectCustom2.Text = "...";
-            this.toolTip1.SetToolTip(this.buttonSelectCustom2, "Change association");
-            this.buttonSelectCustom2.UseVisualStyleBackColor = true;
-            this.buttonSelectCustom2.Click += new System.EventHandler(this.buttonSelectCustom_Click);
-            // 
-            // buttonSelectCustom1
-            // 
-            this.buttonSelectCustom1.Location = new System.Drawing.Point(161, 151);
-            this.buttonSelectCustom1.Name = "buttonSelectCustom1";
-            this.buttonSelectCustom1.Size = new System.Drawing.Size(32, 23);
-            this.buttonSelectCustom1.TabIndex = 10;
-            this.buttonSelectCustom1.Text = "...";
-            this.toolTip1.SetToolTip(this.buttonSelectCustom1, "Change association");
-            this.buttonSelectCustom1.UseVisualStyleBackColor = true;
-            this.buttonSelectCustom1.Click += new System.EventHandler(this.buttonSelectCustom_Click);
-            // 
-            // buttonCustom3
-            // 
-            this.buttonCustom3.Location = new System.Drawing.Point(7, 209);
-            this.buttonCustom3.Name = "buttonCustom3";
-            this.buttonCustom3.Size = new System.Drawing.Size(148, 23);
-            this.buttonCustom3.TabIndex = 13;
-            this.buttonCustom3.Text = "<Custom 3>";
-            this.toolTip1.SetToolTip(this.buttonCustom3, "Custom SQL or BAT file");
-            this.buttonCustom3.UseVisualStyleBackColor = true;
-            this.buttonCustom3.Click += new System.EventHandler(this.buttonCustom_Click);
-            // 
-            // buttonCustom2
-            // 
-            this.buttonCustom2.Location = new System.Drawing.Point(7, 180);
-            this.buttonCustom2.Name = "buttonCustom2";
-            this.buttonCustom2.Size = new System.Drawing.Size(148, 23);
-            this.buttonCustom2.TabIndex = 11;
-            this.buttonCustom2.Text = "<Custom 2>";
-            this.toolTip1.SetToolTip(this.buttonCustom2, "Custom SQL or BAT file");
-            this.buttonCustom2.UseVisualStyleBackColor = true;
-            this.buttonCustom2.Click += new System.EventHandler(this.buttonCustom_Click);
-            // 
-            // buttonCustom1
-            // 
-            this.buttonCustom1.Location = new System.Drawing.Point(7, 151);
-            this.buttonCustom1.Name = "buttonCustom1";
-            this.buttonCustom1.Size = new System.Drawing.Size(148, 23);
-            this.buttonCustom1.TabIndex = 9;
-            this.buttonCustom1.Text = "<Custom 1>";
-            this.toolTip1.SetToolTip(this.buttonCustom1, "Custom SQL or BAT file");
-            this.buttonCustom1.UseVisualStyleBackColor = true;
-            this.buttonCustom1.Click += new System.EventHandler(this.buttonCustom_Click);
-            // 
-            // textBoxOldTentLimit
-            // 
-            this.textBoxOldTentLimit.Location = new System.Drawing.Point(160, 124);
-            this.textBoxOldTentLimit.MaxLength = 4;
-            this.textBoxOldTentLimit.Name = "textBoxOldTentLimit";
-            this.textBoxOldTentLimit.Size = new System.Drawing.Size(47, 20);
-            this.textBoxOldTentLimit.TabIndex = 8;
-            this.textBoxOldTentLimit.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.toolTip1.SetToolTip(this.textBoxOldTentLimit, "Day limit");
-            // 
-            // buttonRemoveTents
-            // 
-            this.buttonRemoveTents.Location = new System.Drawing.Point(6, 122);
-            this.buttonRemoveTents.Name = "buttonRemoveTents";
-            this.buttonRemoveTents.Size = new System.Drawing.Size(148, 23);
-            this.buttonRemoveTents.TabIndex = 7;
-            this.buttonRemoveTents.Text = "Remove tents";
-            this.toolTip1.SetToolTip(this.buttonRemoveTents, "Remove tents from DB\r\nolder than X days");
-            this.buttonRemoveTents.UseVisualStyleBackColor = true;
-            this.buttonRemoveTents.Click += new System.EventHandler(this.buttonRemoveTents_Click);
-            // 
             // textBoxCmdStatus
             // 
             this.textBoxCmdStatus.AcceptsReturn = true;
@@ -1512,38 +1465,6 @@
             this.textBoxCmdStatus.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.textBoxCmdStatus.Size = new System.Drawing.Size(313, 51);
             this.textBoxCmdStatus.TabIndex = 8;
-            // 
-            // textBoxOldBodyLimit
-            // 
-            this.textBoxOldBodyLimit.Location = new System.Drawing.Point(160, 95);
-            this.textBoxOldBodyLimit.MaxLength = 4;
-            this.textBoxOldBodyLimit.Name = "textBoxOldBodyLimit";
-            this.textBoxOldBodyLimit.Size = new System.Drawing.Size(47, 20);
-            this.textBoxOldBodyLimit.TabIndex = 6;
-            this.textBoxOldBodyLimit.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.toolTip1.SetToolTip(this.textBoxOldBodyLimit, "Day limit");
-            // 
-            // textBoxVehicleMax
-            // 
-            this.textBoxVehicleMax.ImeMode = System.Windows.Forms.ImeMode.On;
-            this.textBoxVehicleMax.Location = new System.Drawing.Point(160, 66);
-            this.textBoxVehicleMax.MaxLength = 4;
-            this.textBoxVehicleMax.Name = "textBoxVehicleMax";
-            this.textBoxVehicleMax.Size = new System.Drawing.Size(47, 20);
-            this.textBoxVehicleMax.TabIndex = 4;
-            this.textBoxVehicleMax.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.toolTip1.SetToolTip(this.textBoxVehicleMax, "Expected vehicle count");
-            // 
-            // buttonRemoveBodies
-            // 
-            this.buttonRemoveBodies.Location = new System.Drawing.Point(6, 93);
-            this.buttonRemoveBodies.Name = "buttonRemoveBodies";
-            this.buttonRemoveBodies.Size = new System.Drawing.Size(148, 23);
-            this.buttonRemoveBodies.TabIndex = 5;
-            this.buttonRemoveBodies.Text = "Remove bodies";
-            this.toolTip1.SetToolTip(this.buttonRemoveBodies, "Remove dead survivors from the DB\r\nolder than X days.");
-            this.buttonRemoveBodies.UseVisualStyleBackColor = true;
-            this.buttonRemoveBodies.Click += new System.EventHandler(this.buttonRemoveBodies_Click);
             // 
             // buttonSpawnNew
             // 
@@ -1760,6 +1681,28 @@
             this.dataGridViewPlayers.Size = new System.Drawing.Size(320, 200);
             this.dataGridViewPlayers.TabIndex = 0;
             // 
+            // contextMenuPlayersOnline
+            // 
+            this.contextMenuPlayersOnline.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripMenuItemMessageToPlayer,
+            this.toolStripMenuItemKickPlayer});
+            this.contextMenuPlayersOnline.Name = "contextMenuPlayersOnline";
+            this.contextMenuPlayersOnline.Size = new System.Drawing.Size(170, 48);
+            // 
+            // toolStripMenuItemMessageToPlayer
+            // 
+            this.toolStripMenuItemMessageToPlayer.Name = "toolStripMenuItemMessageToPlayer";
+            this.toolStripMenuItemMessageToPlayer.Size = new System.Drawing.Size(169, 22);
+            this.toolStripMenuItemMessageToPlayer.Text = "Message to player";
+            this.toolStripMenuItemMessageToPlayer.Click += new System.EventHandler(this.messageToPlayerToolStripMenuItem_Click);
+            // 
+            // toolStripMenuItemKickPlayer
+            // 
+            this.toolStripMenuItemKickPlayer.Name = "toolStripMenuItemKickPlayer";
+            this.toolStripMenuItemKickPlayer.Size = new System.Drawing.Size(169, 22);
+            this.toolStripMenuItemKickPlayer.Text = "Kick player";
+            this.toolStripMenuItemKickPlayer.Click += new System.EventHandler(this.kickPlayerToolStripMenuItem_Click);
+            // 
             // dataGridViewAdmins
             // 
             this.dataGridViewAdmins.AllowUserToAddRows = false;
@@ -1922,18 +1865,6 @@
             this.label12.TabIndex = 106;
             this.label12.Text = "Select Instance Id";
             // 
-            // comboSelectInstance
-            // 
-            this.comboSelectInstance.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboSelectInstance.Enabled = false;
-            this.comboSelectInstance.FormattingEnabled = true;
-            this.comboSelectInstance.Location = new System.Drawing.Point(125, 19);
-            this.comboSelectInstance.Name = "comboSelectInstance";
-            this.comboSelectInstance.Size = new System.Drawing.Size(57, 21);
-            this.comboSelectInstance.TabIndex = 107;
-            this.toolTip1.SetToolTip(this.comboSelectInstance, "Instance IDs found in DB");
-            this.comboSelectInstance.SelectedValueChanged += new System.EventHandler(this.comboSelectInstance_SelectedValueChanged);
-            // 
             // groupBox1
             // 
             this.groupBox1.Controls.Add(this.comboSelectEpochWorld);
@@ -1946,17 +1877,6 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Epoch";
             // 
-            // comboSelectEpochWorld
-            // 
-            this.comboSelectEpochWorld.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboSelectEpochWorld.FormattingEnabled = true;
-            this.comboSelectEpochWorld.Location = new System.Drawing.Point(125, 19);
-            this.comboSelectEpochWorld.Name = "comboSelectEpochWorld";
-            this.comboSelectEpochWorld.Size = new System.Drawing.Size(57, 21);
-            this.comboSelectEpochWorld.TabIndex = 109;
-            this.toolTip1.SetToolTip(this.comboSelectEpochWorld, "Effective next launch");
-            this.comboSelectEpochWorld.SelectedValueChanged += new System.EventHandler(this.comboSelectEpochWorld_SelectedValueChanged);
-            // 
             // label14
             // 
             this.label14.AutoSize = true;
@@ -1966,20 +1886,135 @@
             this.label14.TabIndex = 109;
             this.label14.Text = "Select World Bitmap";
             // 
-            // cbCartographer
+            // splitContainerChat
             // 
-            this.cbCartographer.AutoSize = true;
-            this.cbCartographer.Enabled = false;
-            this.cbCartographer.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cbCartographer.ForeColor = System.Drawing.Color.Black;
-            this.cbCartographer.Location = new System.Drawing.Point(6, 6);
-            this.cbCartographer.Name = "cbCartographer";
-            this.cbCartographer.Size = new System.Drawing.Size(78, 17);
-            this.cbCartographer.TabIndex = 111;
-            this.cbCartographer.Text = "Cartograph";
-            this.toolTip1.SetToolTip(this.cbCartographer, "internal use, will be removed later");
-            this.cbCartographer.UseVisualStyleBackColor = true;
-            this.cbCartographer.CheckedChanged += new System.EventHandler(this.cbCartographer_CheckedChanged);
+            this.splitContainerChat.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainerChat.FixedPanel = System.Windows.Forms.FixedPanel.Panel2;
+            this.splitContainerChat.IsSplitterFixed = true;
+            this.splitContainerChat.Location = new System.Drawing.Point(0, 0);
+            this.splitContainerChat.Name = "splitContainerChat";
+            this.splitContainerChat.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            // 
+            // splitContainerChat.Panel1
+            // 
+            this.splitContainerChat.Panel1.Controls.Add(this.richTextBoxChat);
+            // 
+            // splitContainerChat.Panel2
+            // 
+            this.splitContainerChat.Panel2.Controls.Add(this.textBoxChatInput);
+            this.splitContainerChat.Size = new System.Drawing.Size(933, 84);
+            this.splitContainerChat.SplitterDistance = 55;
+            this.splitContainerChat.TabIndex = 2;
+            // 
+            // richTextBoxChat
+            // 
+            this.richTextBoxChat.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.richTextBoxChat.Location = new System.Drawing.Point(0, 0);
+            this.richTextBoxChat.Name = "richTextBoxChat";
+            this.richTextBoxChat.ReadOnly = true;
+            this.richTextBoxChat.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
+            this.richTextBoxChat.Size = new System.Drawing.Size(933, 55);
+            this.richTextBoxChat.TabIndex = 1;
+            this.richTextBoxChat.Text = "";
+            this.richTextBoxChat.TextChanged += new System.EventHandler(this.richTextBoxChat_TextChanged);
+            // 
+            // textBoxChatInput
+            // 
+            this.textBoxChatInput.AcceptsReturn = true;
+            this.textBoxChatInput.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.textBoxChatInput.Location = new System.Drawing.Point(0, 0);
+            this.textBoxChatInput.Multiline = true;
+            this.textBoxChatInput.Name = "textBoxChatInput";
+            this.textBoxChatInput.Size = new System.Drawing.Size(933, 25);
+            this.textBoxChatInput.TabIndex = 0;
+            this.textBoxChatInput.TextChanged += new System.EventHandler(this.textBoxChatInput_TextChanged);
+            // 
+            // toolStripContainer3
+            // 
+            // 
+            // toolStripContainer3.BottomToolStripPanel
+            // 
+            this.toolStripContainer3.BottomToolStripPanel.Controls.Add(this.statusStrip1);
+            // 
+            // toolStripContainer3.ContentPanel
+            // 
+            this.toolStripContainer3.ContentPanel.AutoScroll = true;
+            this.toolStripContainer3.ContentPanel.Controls.Add(this.toolStripContainer2);
+            this.toolStripContainer3.ContentPanel.Size = new System.Drawing.Size(933, 401);
+            this.toolStripContainer3.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.toolStripContainer3.LeftToolStripPanelVisible = false;
+            this.toolStripContainer3.Location = new System.Drawing.Point(0, 0);
+            this.toolStripContainer3.Name = "toolStripContainer3";
+            this.toolStripContainer3.RightToolStripPanelVisible = false;
+            this.toolStripContainer3.Size = new System.Drawing.Size(933, 442);
+            this.toolStripContainer3.TabIndex = 5;
+            this.toolStripContainer3.Text = "toolStripContainer3";
+            this.toolStripContainer3.TopToolStripPanelVisible = false;
+            // 
+            // bgWorkerLoadTiles
+            // 
+            this.bgWorkerLoadTiles.WorkerSupportsCancellation = true;
+            this.bgWorkerLoadTiles.DoWork += new System.ComponentModel.DoWorkEventHandler(this.cb_bgWorkerLoadTiles_DoWork);
+            // 
+            // contextMenuStripPlayerMenu
+            // 
+            this.contextMenuStripPlayerMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripMenuItemHeal,
+            this.toolStripMenuItemSavePlayerState,
+            this.toolStripMenuItemRestorePlayerState});
+            this.contextMenuStripPlayerMenu.Name = "contextMenuStripPlayer";
+            this.contextMenuStripPlayerMenu.Size = new System.Drawing.Size(177, 92);
+            this.contextMenuStripPlayerMenu.Opening += new System.ComponentModel.CancelEventHandler(this.contextMenuStripItemPlayerMenu_Opening);
+            // 
+            // toolStripMenuItemHeal
+            // 
+            this.toolStripMenuItemHeal.Name = "toolStripMenuItemHeal";
+            this.toolStripMenuItemHeal.Size = new System.Drawing.Size(176, 22);
+            this.toolStripMenuItemHeal.Text = "Heal player";
+            this.toolStripMenuItemHeal.Click += new System.EventHandler(this.toolStripMenuItemHealPlayer_Click);
+            // 
+            // toolStripMenuItemSavePlayerState
+            // 
+            this.toolStripMenuItemSavePlayerState.Name = "toolStripMenuItemSavePlayerState";
+            this.toolStripMenuItemSavePlayerState.Size = new System.Drawing.Size(176, 22);
+            this.toolStripMenuItemSavePlayerState.Text = "Save state";
+            this.toolStripMenuItemSavePlayerState.Click += new System.EventHandler(this.toolStripMenuItemSavePlayerState_Click);
+            // 
+            // toolStripMenuItemRestorePlayerState
+            // 
+            this.toolStripMenuItemRestorePlayerState.Name = "toolStripMenuItemRestorePlayerState";
+            this.toolStripMenuItemRestorePlayerState.Size = new System.Drawing.Size(176, 22);
+            this.toolStripMenuItemRestorePlayerState.Text = "Restore state";
+            this.toolStripMenuItemRestorePlayerState.Click += new System.EventHandler(this.toolStripMenuItemRestorePlayerState_Click);
+            // 
+            // bgWorkerFocus
+            // 
+            this.bgWorkerFocus.WorkerSupportsCancellation = true;
+            this.bgWorkerFocus.DoWork += new System.ComponentModel.DoWorkEventHandler(this.cb_bgWorkerFocus_DoWork);
+            // 
+            // bgWorkerBattlEye
+            // 
+            this.bgWorkerBattlEye.WorkerSupportsCancellation = true;
+            this.bgWorkerBattlEye.DoWork += new System.ComponentModel.DoWorkEventHandler(this.bgWorkerRefreshBattEye_DoWork);
+            // 
+            // bgWorkerRefreshLeds
+            // 
+            this.bgWorkerRefreshLeds.WorkerSupportsCancellation = true;
+            this.bgWorkerRefreshLeds.DoWork += new System.ComponentModel.DoWorkEventHandler(this.bgWorkerRefreshLeds_DoWork);
+            // 
+            // contextMenuStripDeadMenu
+            // 
+            this.contextMenuStripDeadMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripMenuItemRevivePlayer});
+            this.contextMenuStripDeadMenu.Name = "contextMenuStripPlayer";
+            this.contextMenuStripDeadMenu.Size = new System.Drawing.Size(144, 26);
+            // 
+            // toolStripMenuItemRevivePlayer
+            // 
+            this.toolStripMenuItemRevivePlayer.Name = "toolStripMenuItemRevivePlayer";
+            this.toolStripMenuItemRevivePlayer.Size = new System.Drawing.Size(143, 22);
+            this.toolStripMenuItemRevivePlayer.Text = "Revive player";
+            this.toolStripMenuItemRevivePlayer.Click += new System.EventHandler(this.toolStripMenuItemRevivePlayer_Click);
             // 
             // MainWindow
             // 
@@ -1996,6 +2031,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.dataSetBindingSource)).EndInit();
             this.contextMenuStripResetTypes.ResumeLayout(false);
             this.contextMenuStripSpawn.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.trackBarMagLevel)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.trackBarLastUpdated)).EndInit();
             this.contextMenuStripVehicle.ResumeLayout(false);
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
@@ -2005,22 +2042,10 @@
             this.toolStripContainer1.ContentPanel.ResumeLayout(false);
             this.toolStripContainer1.ResumeLayout(false);
             this.toolStripContainer1.PerformLayout();
-            this.contextMenuPlayersOnline.ResumeLayout(false);
-            this.toolStripContainer3.BottomToolStripPanel.ResumeLayout(false);
-            this.toolStripContainer3.BottomToolStripPanel.PerformLayout();
-            this.toolStripContainer3.ContentPanel.ResumeLayout(false);
-            this.toolStripContainer3.ResumeLayout(false);
-            this.toolStripContainer3.PerformLayout();
-            this.contextMenuStripPlayerMenu.ResumeLayout(false);
             this.splitContainerGlobal.Panel1.ResumeLayout(false);
             this.splitContainerGlobal.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainerGlobal)).EndInit();
             this.splitContainerGlobal.ResumeLayout(false);
-            this.splitContainerChat.Panel1.ResumeLayout(false);
-            this.splitContainerChat.Panel2.ResumeLayout(false);
-            this.splitContainerChat.Panel2.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainerChat)).EndInit();
-            this.splitContainerChat.ResumeLayout(false);
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
@@ -2038,8 +2063,6 @@
             this.tabControl1.ResumeLayout(false);
             this.tabPageDisplay.ResumeLayout(false);
             this.tabPageDisplay.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.trackBarMagLevel)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.trackBarLastUpdated)).EndInit();
             this.groupBoxInfo.ResumeLayout(false);
             this.tabPageScripts.ResumeLayout(false);
             this.tabPageScripts.PerformLayout();
@@ -2053,6 +2076,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).EndInit();
             this.splitContainer2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewPlayers)).EndInit();
+            this.contextMenuPlayersOnline.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewAdmins)).EndInit();
             this.tabPageSetup.ResumeLayout(false);
             this.tabPageSetup.PerformLayout();
@@ -2064,6 +2088,18 @@
             ((System.ComponentModel.ISupportInitialize)(this.numericDBRefreshRate)).EndInit();
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
+            this.splitContainerChat.Panel1.ResumeLayout(false);
+            this.splitContainerChat.Panel2.ResumeLayout(false);
+            this.splitContainerChat.Panel2.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainerChat)).EndInit();
+            this.splitContainerChat.ResumeLayout(false);
+            this.toolStripContainer3.BottomToolStripPanel.ResumeLayout(false);
+            this.toolStripContainer3.BottomToolStripPanel.PerformLayout();
+            this.toolStripContainer3.ContentPanel.ResumeLayout(false);
+            this.toolStripContainer3.ResumeLayout(false);
+            this.toolStripContainer3.PerformLayout();
+            this.contextMenuStripPlayerMenu.ResumeLayout(false);
+            this.contextMenuStripDeadMenu.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -2178,13 +2214,13 @@
         private System.Windows.Forms.ToolStripContainer toolStripContainer2;
         private System.Windows.Forms.ToolStripContainer toolStripContainer3;
         private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.ToolStripMenuItem repairRefuelVehicleToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemRepairRefuelVehicle;
         private System.ComponentModel.BackgroundWorker bgWorkerLoadTiles;
         private System.Windows.Forms.TabPage tabPagePlayers;
         private System.Windows.Forms.DataGridView dataGridViewPlayers;
         private System.Windows.Forms.ContextMenuStrip contextMenuPlayersOnline;
-        private System.Windows.Forms.ToolStripMenuItem messageToPlayerToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem kickPlayerToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemMessageToPlayer;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemKickPlayer;
         private System.Windows.Forms.SplitContainer splitContainerGlobal;
         private System.Windows.Forms.RichTextBox richTextBoxChat;
         private System.Windows.Forms.TextBox textBoxChatInput;
@@ -2230,6 +2266,10 @@
         private System.ComponentModel.BackgroundWorker bgWorkerRefreshLeds;
         private System.Windows.Forms.TextBox textBoxrConAdminName;
         private System.Windows.Forms.Label label16;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemSavePlayerState;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemRestorePlayerState;
+        private System.Windows.Forms.ContextMenuStrip contextMenuStripDeadMenu;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemRevivePlayer;
     }
 }
 

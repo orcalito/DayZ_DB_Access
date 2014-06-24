@@ -34,7 +34,7 @@ namespace DBAccess
             dicTileExistence[key] = File.Exists(req.path);
             return dicTileExistence[key];
         }
-        private bool? IsPlayerOnline(string uid)
+        private bool IsPlayerOnline(string uid)
         {
             DataRow rowAlive = myDB.PlayersAlive.Tables[0].Rows.Find(uid);
             if (rowAlive != null)
@@ -46,7 +46,7 @@ namespace DBAccess
                 return false;
             }
 
-            return null;
+            return false;
         }
         #endregion
 
@@ -83,7 +83,7 @@ namespace DBAccess
                 }
             }
         }
-        private void toolStripMenuItemHealPlayer_Click(object sender, EventArgs e)
+        private void cb_toolStripMenuItemHealPlayer_Click(object sender, EventArgs e)
         {
             var survivor = propertyGrid1.SelectedObject as Survivor;
             if (survivor != null)
@@ -94,6 +94,63 @@ namespace DBAccess
                     if (!bRes)
                     {
                         MessageBox.Show("Error while trying to heal player '" + survivor.name + "' into database");
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Player '" + survivor.name + "' must be offline or in lobby");
+                }
+            }
+        }
+        private void cb_toolStripMenuItemRevivePlayer_Click(object sender, EventArgs e)
+        {
+            var survivor = propertyGrid1.SelectedObject as Survivor;
+            if (survivor != null)
+            {
+                if (IsPlayerOnline(survivor.uid) == false)
+                {
+                    bool bRes = myDB.RevivePlayer(survivor.uid, survivor.idb.row.Field<uint>("id").ToString());
+                    if (!bRes)
+                    {
+                        MessageBox.Show("Error while trying to revive player '" + survivor.name + "' into database");
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Player '" + survivor.name + "' must be offline or in lobby");
+                }
+            }
+        }
+        private void cb_toolStripMenuItemSavePlayerState_Click(object sender, EventArgs e)
+        {
+            var survivor = propertyGrid1.SelectedObject as Survivor;
+            if (survivor != null)
+            {
+                if (IsPlayerOnline(survivor.uid) == false)
+                {
+                    bool bRes = myDB.SavePlayerState(survivor.uid);
+                    if (!bRes)
+                    {
+                        MessageBox.Show("Error while trying to save player '" + survivor.name + "' state from database");
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Player '" + survivor.name + "' must be offline or in lobby");
+                }
+            }
+        }
+        private void cb_toolStripMenuItemRestorePlayerState_Click(object sender, EventArgs e)
+        {
+            var survivor = propertyGrid1.SelectedObject as Survivor;
+            if (survivor != null)
+            {
+                if (IsPlayerOnline(survivor.uid) == false)
+                {
+                    bool bRes = myDB.RestorePlayerState(survivor.uid);
+                    if (!bRes)
+                    {
+                        MessageBox.Show("Error while trying to restore player '" + survivor.name + "' state in database");
                     }
                 }
                 else
@@ -200,7 +257,7 @@ namespace DBAccess
                 while (bgWorkerBattlEye.IsBusy || bgWorkerDatabase.IsBusy || bgWorkerMapZoom.IsBusy || bgWorkerLoadTiles.IsBusy || bgWorkerFocus.IsBusy || bgWorkerRefreshLeds.IsBusy)
                 {
                     Application.DoEvents();
-                    Thread.Sleep(100);
+                    Thread.Sleep(125);
                 }
             }
             catch
@@ -217,28 +274,27 @@ namespace DBAccess
             panelCnx.Location = new Point((splitter.Width - panelCnx.Width) / 2,
                                          (splitter.Height - panelCnx.Height) / 2);
         }
-        private void contextMenuStripItemPlayerMenu_Opening(object sender, CancelEventArgs e)
+        private void cb_contextMenuStripItemPlayerMenu_Opening(object sender, CancelEventArgs e)
         {
             e.Cancel = false;
 
             var survivor = propertyGrid1.SelectedObject as Survivor;
             if (survivor != null)
             {
-                if (IsPlayerOnline(survivor.uid) == false)
-                {
-                    toolStripMenuItemHeal.Text = "Heal player '" + survivor.name + "'";
-                    toolStripMenuItemHeal.Enabled = true;
-                }
-                else
-                {
-                    toolStripMenuItemHeal.Text = "Heal: player '" + survivor.name + "' must be offline or in lobby";
-                    toolStripMenuItemHeal.Enabled = false;
-                }
+                bool playerIsOffline = IsPlayerOnline(survivor.uid) == false;
+
+                toolStripMenuItemHeal.Text = "Heal player '" + survivor.name + ((playerIsOffline) ? "'" : "' must be offline or in lobby");
+
+                toolStripMenuItemHeal.Enabled = playerIsOffline;
+                toolStripMenuItemSavePlayerState.Enabled = playerIsOffline;
+                toolStripMenuItemRestorePlayerState.Enabled = playerIsOffline && (mycfg.player_state.Tables[0].Rows.Find(survivor.uid) != null);
             }
             else
             {
-                toolStripMenuItemHeal.Text = "Heal: No survivor selected";
+                toolStripMenuItemHeal.Text = "Heal player: No survivor selected";
                 toolStripMenuItemHeal.Enabled = false;
+                toolStripMenuItemSavePlayerState.Enabled = false;
+                toolStripMenuItemRestorePlayerState.Enabled = false;
             }
             //contextMenuStripPlayerMenu.Items.Clear();
             //contextMenuStripPlayerMenu.Items.Add(toolStripMenuItemHeal);
@@ -377,7 +433,7 @@ namespace DBAccess
                             foreach (iconDB idb in listIcons)
                             {
                                 if ((idb.type == UIDType.TypePlayer) || (idb.type == UIDType.TypeVehicle))
-                                    GetUIDGraph(idb.uid).DisplayInMap(e.Graphics, virtualMap);
+                                    GetUIDGraph(idb.uid).DisplayOnMap(e.Graphics, virtualMap);
                             }
                         }
 
@@ -388,7 +444,7 @@ namespace DBAccess
                         {
                             if (recPanel.IntersectsWith(idb.icon.rectangle))
                             {
-                                System.Drawing.Imaging.ImageAttributes attrib = (selectedIcon == idb) ? attrSelected : attrUnselected;
+                                System.Drawing.Imaging.ImageAttributes attrib = (selectedIcon == idb) ? attrSelected : attrUnselected/*GetPlayerColor(idb.uid)*/;
                                 e.Graphics.DrawImage(idb.icon.image, idb.icon.rectangle, 0, 0, idb.icon.image.Width, idb.icon.image.Height, GraphicsUnit.Pixel, attrib);
                             }
                         }
@@ -399,7 +455,7 @@ namespace DBAccess
                     }
 
                     if (!IsMapHelperEnabled && bCartographer)
-                        cartographer.DisplayInMap(e.Graphics, virtualMap);
+                        cartographer.DisplayOnMap(e.Graphics, virtualMap);
                 }
             }
             catch (Exception ex)
@@ -436,16 +492,18 @@ namespace DBAccess
             {
                 selectedIcon = null;
                 Rectangle mouseRec = new Rectangle(e.Location, Size.Empty);
+
+                // Call Click() on (lastly) selected icon
                 foreach (iconDB idb in listIcons)
                 {
                     if (mouseRec.IntersectsWith(idb.icon.rectangle))
-                    {
-                        // Call Click event from icon
                         selectedIcon = idb;
-                        idb.icon.OnClick(this, e);
-                        splitContainer1.Panel1.Invalidate();
-                        break;
-                    }
+                }
+                if (selectedIcon != null)
+                {
+                    // Call Click event from icon
+                    selectedIcon.icon.OnClick(this, e);
+                    splitContainer1.Panel1.Invalidate();
                 }
                 if ((selectedIcon == null) && e.Button.HasFlag(MouseButtons.Right))
                 {
@@ -582,6 +640,12 @@ namespace DBAccess
 
                             splitContainer1.Panel1.Invalidate();
                             prevNearest = nearest;
+
+                            if (nearest != null && listIcons[listIcons.Count - 1] != nearest)
+                            {
+                                listIcons.Remove(nearest);
+                                listIcons.Add(nearest);
+                            }
                         }
                     }
                 }
@@ -760,15 +824,25 @@ namespace DBAccess
                 switch (resultBE)
                 {
                     case BattlEyeConnectionResult.ConnectionFailed:
-                        rCon = null;
-                        MessageBox.Show("Connection to server failed", "BattlEye");
-                        break;
-
                     case BattlEyeConnectionResult.InvalidLogin:
                         rCon = null;
-                        MessageBox.Show("Invalid rCon login", "BattlEye");
                         break;
                 }
+            }
+
+            bool bDBconnected = myDB.Connected;
+            bool bBEconnected = (rCon != null);
+
+            led_database = (bDBconnected) ? LedStatus.On : LedStatus.Off;
+            led_battleye = (bBEconnected) ? LedStatus.On : LedStatus.Off;
+
+            if (!bDBconnected || !bBEconnected)
+            {
+                string header = (!bDBconnected) ? "Database " : "";
+                header += (!bBEconnected) ? "BattlEye" : "";
+                string db_error = (!bDBconnected) ? "Unable to connect to Database.\n" : "";
+                string be_error = (!bBEconnected) ? (resultBE == BattlEyeConnectionResult.InvalidLogin) ? "Invalid rCon login" : "Unable to connect to BattlEye.\n" : "";
+                MessageBox.Show(db_error + be_error, header);
             }
 
             if (myDB.Connected && resultBE != BattlEyeConnectionResult.ConnectionFailed)
@@ -834,9 +908,6 @@ namespace DBAccess
                 panelCnx.Enabled = false;
                 panelCnx.Visible = false;
             }
-
-            led_database = (myDB.Connected) ? LedStatus.On : LedStatus.Off;
-            led_battleye = (rCon!=null && rCon.Connected) ? LedStatus.On : LedStatus.Off;
 
             this.Cursor = Cursors.Arrow;
         }
@@ -1339,27 +1410,58 @@ namespace DBAccess
                         line = sr.ReadLine();
                     } while (line.EndsWith("----") == false);
 
-                    do
+                    line = sr.ReadLine();
+
+                    // http://www.txt2re.com/
+                    string re = "(\\d+)\\s+((?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))(?![\\d]):(\\d+)\\s+(\\d+|\\-1)\\s+.*?((?:[a-z0-9]*)).*?((?:[a-z]+|\\?)).*?\\s+((?:.*))";
+
+                    Regex r = new Regex(re, RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
+                    while (line != null && line.StartsWith("(") == false)
                     {
-                        line = sr.ReadLine();
-                        if (line != null)
+                        Match m = r.Match(line);
+                        if (m.Success)
                         {
-                            if (line.Length>0 && line.StartsWith("(") == false)
+                            PlayerData entry = new PlayerData();
+                            entry.Id = int.Parse(m.Groups[1].ToString());
+                            entry.Name = m.Groups[7].ToString();
+                            entry.Guid = m.Groups[5].ToString();
+                            entry.Ip = m.Groups[2].ToString();
+                            if(entry.Name.Contains("(Lobby)"))
                             {
-                                line = ((line.Replace("  ", " ")).Replace("  ", " ")).Replace("  ", " ");
-                                string[] items = line.Trim().Split(' ', ':');
-
-                                PlayerData entry = new PlayerData();
-                                    entry.Id = int.Parse(items[0]);
-                                    entry.Name = items[5];
-                                    entry.Guid = items[4].Split('(')[0];
-                                    entry.Ip = items[1];
-                                    entry.Status = (items.GetLength(0) > 6) ? "Lobby" : "Ingame";
-
-                                players.Add(entry);
+                                entry.Name = entry.Name.Replace("(Lobby)", "").Trim();
+                                entry.Status = "Lobby";
                             }
+                            else
+                            {
+                                entry.Status = "Ingame";
+                            }
+
+                            players.Add(entry);
                         }
-                    } while (line!=null && line.StartsWith("(") == false);
+
+                        line = sr.ReadLine();
+                    }
+
+                    //    line = sr.ReadLine();
+                    //    if (line != null)
+                    //    {
+                    //        if (line.Length>0 && line.StartsWith("(") == false)
+                    //        {
+                    //            line = ((line.Replace("  ", " ")).Replace("  ", " ")).Replace("  ", " ");
+                    //            string[] items = line.Trim().Split(' ', ':');
+
+                    //            PlayerData entry = new PlayerData();
+                    //                entry.Id = int.Parse(items[0]);
+                    //                entry.Name = items[5];
+                    //                entry.Guid = items[4].Split('(')[0];
+                    //                entry.Ip = items[1];
+                    //                entry.Status = (items.GetLength(0) > 6) ? "Lobby" : "Ingame";
+
+                    //            players.Add(entry);
+                    //        }
+                    //    }
+                    //} while (line!=null && line.StartsWith("(") == false);
 
                     this.Invoke((System.Threading.ThreadStart)(delegate { UpdatePlayersOnline(); }));
                 }
@@ -1556,7 +1658,7 @@ namespace DBAccess
             BackgroundWorker bw = sender as BackgroundWorker;
 
             // Initialize remaining time to 5sec for 1st DB refresh
-            long remaining_ticks = 50000000;
+            long remaining_ticks = 5 * 10000000;
 
             while (!bw.CancellationPending)
             {
