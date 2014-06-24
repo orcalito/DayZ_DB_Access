@@ -720,7 +720,7 @@ namespace DBAccess
             toolStripStatusDead.Enabled = bState;
             toolStripStatusVehicle.Enabled = bState;
             toolStripStatusSpawn.Enabled = bState;
-            toolStripStatusTraders.Enabled = bState;
+            toolStripStatusTraders.Enabled = /*bState*/false;
             toolStripStatusDeployable.Enabled = bState;
             toolStripStatusMapHelper.Enabled = bState;
             toolStripStatusTrail.Enabled = bState;

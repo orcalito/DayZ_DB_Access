@@ -408,7 +408,6 @@ namespace BattleNET
 			catch(Exception ex)
 			{
 				// do nothing
-                //System.Diagnostics.Debug.Assert(false);
                 System.Diagnostics.Debug.Print(ex.Message);
 			}
         }
@@ -521,7 +520,6 @@ namespace BattleNET
         private bool threadReceiveIsRunning = false;
         private bool threadReconnectIsRunning = false;
         private bool threadKeepAliveIsRunning = false;
-
 
 		public event BattlEyeMessageEventHandler BattlEyeMessageReceived;
 		public event BattlEyeConnectEventHandler BattlEyeConnected;
