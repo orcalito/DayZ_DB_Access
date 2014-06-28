@@ -31,9 +31,9 @@ DayZ DB Access
 	- remove old tents (1)
 	- 3 custom SQL or BAT scripts can be set & called.
  - Setup Tab:
-        - refresh rates for Database and BattlEye
-        - set admin name
-        - choose epoch world 
+ 	- refresh rates for Database and BattlEye
+ 	- set admin name
+ 	- choose epoch world 
 
 (1) : disabled with Epoch's DB because useless.
 
