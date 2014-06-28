@@ -11,13 +11,13 @@ namespace BattleNET
 {
 	public enum BattlEyeDisconnectionType
 	{
-		[Description("Disconnected!")]
+        [Description("Disconnected from BattlEye !")]
 		Manual,
 
-		[Description("Disconnected! (Connection timeout)")]
+        [Description("Disconnected from BattlEye ! (Connection timeout)")]
 		ConnectionLost,
 
-		[Description("Disconnected! (Socket Exception)")]
+        [Description("Disconnected from BattlEye ! (Socket Exception)")]
 		SocketException,
 	}
 }

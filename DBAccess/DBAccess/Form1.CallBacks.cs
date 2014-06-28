@@ -64,10 +64,30 @@ namespace DBAccess
                     var vehicle_id = rowT.Field<UInt16>("Id");
 
                     bool bRes = myDB.AddVehicle((currentMode == displayMode.ShowSpawn), classname, vehicle_id, positionInDB);
-                    if (!bRes)
+                    if (bRes)
+                    {
+                        RefreshDB();
+                    }
+                    else
                     {
                         MessageBox.Show("Error while trying to insert vehicle instance '" + classname + "' into database");
                     }
+                }
+            }
+        }
+        private void toolStripMenuItemTeleportVehicle_Click(object sender, EventArgs e)
+        {
+            var vehicle = propertyGrid1.SelectedObject as Vehicle;
+            if (vehicle != null)
+            {
+                bool bRes = myDB.TeleportVehicle(vehicle.uid.ToString(), positionInDB);
+                if (bRes)
+                {
+                    RefreshDB();
+                }
+                else
+                {
+                    MessageBox.Show("Error while trying to teleport vehicle '" + vehicle.uid + "' into database");
                 }
             }
         }
@@ -77,7 +97,11 @@ namespace DBAccess
             if(survivor != null)
             {
                 bool bRes = myDB.TeleportPlayer(survivor.uid, positionInDB);
-                if (!bRes)
+                if (bRes)
+                {
+                    RefreshDB();
+                }
+                else
                 {
                     MessageBox.Show("Error while trying to teleport player '" + survivor.name + "' into database");
                 }
@@ -91,7 +115,11 @@ namespace DBAccess
                 if (IsPlayerOnline(survivor.uid) == false)
                 {
                     bool bRes = myDB.HealPlayer(survivor.uid);
-                    if (!bRes)
+                    if (bRes)
+                    {
+                        RefreshDB();
+                    }
+                    else
                     {
                         MessageBox.Show("Error while trying to heal player '" + survivor.name + "' into database");
                     }
@@ -110,7 +138,11 @@ namespace DBAccess
                 if (IsPlayerOnline(survivor.uid) == false)
                 {
                     bool bRes = myDB.RevivePlayer(survivor.uid, survivor.idb.row.Field<uint>("id").ToString());
-                    if (!bRes)
+                    if (bRes)
+                    {
+                        RefreshDB();
+                    }
+                    else
                     {
                         MessageBox.Show("Error while trying to revive player '" + survivor.name + "' into database");
                     }
@@ -148,7 +180,11 @@ namespace DBAccess
                 if (IsPlayerOnline(survivor.uid) == false)
                 {
                     bool bRes = myDB.RestorePlayerState(survivor.uid);
-                    if (!bRes)
+                    if (bRes)
+                    {
+                        RefreshDB();
+                    }
+                    else
                     {
                         MessageBox.Show("Error while trying to restore player '" + survivor.name + "' state in database");
                     }
@@ -296,8 +332,6 @@ namespace DBAccess
                 toolStripMenuItemSavePlayerState.Enabled = false;
                 toolStripMenuItemRestorePlayerState.Enabled = false;
             }
-            //contextMenuStripPlayerMenu.Items.Clear();
-            //contextMenuStripPlayerMenu.Items.Add(toolStripMenuItemHeal);
         }
         private void contextMenuStripItemMenu_Opening(object sender, CancelEventArgs e)
         {
@@ -307,55 +341,77 @@ namespace DBAccess
             {
                 case displayMode.ShowAlive:
                 case displayMode.ShowOnline:
-                    var survivor = propertyGrid1.SelectedObject as Survivor;
-
-                    if (survivor != null)
                     {
-                        if (IsPlayerOnline(survivor.uid) == false)
+                        var survivor = propertyGrid1.SelectedObject as Survivor;
+
+                        if (survivor != null)
                         {
-                            toolStripMenuMapTeleportPlayer.Text = "Teleport player '" + survivor.name + "'";
-                            toolStripMenuMapTeleportPlayer.Enabled = true;
+                            if (IsPlayerOnline(survivor.uid) == false)
+                            {
+                                toolStripMenuMapTeleportPlayer.Text = "Teleport player '" + survivor.name + "'";
+                                toolStripMenuMapTeleportPlayer.Enabled = true;
+                            }
+                            else
+                            {
+                                toolStripMenuMapTeleportPlayer.Text = "Teleport: player '" + survivor.name + "' must be offline or in lobby";
+                                toolStripMenuMapTeleportPlayer.Enabled = false;
+                            }
                         }
                         else
                         {
-                            toolStripMenuMapTeleportPlayer.Text = "Teleport: player '" + survivor.name + "' must be offline or in lobby";
+                            toolStripMenuMapTeleportPlayer.Text = "Teleport: No survivor selected";
                             toolStripMenuMapTeleportPlayer.Enabled = false;
                         }
+                        contextMenuStripMapMenu.Items.Clear();
+                        contextMenuStripMapMenu.Items.Add(toolStripMenuMapTeleportPlayer);
                     }
-                    else
-                    {
-                        toolStripMenuMapTeleportPlayer.Text = "Teleport: No survivor selected";
-                        toolStripMenuMapTeleportPlayer.Enabled = false;
-                    }
-                    contextMenuStripMapMenu.Items.Clear();
-                    contextMenuStripMapMenu.Items.Add(toolStripMenuMapTeleportPlayer);
                     break;
 
                 case displayMode.ShowVehicle:
                 case displayMode.ShowSpawn:
-                    if (!IsEpochSchema)
-                    {
-                        if (dataGridViewVehicleTypes.SelectedCells.Count == 1)
-                        {
-                            var row = dataGridViewVehicleTypes.Rows[dataGridViewVehicleTypes.SelectedCells[0].RowIndex];
-                            string sType = "";
-                            if (currentMode == displayMode.ShowSpawn)
-                                sType = "Spawnpoint";
-
-                            toolStripMenuMapAddVehicle.Text = "Add " + row.Cells["ColGVVTType"].Value + " '" + row.Cells["ColGVVTClassName"].Value + "' " + sType;
-                            toolStripMenuMapAddVehicle.Enabled = true;
-                        }
-                        else
-                        {
-                            toolStripMenuMapAddVehicle.Text = "Add vehicle: Select a vehicle from tab 'Vehicles'";
-                            toolStripMenuMapAddVehicle.Enabled = false;
-                        }
-                        contextMenuStripMapMenu.Items.Clear();
-                        contextMenuStripMapMenu.Items.Add(toolStripMenuMapAddVehicle);
-                    }
-                    else
                     {
                         e.Cancel = true;
+
+                        if (currentMode == displayMode.ShowVehicle)
+                        {
+                            var vehicle = propertyGrid1.SelectedObject as Vehicle;
+
+                            if (vehicle != null)
+                            {
+                                toolStripMenuMapTeleportVehicle.Text = "Teleport vehicle '" + vehicle.uid.ToString() + "'";
+                                toolStripMenuMapTeleportVehicle.Enabled = true;
+                            }
+                            else
+                            {
+                                toolStripMenuMapTeleportVehicle.Text = "Teleport: No vehicle selected";
+                                toolStripMenuMapTeleportVehicle.Enabled = false;
+                            }
+                            contextMenuStripMapMenu.Items.Clear();
+                            contextMenuStripMapMenu.Items.Add(toolStripMenuMapTeleportVehicle);
+                            e.Cancel = false;
+                        }
+
+                        if (!IsEpochSchema)
+                        {
+                            if (dataGridViewVehicleTypes.SelectedCells.Count == 1)
+                            {
+                                var row = dataGridViewVehicleTypes.Rows[dataGridViewVehicleTypes.SelectedCells[0].RowIndex];
+                                string sType = "";
+                                if (currentMode == displayMode.ShowSpawn)
+                                    sType = "Spawnpoint";
+
+                                toolStripMenuMapAddVehicle.Text = "Add " + row.Cells["ColGVVTType"].Value + " '" + row.Cells["ColGVVTClassName"].Value + "' " + sType;
+                                toolStripMenuMapAddVehicle.Enabled = true;
+                            }
+                            else
+                            {
+                                toolStripMenuMapAddVehicle.Text = "Add vehicle: Select a vehicle from tab 'Vehicles'";
+                                toolStripMenuMapAddVehicle.Enabled = false;
+                            }
+                            contextMenuStripMapMenu.Items.Clear();
+                            contextMenuStripMapMenu.Items.Add(toolStripMenuMapAddVehicle);
+                            e.Cancel = false;
+                        }
                     }
                     break;
 
@@ -745,7 +801,10 @@ namespace DBAccess
             if (selectedIcon != null)
             {
                 if (myDB.RepairAndRefuelVehicle(selectedIcon.uid))
+                {
+                    RefreshDB();
                     textBoxCmdStatus.Text = "repaired & refueled vehicle id " + selectedIcon.uid;
+                }
             }
             selectedIcon = null;
         }
@@ -754,7 +813,10 @@ namespace DBAccess
             if (selectedIcon != null)
             {
                 if (myDB.DeleteVehicle(selectedIcon.uid))
+                {
+                    RefreshDB();
                     textBoxCmdStatus.Text = "removed vehicle id " + selectedIcon.uid;
+                }
             }
             selectedIcon = null;
         }
@@ -763,7 +825,10 @@ namespace DBAccess
             if (selectedIcon != null)
             {
                 if (myDB.DeleteSpawn(selectedIcon.uid))
+                {
+                    RefreshDB();
                     textBoxCmdStatus.Text = "removed vehicle spawnpoint id " + selectedIcon.uid;
+                }
             }
             selectedIcon = null;
         }
@@ -922,6 +987,8 @@ namespace DBAccess
 
             mycfg.filter_last_updated = (track.Value == track.Maximum) ? 999 : track.Value;
             myDB.Schema.FilterLastUpdated = mycfg.filter_last_updated;
+
+            RefreshDB();
         }
         private void cb_trackBarMagLevel_ValueChanged(object sender, EventArgs e)
         {
@@ -961,7 +1028,10 @@ namespace DBAccess
         private void cb_buttonRemoveDestroyed_Click(object sender, EventArgs e)
         {
             int res = myDB.ExecuteSqlNonQuery("DELETE FROM instance_vehicle WHERE instance_id=" + mycfg.instance_id + " AND damage=1");
-
+            if (res > 0)
+            {
+                RefreshDB();
+            }
             textBoxCmdStatus.Text = "removed " + res + " destroyed vehicles.";
         }
         private void cb_buttonSpawnNew_Click(object sender, EventArgs e)
@@ -969,7 +1039,10 @@ namespace DBAccess
             this.Cursor = Cursors.WaitCursor;
 
             int result = myDB.SpawnNewVehicles(int.Parse(textBoxVehicleMax.Text));
-
+            if (result > 0)
+            {
+                RefreshDB();
+            }
             textBoxCmdStatus.Text = "spawned " + result + " new vehicles.";
 
             this.Cursor = Cursors.Arrow;
@@ -979,7 +1052,10 @@ namespace DBAccess
             int limit = int.Parse(textBoxOldBodyLimit.Text);
 
             int res = myDB.RemoveBodies(limit);
-
+            if (res > 0)
+            {
+                RefreshDB();
+            }
             textBoxCmdStatus.Text = "removed " + res + " bodies older than " + limit + " days.";
         }
         private void cb_buttonRemoveTents_Click(object sender, EventArgs e)
@@ -990,6 +1066,10 @@ namespace DBAccess
                          + " inner join survivor s on id.owner_id = s.id and s.is_dead=1"
                          + " WHERE id.instance_id=" + mycfg.instance_id + " AND d.class_name = 'TentStorage' AND id.last_updated < now() - interval " + limit + " day";
             int res = myDB.ExecuteSqlNonQuery(query);
+            if (res > 0)
+            {
+                RefreshDB();
+            }
         }
         private void cb_buttonSelectCustom_Click(object sender, EventArgs e)
         {
@@ -1354,7 +1434,6 @@ namespace DBAccess
             {
                 BattlEyeConnectionMessage(args.Message, bSuccess);
             }));
-
         }
         private void BattlEyeDisconnected(BattlEyeDisconnectEventArgs args)
         {
@@ -1443,26 +1522,6 @@ namespace DBAccess
                         line = sr.ReadLine();
                     }
 
-                    //    line = sr.ReadLine();
-                    //    if (line != null)
-                    //    {
-                    //        if (line.Length>0 && line.StartsWith("(") == false)
-                    //        {
-                    //            line = ((line.Replace("  ", " ")).Replace("  ", " ")).Replace("  ", " ");
-                    //            string[] items = line.Trim().Split(' ', ':');
-
-                    //            PlayerData entry = new PlayerData();
-                    //                entry.Id = int.Parse(items[0]);
-                    //                entry.Name = items[5];
-                    //                entry.Guid = items[4].Split('(')[0];
-                    //                entry.Ip = items[1];
-                    //                entry.Status = (items.GetLength(0) > 6) ? "Lobby" : "Ingame";
-
-                    //            players.Add(entry);
-                    //        }
-                    //    }
-                    //} while (line!=null && line.StartsWith("(") == false);
-
                     this.Invoke((System.Threading.ThreadStart)(delegate { UpdatePlayersOnline(); }));
                 }
                 else if (args.Message.StartsWith("Connected RCon admins"))
@@ -1507,7 +1566,11 @@ namespace DBAccess
                 }
                 else
                 {
-                    richTextBoxChat.Invoke((System.Threading.ThreadStart)(delegate { AddTextInChat(args.Message, Color.Black); }));
+                    richTextBoxChat.Invoke((System.Threading.ThreadStart)(delegate
+                    {
+                        Color col = (args.Message.StartsWith("RCon admin #")) ? Color.DarkOrange : Color.Black;
+                        AddTextInChat(args.Message, col);
+                    }));
                 }
             }
             catch
@@ -1670,23 +1733,28 @@ namespace DBAccess
                 {
                     remaining_ticks = (long)(10000000 * mycfg.db_refreshrate);
 
-                    led_database = LedStatus.Active;
-
-                    myDB.Refresh();
-
-                    if (System.Threading.Interlocked.CompareExchange(ref bUserAction, 1, 0) == 0)
-                    {
-                        dlgUpdateIcons = this.BuildIcons;
-
-                        if (myDB.Connected)
-                            this.Invoke(dlgUpdateIcons);
-
-                        System.Threading.Interlocked.Exchange(ref bUserAction, 0);
-                    }
-
-                    led_database = (myDB.Connected) ? LedStatus.On : LedStatus.Off;
+                    RefreshDB();
                 }
             }
+        }
+
+        private void RefreshDB()
+        {
+            led_database = LedStatus.Active;
+
+            myDB.Refresh();
+
+            if (System.Threading.Interlocked.CompareExchange(ref bUserAction, 1, 0) == 0)
+            {
+                dlgUpdateIcons = this.BuildIcons;
+
+                if (myDB.Connected)
+                    this.Invoke(dlgUpdateIcons);
+
+                System.Threading.Interlocked.Exchange(ref bUserAction, 0);
+            }
+
+            led_database = (myDB.Connected) ? LedStatus.On : LedStatus.Off;
         }
         private void cb_bgWorkerRefreshBattEye_DoWork(object sender, DoWorkEventArgs e)
         {

@@ -268,4 +268,10 @@
   <data name="Tool_LedAccess" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Tool_LedAccess.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="suv" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\suv.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="suv_crashed" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\suv_crashed.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
 </root>

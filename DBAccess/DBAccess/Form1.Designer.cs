@@ -38,6 +38,7 @@
             this.contextMenuStripMapMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.toolStripMenuMapAddVehicle = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuMapTeleportPlayer = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuMapTeleportVehicle = new System.Windows.Forms.ToolStripMenuItem();
             this.dataSetBindingSource = new System.Windows.Forms.BindingSource(this.components);
             this.contextMenuStripResetTypes = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.toolStripMenuItemResetTypes = new System.Windows.Forms.ToolStripMenuItem();
@@ -307,6 +308,13 @@
             this.toolStripMenuMapTeleportPlayer.Size = new System.Drawing.Size(162, 22);
             this.toolStripMenuMapTeleportPlayer.Text = "Teleport";
             this.toolStripMenuMapTeleportPlayer.Click += new System.EventHandler(this.toolStripMenuItemTeleportPlayer_Click);
+            // 
+            // toolStripMenuMapTeleportVehicle
+            // 
+            this.toolStripMenuMapTeleportVehicle.Name = "toolStripMenuMapTeleportVehicle";
+            this.toolStripMenuMapTeleportVehicle.Size = new System.Drawing.Size(162, 22);
+            this.toolStripMenuMapTeleportVehicle.Text = "Teleport";
+            this.toolStripMenuMapTeleportVehicle.Click += new System.EventHandler(this.toolStripMenuItemTeleportVehicle_Click);
             // 
             // dataSetBindingSource
             // 
@@ -1549,18 +1557,6 @@
             this.ColGVVTType.FillWeight = 127.1574F;
             this.ColGVVTType.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.ColGVVTType.HeaderText = "Type";
-            this.ColGVVTType.Items.AddRange(new object[] {
-            "Air",
-            "Atv",
-            "Bicycle",
-            "Boat",
-            "Bus",
-            "Car",
-            "Helicopter",
-            "Motorcycle",
-            "Tractor",
-            "Truck",
-            "UAZ"});
             this.ColGVVTType.Name = "ColGVVTType";
             this.ColGVVTType.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
             // 
@@ -1619,17 +1615,6 @@
             this.ColGVDTType.FillWeight = 127.1574F;
             this.ColGVDTType.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.ColGVDTType.HeaderText = "Type";
-            this.ColGVDTType.Items.AddRange(new object[] {
-            "Unknown",
-            "Tent",
-            "Stach",
-            "SmallBuild",
-            "LargeBuild",
-            "Car",
-            "Truck",
-            "Helicopter",
-            "Air",
-            "Boat"});
             this.ColGVDTType.Name = "ColGVDTType";
             this.ColGVDTType.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
             // 
@@ -2179,6 +2164,7 @@
         private System.Windows.Forms.ContextMenuStrip contextMenuStripMapMenu;
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuMapAddVehicle;
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuMapTeleportPlayer;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuMapTeleportVehicle;
         private System.Windows.Forms.TrackBar trackBarLastUpdated;
         private System.Windows.Forms.Label labelLastUpdate;
         private System.Windows.Forms.ToolStripMenuItem ttootToolStripMenuItem;

@@ -12,7 +12,7 @@
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <IsWebBootstrapper>true</IsWebBootstrapper>
-    <PublishUrl>c:\publishDDBA\</PublishUrl>
+    <PublishUrl>ftp://ftp.olympe.in/</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Web</InstallFrom>
     <UpdateEnabled>true</UpdateEnabled>
@@ -28,8 +28,8 @@
     <CreateWebPageOnPublish>true</CreateWebPageOnPublish>
     <WebPage>publish.htm</WebPage>
     <OpenBrowserOnPublish>false</OpenBrowserOnPublish>
-    <ApplicationRevision>0</ApplicationRevision>
-    <ApplicationVersion>2.9.6.%2a</ApplicationVersion>
+    <ApplicationRevision>4</ApplicationRevision>
+    <ApplicationVersion>2.9.8.%2a</ApplicationVersion>
     <UseApplicationTrust>true</UseApplicationTrust>
     <CreateDesktopShortcut>true</CreateDesktopShortcut>
     <PublishWizardCompleted>true</PublishWizardCompleted>
@@ -175,7 +175,6 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
     <None Include="Resources\HISTORY.rtf" />
-    <None Include="Resources\README.md" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -205,12 +204,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Application.ico" />
-    <None Include="Resources\Tool_LedAccess.png" />
-    <None Include="Resources\Tool_Dead.png" />
-    <None Include="Resources\atv.png" />
-    <None Include="Resources\iconDead.png" />
-    <None Include="Resources\air_crashed.png" />
-    <None Include="Resources\air.png" />
     <None Include="Resources\Application.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -31,11 +31,11 @@ namespace DBAccess
                 
                 if (key <= 12500)
                 {
-                    if (key > 10000) this.epochKey += "KeyBlack=" + (key - 10000).ToString();
-                    else if (key > 7500) this.epochKey += "KeyYellow=" + (key - 7500).ToString();
-                    else if (key > 5000) this.epochKey += "KeyBlue=" + (key - 5000).ToString();
-                    else if (key > 2500) this.epochKey += "KeyRed=" + (key - 2500).ToString();
-                    else if (key > 0) this.epochKey += "KeyGreen=" + key.ToString();
+                    if (key > 10000) this.epochKey += "KeyBlack" + (key - 10000).ToString();
+                    else if (key > 7500) this.epochKey += "KeyYellow" + (key - 7500).ToString();
+                    else if (key > 5000) this.epochKey += "KeyBlue" + (key - 5000).ToString();
+                    else if (key > 2500) this.epochKey += "KeyRed" + (key - 2500).ToString();
+                    else if (key > 0) this.epochKey += "KeyGreen" + key.ToString();
                 }
             }
         }

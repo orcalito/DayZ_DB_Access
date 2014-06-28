@@ -135,8 +135,13 @@ namespace DBAccess
             }
             if (pos != InvalidPos)
             {
-                if((paths.Last().points.Count == 0) || (Tool.Point.Distance(pos, paths.Last().points.Last()) > 0.001f))
+                if ((paths.Last().points.Count == 0) || (Tool.Point.Distance(pos, paths.Last().points.Last()) > 0.0002614f))
                     paths.Last().points.Add(pos);
+                else
+                {
+                    paths.Last().points.RemoveAt(paths.Last().points.Count-1);
+                    paths.Last().points.Add(pos);
+                }
             }
         }
         public void DisplayOnMap(Graphics gfx, VirtualMap map)

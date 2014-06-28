@@ -14,6 +14,7 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Windows.Forms;
 using System.Xml.Serialization;
 
@@ -22,7 +23,8 @@ namespace DBAccess
     public partial class MainWindow : Form
     {
         #region Fields
-        static ModuleVersion curCfgVersion = new ModuleVersion(5, 0);
+        public static bool IsDebug { get; private set; }
+        static ModuleVersion curCfgVersion = new ModuleVersion(5, 1);
 
         private static int bUserAction = 0;
         //
@@ -143,6 +145,24 @@ namespace DBAccess
         {
             InitializeComponent();
 
+            //--- Fill ColGVVTType & ColGVDTType with compatible icon types ---
+            foreach (IconType v in Enum.GetValues(typeof(IconType)))
+            {
+                FieldInfo fi = v.GetType().GetField(v.ToString());
+                var attributes = (UsableInAttribute[])fi.GetCustomAttributes(typeof(UsableInAttribute), false);
+                if (attributes.Length > 0)
+                {
+                    foreach (var attr in attributes)
+                    {
+                        switch (attr.target)
+                        {
+                            case "Vehicle": this.ColGVVTType.Items.Add(v.ToString()); break;
+                            case "Deployable": this.ColGVDTType.Items.Add(v.ToString()); break;
+                        }
+                    }
+                }
+            }
+
             //
             splitContainerGlobal.Panel2Collapsed = true;
 
@@ -200,6 +220,7 @@ namespace DBAccess
                 {
                     this.Text = asb.GetName().Name + " - Test version";
                     cbCartographer.Enabled = true;
+                    IsDebug = true;
                 }
             }
             catch
@@ -246,8 +267,9 @@ namespace DBAccess
             dataGridViewAdmins.DataSource = AdminsOnline.Tables[0];
 
             //
-            localIP = ExternalLocalIP();
-            
+            localIP = "";
+            RetrieveExternalLocalIP();
+
             bgWorkerDatabase.RunWorkerAsync();
             bgWorkerBattlEye.RunWorkerAsync();
             bgWorkerMapZoom.RunWorkerAsync();
@@ -609,7 +631,8 @@ namespace DBAccess
                 case "Car": return (!crashed) ? global::DBAccess.Properties.Resources.car : global::DBAccess.Properties.Resources.car_crashed;
                 case "Helicopter": return (!crashed) ? global::DBAccess.Properties.Resources.helicopter : global::DBAccess.Properties.Resources.helicopter_crashed;
                 case "Motorcycle": return (!crashed) ?  global::DBAccess.Properties.Resources.motorcycle : global::DBAccess.Properties.Resources.motorcycle_crashed;
-                case "Tractor": return (!crashed) ?  global::DBAccess.Properties.Resources.tractor : global::DBAccess.Properties.Resources.tractor_crashed;
+                case "SUV": return (!crashed) ? global::DBAccess.Properties.Resources.suv : global::DBAccess.Properties.Resources.suv_crashed;
+                case "Tractor": return (!crashed) ? global::DBAccess.Properties.Resources.tractor : global::DBAccess.Properties.Resources.tractor_crashed;
                 case "Truck": return (!crashed) ?  global::DBAccess.Properties.Resources.truck : global::DBAccess.Properties.Resources.truck_crashed;
                 case "UAZ": return (!crashed) ?  global::DBAccess.Properties.Resources.uaz : global::DBAccess.Properties.Resources.uaz_crashed;
                 case "Tent": return global::DBAccess.Properties.Resources.tent;
@@ -618,10 +641,10 @@ namespace DBAccess
                 case "LargeBuild": return global::DBAccess.Properties.Resources.large_build;
             }
 
-            if(def_is_unknown)
+            //if(def_is_unknown)
                 return global::DBAccess.Properties.Resources.unknown;
 
-            return (!crashed) ? global::DBAccess.Properties.Resources.car : global::DBAccess.Properties.Resources.car_crashed;
+            //return (!crashed) ? global::DBAccess.Properties.Resources.car : global::DBAccess.Properties.Resources.car_crashed;
         }
         private void BuildSpawnIcons()
         {
@@ -932,6 +955,12 @@ namespace DBAccess
                 keys[0] = table.Columns[0];
                 mycfg.player_state.Tables[0].PrimaryKey = keys;
             }
+            if (mycfg.cfgVersion < new ModuleVersion(5, 1))
+            {
+                DataTable table = mycfg.player_state.Tables[0];
+                table.Columns.Add(new DataColumn("State", typeof(string)));
+                table.Columns.Add(new DataColumn("Model", typeof(string)));
+            }
 
             try
             {
@@ -1088,21 +1117,6 @@ namespace DBAccess
             return uidgraph;
         }
 
-
-        enum displayMode
-	    {
-            InTheVoid = 0,
-            SetMaps,
-	        ShowOnline,
-            ShowAlive,
-            ShowDead,
-            ShowVehicle,
-            ShowSpawn,
-            ShowTraders,
-            ShowDeployable,
-            MapHelper,
-	    }
-
         //
         private void _MapHelperStateChanged()
         {
@@ -1146,13 +1160,17 @@ namespace DBAccess
             new Pen(Color.Orange, 2),
             new Pen(Color.Violet, 2)
         };
-        private string ExternalLocalIP()
+        private void RetrieveExternalLocalIP()
         {
-            WebClient wc = new WebClient();
-            string strIP = wc.DownloadString("http://checkip.dyndns.org");
-            strIP = (new Regex(@"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b")).Match(strIP).Value;
-            wc.Dispose();
-            return strIP;
+            new Thread(new ThreadStart(delegate
+                {
+                    WebClient wc = new WebClient();
+                    string strIP = wc.DownloadString("http://checkip.dyndns.org");
+                    strIP = (new Regex(@"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b")).Match(strIP).Value;
+                    wc.Dispose();
+
+                    localIP = strIP;
+                })).Start();
         }
         private string LocalResolveIP(string ip)
         {
@@ -1193,6 +1211,7 @@ namespace DBAccess
             return value;
         }
 
+        #region CBfromDesigner
         private void buttonConnect_Click(object sender, EventArgs e)
         {
             cb_buttonConnect_Click(sender, e);
@@ -1387,6 +1406,88 @@ namespace DBAccess
         {
             cb_toolStripMenuItemRestorePlayerState_Click(sender, e);
         }
+        #endregion
+
+        #region Icons
+
+        private enum displayMode
+	    {
+            InTheVoid = 0,
+            SetMaps,
+	        ShowOnline,
+            ShowAlive,
+            ShowDead,
+            ShowVehicle,
+            ShowSpawn,
+            ShowTraders,
+            ShowDeployable,
+            MapHelper,
+	    }
+
+        [AttributeUsage(AttributeTargets.Field, AllowMultiple = true) ]
+        public class UsableInAttribute : Attribute
+        {
+             public string target;
+             public UsableInAttribute(string target)
+             {
+                 this.target = target;
+             }
+        }
+
+        private enum IconType
+        {
+            [UsableIn("Vehicle"), UsableIn("Deployable")]
+            Air,
+
+            [UsableIn("Vehicle"), UsableIn("Deployable")]
+            Atv,
+
+            [UsableIn("Vehicle"), UsableIn("Deployable")]
+            Bicycle,
+
+            [UsableIn("Vehicle"), UsableIn("Deployable")]
+            Boat,
+
+            [UsableIn("Vehicle"), UsableIn("Deployable")]
+            Bus,
+
+            [UsableIn("Vehicle"), UsableIn("Deployable")]
+            Car,
+
+            [UsableIn("Vehicle"), UsableIn("Deployable")]
+            Helicopter,
+
+            [UsableIn("Vehicle"), UsableIn("Deployable")]
+            Motorcycle,
+
+            [UsableIn("Vehicle"), UsableIn("Deployable")]
+            SUV,
+
+            [UsableIn("Vehicle"), UsableIn("Deployable")]
+            Tractor,
+
+            [UsableIn("Vehicle"), UsableIn("Deployable")]
+            Truck,
+
+            [UsableIn("Vehicle"), UsableIn("Deployable")]
+            UAZ,
+
+            [UsableIn("Deployable")]
+            Tent,
+
+            [UsableIn("Deployable")]
+            Stach,
+
+            [UsableIn("Deployable")]
+            SmallBuild,
+
+            [UsableIn("Deployable")]
+            LargeBuild,
+
+            [UsableIn("Vehicle"), UsableIn("Deployable")]
+            Unknown
+        }
+        #endregion
     }
 }
 public static class DataRowCollectionExtensions
