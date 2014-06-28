@@ -27,7 +27,7 @@ DayZ DB Access
 	- backup database
 	- remove destroyed vehicles
 	- spawn new vehicles (1)
-	- remove old bodies (1)
+	- remove old bodies
 	- remove old tents (1)
 	- 3 custom SQL or BAT scripts can be set & called.
  - Setup Tab:
