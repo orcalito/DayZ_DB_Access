@@ -6,21 +6,23 @@ DayZ DB Access
 
  - Supporting classic & Epoch DayZ databases.
  - Show on map:
-	- players online
-	- players alive
-	- players dead
+	- players online/alive/dead
 	- vehicles
 	- vehicle spawn points
-	- deployables
+	- deployables/objects
  - Show connected players & rCon admins
  - Filter items by class
  - Filter items by time
- - Show players/vehicles/deployables inventory.
+ - Show players/vehicles/objects inventory
  - Add/Delete vehicle instances / spawnpoints
+ - Revive/Heal player
+ - Save/Restore player inventory & backpack
+ - Teleport offline players/vehicles
+ - PM/Kick player
  - Bitmap selection for each World's type.
  - Map helper to do the link between selected bitmap & DB's coordinates
  - Vehicles Tab: associate an icon to each vehicle's class.
- - Deployables Tab: associate an icon to each deployable's class.
+ - Objects Tab: associate an icon to each object's class.
  - Scripts Tab:
 	- backup database
 	- remove destroyed vehicles
@@ -28,6 +30,10 @@ DayZ DB Access
 	- remove old bodies (1)
 	- remove old tents (1)
 	- 3 custom SQL or BAT scripts can be set & called.
+ - Setup Tab:
+        - refresh rates for Database and BattlEye
+        - set admin name
+        - choose epoch world 
 
 (1) : disabled with Epoch's DB because useless.
 
