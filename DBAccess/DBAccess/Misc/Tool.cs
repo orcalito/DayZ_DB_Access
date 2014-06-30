@@ -359,29 +359,6 @@ namespace DBAccess
 
             return new Tuple<Size, Size, Size>(inSize, sqSize, limits);
         }
-/*        public static Tuple<Size, Size, Size> CreateTiles(string filepath, string basepath, int limit)
-        {
-            Bitmap input = new Bitmap(filepath);
-
-            Size inSize = input.Size;
-            Size sqSize = inSize.UpperPowerOf2;
-
-            if (sqSize.Width * sqSize.Height > (16384 * 16384))
-                throw new Exception("Input bitmap is too large, don't use bitmaps larger than 16384 * 16384");
-
-            Bitmap sqInput = IncreaseImageSize(input, sqSize);
-
-            input.Dispose();
-
-            double iMax = 1.0 / Math.Min(sqSize.Width, sqSize.Height);
-
-            Size limits = sqSize * (float)(limit * iMax);
-
-            RecursCreateTiles(Point.Empty, Size.Empty, basepath, "Tile", sqInput, limits, 0);
-            sqInput.Dispose();
-
-            return new Tuple<Size, Size, Size>(inSize, sqSize, limits);
-        }*/
         private static void RecursCreateTiles(Point father, Size child, string basepath, string name, Bitmap input, Size limits, int recCnt)
         {
             Point pos = father + child;
@@ -464,9 +441,7 @@ namespace DBAccess
                     return codecs[i];
             return null;
         }
-        //
-        //
-        //
+        #region WorldDefPoints
         private static Point[] ptsWorld1_Grid = new Point[]
         {
             new Point(14000,2360),
@@ -698,6 +673,7 @@ namespace DBAccess
             {
             }
         };
+        #endregion
     }
 }
 

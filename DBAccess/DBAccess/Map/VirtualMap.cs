@@ -126,8 +126,6 @@ namespace DBAccess
             nfo.min_depth = 0;
             while ((Directory.Exists(nfo.tileBasePath + nfo.min_depth) == false) && (nfo.min_depth<20))
                 nfo.min_depth++;
-
-
         }
 
         public class BitmapNfo

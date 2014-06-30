@@ -385,7 +385,6 @@
             this.trackBarMagLevel.RightToLeft = System.Windows.Forms.RightToLeft.No;
             this.trackBarMagLevel.Size = new System.Drawing.Size(144, 45);
             this.trackBarMagLevel.TabIndex = 2;
-            this.trackBarMagLevel.TickFrequency = 5;
             this.trackBarMagLevel.TickStyle = System.Windows.Forms.TickStyle.TopLeft;
             this.toolTip1.SetToolTip(this.trackBarMagLevel, "Map maximal level of zoom");
             this.trackBarMagLevel.Value = this.trackBarMagLevel.Maximum;
@@ -635,6 +634,7 @@
             this.toolStripStatusWorld.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
             this.toolStripStatusWorld.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
             this.toolStripStatusWorld.Image = global::DBAccess.Properties.Resources.Tool_World;
+            this.toolStripStatusWorld.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             this.toolStripStatusWorld.Name = "toolStripStatusWorld";
             this.toolStripStatusWorld.Size = new System.Drawing.Size(48, 36);
             this.toolStripStatusWorld.ToolTipText = "Set maps for each world";
@@ -647,6 +647,7 @@
             this.toolStripStatusOnline.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
             this.toolStripStatusOnline.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
             this.toolStripStatusOnline.Image = global::DBAccess.Properties.Resources.Tool_Online;
+            this.toolStripStatusOnline.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             this.toolStripStatusOnline.Name = "toolStripStatusOnline";
             this.toolStripStatusOnline.Size = new System.Drawing.Size(64, 36);
             this.toolStripStatusOnline.Text = "888";
@@ -660,6 +661,7 @@
             this.toolStripStatusAlive.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
             this.toolStripStatusAlive.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
             this.toolStripStatusAlive.Image = global::DBAccess.Properties.Resources.Tool_Alive;
+            this.toolStripStatusAlive.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             this.toolStripStatusAlive.Name = "toolStripStatusAlive";
             this.toolStripStatusAlive.Size = new System.Drawing.Size(64, 36);
             this.toolStripStatusAlive.Text = "888";
@@ -673,6 +675,7 @@
             this.toolStripStatusDead.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
             this.toolStripStatusDead.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
             this.toolStripStatusDead.Image = global::DBAccess.Properties.Resources.Tool_Dead;
+            this.toolStripStatusDead.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             this.toolStripStatusDead.Name = "toolStripStatusDead";
             this.toolStripStatusDead.Size = new System.Drawing.Size(64, 36);
             this.toolStripStatusDead.Text = "888";
@@ -686,8 +689,9 @@
             this.toolStripStatusVehicle.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
             this.toolStripStatusVehicle.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
             this.toolStripStatusVehicle.Image = global::DBAccess.Properties.Resources.Tool_Vehicle;
+            this.toolStripStatusVehicle.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             this.toolStripStatusVehicle.Name = "toolStripStatusVehicle";
-            this.toolStripStatusVehicle.Size = new System.Drawing.Size(64, 36);
+            this.toolStripStatusVehicle.Size = new System.Drawing.Size(68, 36);
             this.toolStripStatusVehicle.Text = "888";
             this.toolStripStatusVehicle.ToolTipText = "Show vehicles";
             this.toolStripStatusVehicle.Click += new System.EventHandler(this.toolStripStatusVehicle_Click);
@@ -699,8 +703,9 @@
             this.toolStripStatusSpawn.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
             this.toolStripStatusSpawn.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
             this.toolStripStatusSpawn.Image = global::DBAccess.Properties.Resources.Tool_Spawn;
+            this.toolStripStatusSpawn.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             this.toolStripStatusSpawn.Name = "toolStripStatusSpawn";
-            this.toolStripStatusSpawn.Size = new System.Drawing.Size(64, 36);
+            this.toolStripStatusSpawn.Size = new System.Drawing.Size(68, 36);
             this.toolStripStatusSpawn.Text = "888";
             this.toolStripStatusSpawn.ToolTipText = "Show spawn points";
             this.toolStripStatusSpawn.Click += new System.EventHandler(this.toolStripStatusSpawn_Click);
@@ -712,6 +717,7 @@
             this.toolStripStatusDeployable.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
             this.toolStripStatusDeployable.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
             this.toolStripStatusDeployable.Image = global::DBAccess.Properties.Resources.Tool_Deployable;
+            this.toolStripStatusDeployable.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             this.toolStripStatusDeployable.Name = "toolStripStatusDeployable";
             this.toolStripStatusDeployable.RightToLeft = System.Windows.Forms.RightToLeft.No;
             this.toolStripStatusDeployable.Size = new System.Drawing.Size(64, 36);
@@ -739,6 +745,7 @@
             this.toolStripStatusMapHelper.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
             this.toolStripStatusMapHelper.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
             this.toolStripStatusMapHelper.Image = global::DBAccess.Properties.Resources.Tool_MapHelper;
+            this.toolStripStatusMapHelper.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             this.toolStripStatusMapHelper.Name = "toolStripStatusMapHelper";
             this.toolStripStatusMapHelper.Size = new System.Drawing.Size(48, 36);
             this.toolStripStatusMapHelper.ToolTipText = "Set link between bitmap and the database coordinates";
@@ -754,8 +761,8 @@
             this.toolStripStatusTrail.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             this.toolStripStatusTrail.Name = "toolStripStatusTrail";
             this.toolStripStatusTrail.Size = new System.Drawing.Size(48, 36);
-            this.toolStripStatusTrail.ToolTipText = "Display moves for players/vehicles";
-            this.toolStripStatusTrail.Click += new System.EventHandler(this.toolStripStatusTrail_Click);
+            this.toolStripStatusTrail.ToolTipText = "Display moves for players/vehicles (RMB to erase current)";
+            this.toolStripStatusTrail.MouseDown += new System.Windows.Forms.MouseEventHandler(this.toolStripStatusTrail_MouseDown);
             // 
             // toolStripStatusChat
             // 
@@ -765,6 +772,7 @@
             this.toolStripStatusChat.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
             this.toolStripStatusChat.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.toolStripStatusChat.Image = global::DBAccess.Properties.Resources.Tool_Chat;
+            this.toolStripStatusChat.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             this.toolStripStatusChat.Name = "toolStripStatusChat";
             this.toolStripStatusChat.Size = new System.Drawing.Size(48, 36);
             this.toolStripStatusChat.ToolTipText = "Chat window";
@@ -779,6 +787,7 @@
             | System.Windows.Forms.ToolStripStatusLabelBorderSides.Bottom)));
             this.toolStripStatusCoordMap.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
             this.toolStripStatusCoordMap.Image = global::DBAccess.Properties.Resources.Tool_Map;
+            this.toolStripStatusCoordMap.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             this.toolStripStatusCoordMap.Margin = new System.Windows.Forms.Padding(1, 3, 1, 2);
             this.toolStripStatusCoordMap.Name = "toolStripStatusCoordMap";
             this.toolStripStatusCoordMap.Size = new System.Drawing.Size(74, 36);
@@ -1948,27 +1957,27 @@
             this.toolStripMenuItemSavePlayerState,
             this.toolStripMenuItemRestorePlayerState});
             this.contextMenuStripPlayerMenu.Name = "contextMenuStripPlayer";
-            this.contextMenuStripPlayerMenu.Size = new System.Drawing.Size(177, 92);
+            this.contextMenuStripPlayerMenu.Size = new System.Drawing.Size(142, 70);
             this.contextMenuStripPlayerMenu.Opening += new System.ComponentModel.CancelEventHandler(this.contextMenuStripItemPlayerMenu_Opening);
             // 
             // toolStripMenuItemHeal
             // 
             this.toolStripMenuItemHeal.Name = "toolStripMenuItemHeal";
-            this.toolStripMenuItemHeal.Size = new System.Drawing.Size(176, 22);
+            this.toolStripMenuItemHeal.Size = new System.Drawing.Size(141, 22);
             this.toolStripMenuItemHeal.Text = "Heal player";
             this.toolStripMenuItemHeal.Click += new System.EventHandler(this.toolStripMenuItemHealPlayer_Click);
             // 
             // toolStripMenuItemSavePlayerState
             // 
             this.toolStripMenuItemSavePlayerState.Name = "toolStripMenuItemSavePlayerState";
-            this.toolStripMenuItemSavePlayerState.Size = new System.Drawing.Size(176, 22);
+            this.toolStripMenuItemSavePlayerState.Size = new System.Drawing.Size(141, 22);
             this.toolStripMenuItemSavePlayerState.Text = "Save state";
             this.toolStripMenuItemSavePlayerState.Click += new System.EventHandler(this.toolStripMenuItemSavePlayerState_Click);
             // 
             // toolStripMenuItemRestorePlayerState
             // 
             this.toolStripMenuItemRestorePlayerState.Name = "toolStripMenuItemRestorePlayerState";
-            this.toolStripMenuItemRestorePlayerState.Size = new System.Drawing.Size(176, 22);
+            this.toolStripMenuItemRestorePlayerState.Size = new System.Drawing.Size(141, 22);
             this.toolStripMenuItemRestorePlayerState.Text = "Restore state";
             this.toolStripMenuItemRestorePlayerState.Click += new System.EventHandler(this.toolStripMenuItemRestorePlayerState_Click);
             // 

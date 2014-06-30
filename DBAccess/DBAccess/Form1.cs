@@ -60,10 +60,12 @@ namespace DBAccess
         private List<tileNfo> tileCache = new List<tileNfo>();
         private bool bShowTrails = false;
         private bool bCartographer = false;
-
+        
         private bool IsMapHelperEnabled { get { return (mapHelper != null) && mapHelper.enabled; } }
 
-        private Dictionary<displayMode, ToolStripStatusLabel> ModeButtons = new Dictionary<displayMode, ToolStripStatusLabel>();
+        private ToolIcon toolIconTrails = null;
+        private ToolIcon toolIconChat = null;
+        private Dictionary<displayMode, ToolIcon> ModeButtons = new Dictionary<displayMode, ToolIcon>();
         private displayMode _lastMode = displayMode.InTheVoid;
         private displayMode lastMode { get { return _lastMode;  } }
         private displayMode _currentMode = displayMode.InTheVoid;
@@ -116,22 +118,21 @@ namespace DBAccess
 
                     foreach(var item in ModeButtons)
                     {
-                        item.Value.Font = new System.Drawing.Font("Segoe UI", 9F);
-                        item.Value.BorderSides = ToolStripStatusLabelBorderSides.None;
+                        item.Value.Select = false;
                     }
-                    
-                    if(_currentMode != displayMode.InTheVoid)
+
+                    if (_currentMode != displayMode.InTheVoid)
                     {
-                        var selected = ModeButtons[_currentMode];
-                        selected.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-                        selected.BorderSides = ToolStripStatusLabelBorderSides.All;
+                        ModeButtons[_currentMode].Select = true;
                     }
 
                     dataGridViewMaps.Visible = (value == displayMode.SetMaps);
                 }
             }
         }
-        private iconDB selectedIcon;
+        private iconDB selectedIcon = null;
+        private iconDB hoverIcon = null;
+        private iconDB prevHoverIcon = null;
 
         private System.Drawing.Imaging.ImageAttributes attrSelected = new System.Drawing.Imaging.ImageAttributes();
         private System.Drawing.Imaging.ImageAttributes attrUnselected = new System.Drawing.Imaging.ImageAttributes();
@@ -170,15 +171,19 @@ namespace DBAccess
             diagMsgToPlayer = new MessageToPlayer(this);
 
             //
-            ModeButtons.Add(displayMode.SetMaps, toolStripStatusWorld);
-            ModeButtons.Add(displayMode.ShowOnline, toolStripStatusOnline);
-            ModeButtons.Add(displayMode.ShowAlive, toolStripStatusAlive);
-            ModeButtons.Add(displayMode.ShowDead, toolStripStatusDead);
-            ModeButtons.Add(displayMode.ShowVehicle, toolStripStatusVehicle);
-            ModeButtons.Add(displayMode.ShowSpawn, toolStripStatusSpawn);
-            ModeButtons.Add(displayMode.ShowTraders, toolStripStatusTraders);
-            ModeButtons.Add(displayMode.ShowDeployable, toolStripStatusDeployable);
-            ModeButtons.Add(displayMode.MapHelper, toolStripStatusMapHelper);
+            ModeButtons.Add(displayMode.SetMaps, new ToolIcon(toolStripStatusWorld, global::DBAccess.Properties.Resources.Tool_World, global::DBAccess.Properties.Resources.Tool_World_S));
+            ModeButtons.Add(displayMode.ShowOnline, new ToolIcon(toolStripStatusOnline, global::DBAccess.Properties.Resources.Tool_Online, global::DBAccess.Properties.Resources.Tool_Online_S));
+            ModeButtons.Add(displayMode.ShowAlive, new ToolIcon(toolStripStatusAlive, global::DBAccess.Properties.Resources.Tool_Alive, global::DBAccess.Properties.Resources.Tool_Alive_S));
+            ModeButtons.Add(displayMode.ShowDead, new ToolIcon(toolStripStatusDead, global::DBAccess.Properties.Resources.Tool_Dead, global::DBAccess.Properties.Resources.Tool_Dead_S));
+            ModeButtons.Add(displayMode.ShowVehicle, new ToolIcon(toolStripStatusVehicle, global::DBAccess.Properties.Resources.Tool_Vehicle, global::DBAccess.Properties.Resources.Tool_Vehicle_S));
+            ModeButtons.Add(displayMode.ShowSpawn, new ToolIcon(toolStripStatusSpawn, global::DBAccess.Properties.Resources.Tool_Spawn, global::DBAccess.Properties.Resources.Tool_Spawn_S));
+            ModeButtons.Add(displayMode.ShowTraders, new ToolIcon(toolStripStatusTraders, global::DBAccess.Properties.Resources.Tool_Traders, global::DBAccess.Properties.Resources.Tool_Traders));
+            ModeButtons.Add(displayMode.ShowDeployable, new ToolIcon(toolStripStatusDeployable, global::DBAccess.Properties.Resources.Tool_Deployable, global::DBAccess.Properties.Resources.Tool_Deployable_S));
+            ModeButtons.Add(displayMode.MapHelper, new ToolIcon(toolStripStatusMapHelper, global::DBAccess.Properties.Resources.Tool_MapHelper, global::DBAccess.Properties.Resources.Tool_MapHelper_S));
+
+            //
+            toolIconTrails = new ToolIcon(toolStripStatusTrail, global::DBAccess.Properties.Resources.Tool_Trail, global::DBAccess.Properties.Resources.Tool_Trail_S);
+            toolIconChat = new ToolIcon(toolStripStatusChat, global::DBAccess.Properties.Resources.Tool_Chat, global::DBAccess.Properties.Resources.Tool_Chat_S);
 
             //
             float[][] colorMatrixUnselected =
@@ -361,7 +366,7 @@ namespace DBAccess
                     }
 
                     RefreshIcons();
-                    prevNearest = null;
+                    prevHoverIcon = null;
                 }
                 catch (Exception ex)
                 {
@@ -1096,7 +1101,7 @@ namespace DBAccess
                     mapZoom.currDepth = Math.Log(virtualMap.ResizeFromZoom((float)Math.Pow(2, mapZoom.currDepth)), 2);
 
                 Tool.Size sizePanel = splitContainer1.Panel1.Size;
-                virtualMap.Position = (Tool.Point)((sizePanel - virtualMap.Size) * 0.5f);
+                virtualMap.Position = (Tool.Point)((sizePanel - virtualMap.SizeCorrected) * 0.5f);
 
                 mapHelper = new MapHelper(virtualMap, mycfg.world_id);
 
@@ -1487,7 +1492,45 @@ namespace DBAccess
             [UsableIn("Vehicle"), UsableIn("Deployable")]
             Unknown
         }
+
+        private class ToolIcon
+        {
+            public ToolIcon(ToolStripStatusLabel control, Bitmap normal, Bitmap selected)
+            {
+                this.control = control;
+                this.normal = normal;
+                this.selected = selected;
+            }
+
+            public bool Select
+            {
+                set
+                {
+                    if(value)
+                    {
+                        control.Image = this.selected;
+                        control.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+                        //control.BorderSides = ToolStripStatusLabelBorderSides.All;
+                    }
+                    else
+                    {
+                        control.Image = this.normal;
+                        control.Font = new System.Drawing.Font("Segoe UI", 9F);
+                        //control.BorderSides = ToolStripStatusLabelBorderSides.None;
+                    }
+                }
+            }
+
+            private ToolStripStatusLabel control;
+            private Bitmap normal;
+            private Bitmap selected;
+        }
         #endregion
+
+        private void toolStripStatusTrail_MouseDown(object sender, MouseEventArgs e)
+        {
+            cb_toolStripStatusTrail_MouseDown(sender, e);
+        }
     }
 }
 public static class DataRowCollectionExtensions

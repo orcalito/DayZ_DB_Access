@@ -274,4 +274,34 @@
   <data name="suv_crashed" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\suv_crashed.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="Tool_Alive_S" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Tool_Alive_S.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Tool_Chat_S" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Tool_Chat_S.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Tool_Dead_S" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Tool_Dead_S.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Tool_Deployable_S" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Tool_Deployable_S.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Tool_MapHelper_S" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Tool_MapHelper_S.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Tool_Online_S" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Tool_Online_S.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Tool_Spawn_S" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Tool_Spawn_S.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Tool_Trail_S" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Tool_Trail_S.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Tool_Vehicle_S" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Tool_Vehicle_S.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Tool_World_S" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Tool_World_S.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
 </root>

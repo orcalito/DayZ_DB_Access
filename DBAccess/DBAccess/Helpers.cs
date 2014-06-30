@@ -178,7 +178,11 @@ namespace DBAccess
         public void ResetPaths()
         {
             foreach (PathDef def in paths)
+            {
                 def.path.Reset();
+                def.points.Clear();
+            }
+            paths.Clear();
         }
         internal List<PathDef> paths = new List<PathDef>();
         internal Pen pen;

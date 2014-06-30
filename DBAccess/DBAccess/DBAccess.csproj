@@ -28,7 +28,7 @@
     <CreateWebPageOnPublish>true</CreateWebPageOnPublish>
     <WebPage>publish.htm</WebPage>
     <OpenBrowserOnPublish>false</OpenBrowserOnPublish>
-    <ApplicationRevision>4</ApplicationRevision>
+    <ApplicationRevision>6</ApplicationRevision>
     <ApplicationVersion>2.9.8.%2a</ApplicationVersion>
     <UseApplicationTrust>true</UseApplicationTrust>
     <CreateDesktopShortcut>true</CreateDesktopShortcut>
@@ -99,43 +99,43 @@
     <Compile Include="AboutBox.Designer.cs">
       <DependentUpon>AboutBox.cs</DependentUpon>
     </Compile>
-    <Compile Include="BattleEyeLoginCredentials.cs" />
-    <Compile Include="BattlEyeClient.cs" />
-    <Compile Include="BattlEyeCommand.cs" />
-    <Compile Include="BattlEyeCommandResult.cs" />
-    <Compile Include="BattlEyeConnectionResult.cs" />
-    <Compile Include="BattlEyeDisconnectEventArgs.cs" />
-    <Compile Include="BattlEyeDisconnectionType.cs" />
-    <Compile Include="BattlEyeMessageEventArgs.cs" />
-    <Compile Include="BattlEyePacketType.cs" />
-    <Compile Include="BE_Helpers.cs" />
-    <Compile Include="CRC32.cs" />
+    <Compile Include="BattlEye\BattleEyeLoginCredentials.cs" />
+    <Compile Include="BattlEye\BattlEyeClient.cs" />
+    <Compile Include="BattlEye\BattlEyeCommand.cs" />
+    <Compile Include="BattlEye\BattlEyeCommandResult.cs" />
+    <Compile Include="BattlEye\BattlEyeConnectionResult.cs" />
+    <Compile Include="BattlEye\BattlEyeDisconnectEventArgs.cs" />
+    <Compile Include="BattlEye\BattlEyeDisconnectionType.cs" />
+    <Compile Include="BattlEye\BattlEyeMessageEventArgs.cs" />
+    <Compile Include="BattlEye\BattlEyePacketType.cs" />
+    <Compile Include="BattlEye\BE_Helpers.cs" />
+    <Compile Include="Misc\CRC32.cs" />
     <Compile Include="Database.cs" />
     <Compile Include="Form1.CallBacks.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="MapHelper.cs" />
-    <Compile Include="MapPan.cs" />
-    <Compile Include="MapZoom.cs" />
+    <Compile Include="Map\MapHelper.cs" />
+    <Compile Include="Map\MapPan.cs" />
+    <Compile Include="Map\MapZoom.cs" />
     <Compile Include="MessageToPlayer.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="MessageToPlayer.Designer.cs">
       <DependentUpon>MessageToPlayer.cs</DependentUpon>
     </Compile>
-    <Compile Include="propDeployable.cs" />
-    <Compile Include="propBase.cs" />
+    <Compile Include="PropertyGrid\propDeployable.cs" />
+    <Compile Include="PropertyGrid\propBase.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="PropertyGridHelpers.cs" />
-    <Compile Include="propSpawn.cs" />
-    <Compile Include="propVehicle.cs" />
-    <Compile Include="propSurvivor.cs" />
-    <Compile Include="Tiles.cs" />
-    <Compile Include="Tool.cs" />
+    <Compile Include="PropertyGrid\PropertyGridHelpers.cs" />
+    <Compile Include="PropertyGrid\propSpawn.cs" />
+    <Compile Include="PropertyGrid\propVehicle.cs" />
+    <Compile Include="PropertyGrid\propSurvivor.cs" />
+    <Compile Include="Misc\Tiles.cs" />
+    <Compile Include="Misc\Tool.cs" />
     <Compile Include="Helpers.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -147,8 +147,8 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Version.cs" />
-    <Compile Include="VirtualMap.cs" />
+    <Compile Include="Misc\Version.cs" />
+    <Compile Include="Map\VirtualMap.cs" />
     <EmbeddedResource Include="AboutBox.resx">
       <DependentUpon>AboutBox.cs</DependentUpon>
     </EmbeddedResource>
@@ -199,11 +199,19 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="bin\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <Content Include="Application.ico" />
+    <None Include="Resources\Tool_World_S.png" />
+    <None Include="Resources\Tool_Vehicle_S.png" />
+    <None Include="Resources\Tool_Trail_S.png" />
+    <None Include="Resources\Tool_Spawn_S.png" />
+    <None Include="Resources\Tool_Online_S.png" />
+    <None Include="Resources\Tool_MapHelper_S.png" />
+    <None Include="Resources\Tool_Deployable_S.png" />
+    <None Include="Resources\Tool_Dead_S.png" />
+    <None Include="Resources\Tool_Chat_S.png" />
+    <None Include="Resources\Tool_Alive_S.png" />
     <None Include="Resources\Application.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

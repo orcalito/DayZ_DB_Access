@@ -34,6 +34,7 @@ namespace BattleNET
         private Thread threadReceive = null;
         private Thread threadReconnect = null;
         private Thread threadKeepAlive = null;
+        private LogType lastLog = LogType.None;
 
 		public bool Connected
 		{
@@ -456,18 +457,30 @@ namespace BattleNET
 
 		private void OnConnect(BattlEyeLoginCredentials loginDetails, BattlEyeConnectionResult connectionResult)
 		{
-			if(loginAccepted == false)
-				if (connectionResult == BattlEyeConnectionResult.ConnectionFailed || connectionResult == BattlEyeConnectionResult.InvalidLogin)
-					Disconnect(null);
+            LogType logtype = (connectionResult == BattlEyeConnectionResult.Success) ? LogType.Connected : LogType.Disconnected;
 
-			if (BattlEyeConnected != null)
-				BattlEyeConnected(new BattlEyeConnectEventArgs(loginDetails, connectionResult));
+            if (lastLog != logtype)
+            {
+                if (loginAccepted == false)
+                    if (connectionResult == BattlEyeConnectionResult.ConnectionFailed || connectionResult == BattlEyeConnectionResult.InvalidLogin)
+                        Disconnect(null);
+
+                if (BattlEyeConnected != null)
+                    BattlEyeConnected(new BattlEyeConnectEventArgs(loginDetails, connectionResult));
+
+                lastLog = logtype;
+            }
 		}
 
 		private void OnDisconnect(BattlEyeLoginCredentials loginDetails, BattlEyeDisconnectionType? disconnectionType)
 		{
-			if (BattlEyeDisconnected != null)
-				BattlEyeDisconnected(new BattlEyeDisconnectEventArgs(loginDetails, disconnectionType));
+            if (lastLog != LogType.Disconnected)
+            {
+                if (BattlEyeDisconnected != null)
+                    BattlEyeDisconnected(new BattlEyeDisconnectEventArgs(loginDetails, disconnectionType));
+
+                lastLog = LogType.Disconnected;
+            }
 		}
         private void ThreadReconnect()
         {
@@ -551,7 +564,14 @@ namespace BattleNET
             }
         }
 
-		public event BattlEyeMessageEventHandler BattlEyeMessageReceived;
+        private enum LogType
+        {
+            None,
+            Connected,
+            Disconnected
+        }
+
+        public event BattlEyeMessageEventHandler BattlEyeMessageReceived;
 		public event BattlEyeConnectEventHandler BattlEyeConnected;
 		public event BattlEyeDisconnectEventHandler BattlEyeDisconnected;
 	}

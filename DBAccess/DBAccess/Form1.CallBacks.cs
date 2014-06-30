@@ -231,17 +231,20 @@ namespace DBAccess
         {
             currentMode = displayMode.SetMaps;
         }
-        private void toolStripStatusTrail_Click(object sender, EventArgs e)
+        private void cb_toolStripStatusTrail_MouseDown(object sender, MouseEventArgs e)
         {
-            bShowTrails = !bShowTrails;
+            if (e.Button == MouseButtons.Left)
+            {
+                bShowTrails = !bShowTrails;
 
-            if (!bShowTrails)
+                toolIconTrails.Select = bShowTrails;
+                //toolStripStatusTrail.BorderSides = (bShowTrails) ? ToolStripStatusLabelBorderSides.All : ToolStripStatusLabelBorderSides.None;
+            }
+            else if (e.Button == MouseButtons.Right)
             {
                 foreach (KeyValuePair<string, UIDGraph> pair in dicUIDGraph)
                     pair.Value.ResetPaths();
             }
-
-            toolStripStatusTrail.BorderSides = (bShowTrails) ? ToolStripStatusLabelBorderSides.All : ToolStripStatusLabelBorderSides.None;
         }
         private void toolStripStatusNews_Click(object sender, EventArgs e)
         {
@@ -252,7 +255,8 @@ namespace DBAccess
             // Show/Hide chat panel
             splitContainerGlobal.Panel2Collapsed = !splitContainerGlobal.Panel2Collapsed;
 
-            toolStripStatusChat.BorderSides = (!splitContainerGlobal.Panel2Collapsed) ? ToolStripStatusLabelBorderSides.All : ToolStripStatusLabelBorderSides.None;
+            toolIconChat.Select = !splitContainerGlobal.Panel2Collapsed;
+            //toolStripStatusChat.BorderSides = (!splitContainerGlobal.Panel2Collapsed) ? ToolStripStatusLabelBorderSides.All : ToolStripStatusLabelBorderSides.None;
         }
         #endregion
 
@@ -479,6 +483,7 @@ namespace DBAccess
                     }
                     mtxTileUpdate.ReleaseMutex();
 
+                    e.Graphics.InterpolationMode = InterpolationMode.NearestNeighbor;
                     e.Graphics.CompositingMode = CompositingMode.SourceOver;
 
                     if (!IsMapHelperEnabled)
@@ -512,6 +517,24 @@ namespace DBAccess
 
                     if (!IsMapHelperEnabled && bCartographer)
                         cartographer.DisplayOnMap(e.Graphics, virtualMap);
+
+                    //---- Show item info ----
+                    {
+                        if(hoverIcon != null && hoverIcon.type == UIDType.TypePlayer)
+                        {
+                            string name = hoverIcon.row.Field<string>("Name");
+                            e.Graphics.CompositingMode = CompositingMode.SourceOver;
+                            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                            e.Graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                            e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+
+                            Font ft = new Font("Buxton Sketch", 16, FontStyle.Bold);
+                            Point mousePos = splitContainer1.Panel1.PointToClient(Cursor.Position);
+
+                            e.Graphics.DrawString(name, ft, Brushes.Black, mousePos + new Size(12, 7));
+                            e.Graphics.DrawString(name, ft, Brushes.White, mousePos + new Size(10, 5));
+                        }
+                    }
                 }
             }
             catch (Exception ex)
@@ -602,7 +625,6 @@ namespace DBAccess
                 mapPan.Start(virtualMap.Position);
             }
         }
-        private iconDB prevNearest = null;
         private void cb_Panel1_MouseMove(object sender, MouseEventArgs e)
         {
             Rectangle recPanel = new Rectangle(Point.Empty, splitContainer1.Panel1.Size);
@@ -684,24 +706,25 @@ namespace DBAccess
                         if (nearestLength * 1000 > (50 / (float)(Math.Pow(2, virtualMap.Depth))))
                             nearest = null;
 
-                        if (prevNearest != nearest)
+                        if (prevHoverIcon != nearest)
                         {
-                            if (prevNearest != null)
-                                prevNearest.icon.rectangle = new Rectangle(prevNearest.icon.rectangle.Location + (Tool.Size)prevNearest.icon.image.Size * 0.5f,
-                                                                           (Tool.Size)prevNearest.icon.image.Size);
+                            if (prevHoverIcon != null)
+                                prevHoverIcon.icon.rectangle = new Rectangle(prevHoverIcon.icon.rectangle.Location + (Tool.Size)prevHoverIcon.icon.image.Size * 0.5f,
+                                                                           (Tool.Size)prevHoverIcon.icon.image.Size);
 
                             if (nearest != null)
                                 nearest.icon.rectangle = new Rectangle(nearest.icon.rectangle.Location - (Tool.Size)nearest.icon.image.Size * 0.5f,
                                                                        (Tool.Size)nearest.icon.image.Size * 2);
 
                             splitContainer1.Panel1.Invalidate();
-                            prevNearest = nearest;
+                            prevHoverIcon = nearest;
 
                             if (nearest != null && listIcons[listIcons.Count - 1] != nearest)
                             {
                                 listIcons.Remove(nearest);
                                 listIcons.Add(nearest);
                             }
+                            hoverIcon = nearest;
                         }
                     }
                 }
