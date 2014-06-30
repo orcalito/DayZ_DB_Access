@@ -1,6 +1,6 @@
 DayZ DB Access
 ==============
-![Screenshot](http://ddba.olympe.in/Screenshot.jpg "Screenshot")
+![Screenshot](http://ddba.olympe.in/ShowVehicles.jpg "Screenshot")
 
 (WIP) Simple tool to show some data from a DayZ database. (Windows Only)
 
