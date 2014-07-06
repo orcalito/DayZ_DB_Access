@@ -630,49 +630,100 @@ namespace DBAccess
             new Point(10382,11281),
             new Point(10379,11317)
         };
-        //
-        public static List<List<Point[]>> MapHelperDefs = new List<List<Point[]>>
+        private static Point[] ptsNapf_NEAF = new Point[]
         {
-            // Chernarus
-            new List<Point[]>
+            new Point(15029,20400-4349),
+            new Point(15183,20400-4223),
+            new Point(14735,20400-3720),
+            new Point(14698,20400-3758),
+            new Point(14270,20400-3271),
+            new Point(14173,20400-3361),
+            new Point(15029,20400-4349)
+        };
+        private static Point[] ptsNapf_SWAF = new Point[]
+        {
+            new Point(3848,20400-15784),
+            new Point(3902,20400-16096),
+            new Point(5198,20400-15868),
+            new Point(5142,20400-15556),
+            new Point(3848,20400-15784)
+        };
+        private static List<Point[]> lingor_MHDefs = new List<Point[]>
+        {
+            new Point[]
             {
-                ptsWorld1_Grid,
-                ptsWorld1_NWAF,
-                ptsWorld1_Skalisty
-            },
-            new List<Point[]>
-            {
-            },
-            new List<Point[]>
-            {
-            },
-            new List<Point[]>
-            {
-            },
-            new List<Point[]>
-            {
-            },
-            new List<Point[]>
-            {
-            },
-            new List<Point[]>
-            {
-            },
-            new List<Point[]>
-            {
-            },
-            // Celle 2
-            new List<Point[]>
-            {
-                ptsWorld9_HighwayWest,
-                ptsWorld9_SouthAF,
-                ptsWorld9_NorthAF
-            },
-            // Taviana
-            new List<Point[]>
-            {
+                new Point(0,0),
+                new Point(0,10000),
+                new Point(10000,10000),
+                new Point(10000,0),
+                new Point(0,0)
             }
         };
+        private static List<Point[]> namalsk_MHDefs = new List<Point[]>
+        {
+            new Point[]
+            {
+                new Point(0,0),
+                new Point(0,12000),
+                new Point(12000,12000),
+                new Point(12000,0),
+                new Point(0,0)
+            }
+        };
+        private static List<Point[]> taviana_MHDefs = new List<Point[]>
+        {
+            new Point[]
+            {
+                new Point(0,0),
+                new Point(0,25600),
+                new Point(25600,25600),
+                new Point(25600,0),
+                new Point(0,0)
+            }
+        };
+        private static List<Point[]> utes_MHDefs = new List<Point[]>
+        {
+            new Point[]
+            {
+                new Point(0,0),
+                new Point(0,5100),
+                new Point(5100,5100),
+                new Point(5100,0),
+                new Point(0,0)
+            }
+        };
+        private static List<Point[]> chernarus_MHDefs = new List<Point[]>
+        {
+            ptsWorld1_Grid,
+            ptsWorld1_NWAF,
+            ptsWorld1_Skalisty
+        };
+        private static List<Point[]> celle2_MHDefs = new List<Point[]>
+        {
+            ptsWorld9_HighwayWest,
+            ptsWorld9_SouthAF,
+            ptsWorld9_NorthAF
+        };
+        private static List<Point[]> napf_MHDefs = new List<Point[]>
+        {
+            ptsNapf_NEAF,
+            ptsNapf_SWAF
+        };
+        public static void BuildMapHelperDefs()
+        {
+            //--- Fill MapHelpers ---
+            mapHelperDefs = new Dictionary<string, List<Point[]>>();
+
+            mapHelperDefs.Add("Celle2", celle2_MHDefs);
+            mapHelperDefs.Add("Chernarus", chernarus_MHDefs);
+            mapHelperDefs.Add("Lingor", lingor_MHDefs);
+            mapHelperDefs.Add("Namalsk", namalsk_MHDefs);
+            mapHelperDefs.Add("Napf", napf_MHDefs);
+            mapHelperDefs.Add("Taviana", taviana_MHDefs);
+            mapHelperDefs.Add("Utes", utes_MHDefs);
+        }
+
+        public static Dictionary<string, List<Point[]>> mapHelperDefs = null;
         #endregion
     }
 }

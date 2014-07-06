@@ -8,6 +8,17 @@ namespace DBAccess
     //
     public class MapHelper
     {
+        public enum World
+        {
+            Celle2,
+            Chernarus,
+            Lingor,
+            Namalsk,
+            Napf,
+            Taviana,
+            Utes
+        }
+
         public Tool.Point[] defBoundaries = new Tool.Point[2];
         public Tool.Point[] boundaries = new Tool.Point[2];
         public Tool.Point[] controls = new Tool.Point[4];
@@ -20,14 +31,11 @@ namespace DBAccess
                 def.points.Add(pt);
             paths.Add(def);
         }
-        public MapHelper(VirtualMap map, int worldId)
+        public MapHelper(VirtualMap map, string worldId)
         {
             this.map = map;
 
-            if (worldId == 0)
-                return;
-
-            foreach (Tool.Point[] arr in Tool.MapHelperDefs[worldId - 1])
+            foreach (Tool.Point[] arr in Tool.mapHelperDefs[worldId])
                 AddPathDef(arr);
 
             Tool.Point min = new Tool.Point(9999999, 9999999);

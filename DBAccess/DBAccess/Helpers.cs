@@ -43,15 +43,36 @@ namespace DBAccess
     //
     //
     //
-    public class myConfig
+    public class myCommonConfig
     {
-        public myConfig()
+        public myCommonConfig()
         {
         }
-        public myConfig(ModuleVersion curVers)
+        public myCommonConfig(ModuleVersion curVers)
         {
             cfgVersion = curVers;
-            worlds_def = new DataSet();
+        }
+        public string vehicle_limit;
+        public string body_time_limit;
+        public string tent_time_limit;
+        public string customscript1;
+        public string customscript2;
+        public string customscript3;
+        public decimal db_refreshrate;
+        public decimal be_refreshrate;
+        public ModuleVersion cfgVersion { get; set; }
+    }
+    //
+    //
+    //
+    public class myServerConfig
+    {
+        public myServerConfig()
+        {
+        }
+        public myServerConfig(ModuleVersion curVers)
+        {
+            cfgVersion = curVers;
             vehicle_types = new DataSet();
             deployable_types = new DataSet();
             player_state = new DataSet();
@@ -62,29 +83,46 @@ namespace DBAccess
         public string username;
         public string password;
         public string instance_id;
-        public string vehicle_limit;
-        public string body_time_limit;
-        public string tent_time_limit;
-        public string online_time_limit;
-        public string customscript1;
-        public string customscript2;
-        public string customscript3;
-        public int filter_last_updated;
         public int bitmap_mag_level;
         public int world_id;
-        public decimal db_refreshrate;
-        public decimal be_refreshrate;
+        public string world_name;
+        public int filter_last_updated;
         public string rcon_port;
         public string rcon_url;
         public string rcon_password;
         public string rcon_adminname;
         public ModuleVersion cfgVersion { get; set; }
-        public DataSet worlds_def { get; set; }
+        //public DataSet worlds_def { get; set; }
         public DataSet vehicle_types { get; set; }
         public DataSet deployable_types { get; set; }
         public DataSet player_state { get; set; }
         //
-        //[XmlIgnore]
+        public string BitmapName;
+    }
+    //
+    //
+    //
+    public class myBitmapConfig
+    {
+        public myBitmapConfig()
+        {
+        }
+        public myBitmapConfig(ModuleVersion curVers)
+        {
+            cfgVersion = curVers;
+        }
+        public float RatioX;
+        public float RatioY;
+        public int TileSizeX;
+        public int TileSizeY;
+        public int TileDepth;
+        public int DB_X;
+        public int DB_Y;
+        public uint DB_Width;
+        public uint DB_Height;
+        public uint DB_refWidth;
+        public uint DB_refHeight;
+        public ModuleVersion cfgVersion { get; set; }
     }
     //
     //

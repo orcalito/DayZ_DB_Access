@@ -45,37 +45,43 @@ namespace DBAccess
             this.inventory.items.Clear();
             this.inventory.bags.Clear();
 
-            this.name = idb.row.Field<string>("class_name");
-            
-            ComputeEpochKey(idb.row.Field<uint>("keycode"));
-
-            ArrayList arr = Tool.ParseInventoryString(idb.row.Field<string>("inventory"));
-            ArrayList aItems;
-            ArrayList aTypes;
-            ArrayList aCount;
-
-            if (arr.Count > 0)
+            try
             {
-                // arr[0] = weapons
-                // arr[1] = items
-                // arr[2] = bags
-                aItems = arr[0] as ArrayList;
-                aTypes = aItems[0] as ArrayList;
-                aCount = aItems[1] as ArrayList;
-                for (int i = 0; i < aTypes.Count; i++)
-                    this.inventory.weapons.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
+                this.name = idb.row.Field<string>("class_name");
 
-                aItems = arr[1] as ArrayList;
-                aTypes = aItems[0] as ArrayList;
-                aCount = aItems[1] as ArrayList;
-                for (int i = 0; i < aTypes.Count; i++)
-                    this.inventory.items.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
+                ComputeEpochKey(idb.row.Field<uint>("keycode"));
 
-                aItems = arr[2] as ArrayList;
-                aTypes = aItems[0] as ArrayList;
-                aCount = aItems[1] as ArrayList;
-                for (int i = 0; i < aTypes.Count; i++)
-                    this.inventory.bags.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
+                ArrayList arr = Tool.ParseInventoryString(idb.row.Field<string>("inventory"));
+                ArrayList aItems;
+                ArrayList aTypes;
+                ArrayList aCount;
+
+                if (arr.Count > 0)
+                {
+                    // arr[0] = weapons
+                    // arr[1] = items
+                    // arr[2] = bags
+                    aItems = arr[0] as ArrayList;
+                    aTypes = aItems[0] as ArrayList;
+                    aCount = aItems[1] as ArrayList;
+                    for (int i = 0; i < aTypes.Count; i++)
+                        this.inventory.weapons.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
+
+                    aItems = arr[1] as ArrayList;
+                    aTypes = aItems[0] as ArrayList;
+                    aCount = aItems[1] as ArrayList;
+                    for (int i = 0; i < aTypes.Count; i++)
+                        this.inventory.items.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
+
+                    aItems = arr[2] as ArrayList;
+                    aTypes = aItems[0] as ArrayList;
+                    aCount = aItems[1] as ArrayList;
+                    for (int i = 0; i < aTypes.Count; i++)
+                        this.inventory.bags.Add(new Entry(aTypes[i] as string, int.Parse(aCount[i] as string)));
+                }
+            }
+            catch
+            {
             }
         }
     }

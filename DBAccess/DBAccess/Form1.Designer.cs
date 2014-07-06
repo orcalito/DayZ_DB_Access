@@ -62,8 +62,8 @@
             this.textBoxVehicleMax = new System.Windows.Forms.TextBox();
             this.buttonRemoveBodies = new System.Windows.Forms.Button();
             this.comboSelectInstance = new System.Windows.Forms.ComboBox();
-            this.comboSelectEpochWorld = new System.Windows.Forms.ComboBox();
             this.cbCartographer = new System.Windows.Forms.CheckBox();
+            this.comboSelectMapHelperWorld = new System.Windows.Forms.ComboBox();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.contextMenuStripVehicle = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.toolStripMenuItemRepairRefuelVehicle = new System.Windows.Forms.ToolStripMenuItem();
@@ -72,6 +72,7 @@
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusWorld = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusMapHelper = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusOnline = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusAlive = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusDead = new System.Windows.Forms.ToolStripStatusLabel();
@@ -79,7 +80,6 @@
             this.toolStripStatusSpawn = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusDeployable = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusTraders = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusMapHelper = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusTrail = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusChat = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusCoordMap = new System.Windows.Forms.ToolStripStatusLabel();
@@ -111,12 +111,16 @@
             this.splitContainerGlobal = new System.Windows.Forms.SplitContainer();
             this.splitContainer1 = new DBAccess.MySplitContainer();
             this.panelCnx = new System.Windows.Forms.Panel();
+            this.groupBox4 = new System.Windows.Forms.GroupBox();
+            this.buttonAddConfigFile = new System.Windows.Forms.Button();
+            this.buttonConnect = new System.Windows.Forms.Button();
             this.groupBoxrCon = new System.Windows.Forms.GroupBox();
             this.numericUpDownrConPort = new System.Windows.Forms.NumericUpDown();
             this.textBoxrConPassword = new System.Windows.Forms.TextBox();
             this.label8 = new System.Windows.Forms.Label();
             this.label9 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
+            this.comboBoxConfigFile = new System.Windows.Forms.ComboBox();
             this.groupBoxDB = new System.Windows.Forms.GroupBox();
             this.numericUpDownDBPort = new System.Windows.Forms.NumericUpDown();
             this.label6 = new System.Windows.Forms.Label();
@@ -129,13 +133,7 @@
             this.label3 = new System.Windows.Forms.Label();
             this.textBoxDBUser = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
-            this.buttonConnect = new System.Windows.Forms.Button();
             this.dataGridViewTraders = new System.Windows.Forms.DataGridView();
-            this.dataGridViewMaps = new System.Windows.Forms.DataGridView();
-            this.ColGVMID = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ColGVMName = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ColGVMChoosePath = new System.Windows.Forms.DataGridViewButtonColumn();
-            this.ColGVMPath = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPageDisplay = new System.Windows.Forms.TabPage();
             this.label11 = new System.Windows.Forms.Label();
@@ -192,6 +190,7 @@
             this.bgWorkerRefreshLeds = new System.ComponentModel.BackgroundWorker();
             this.contextMenuStripDeadMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.toolStripMenuItemRevivePlayer = new System.Windows.Forms.ToolStripMenuItem();
+            this.openFileDialog2 = new System.Windows.Forms.OpenFileDialog();
             ((System.ComponentModel.ISupportInitialize)(this.dataSetBindingSource)).BeginInit();
             this.contextMenuStripResetTypes.SuspendLayout();
             this.contextMenuStripSpawn.SuspendLayout();
@@ -212,13 +211,13 @@
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
             this.panelCnx.SuspendLayout();
+            this.groupBox4.SuspendLayout();
             this.groupBoxrCon.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownrConPort)).BeginInit();
             this.groupBoxDB.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownDBPort)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownInstanceId)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewTraders)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewMaps)).BeginInit();
             this.tabControl1.SuspendLayout();
             this.tabPageDisplay.SuspendLayout();
             this.groupBoxInfo.SuspendLayout();
@@ -537,17 +536,6 @@
             this.toolTip1.SetToolTip(this.comboSelectInstance, "Instance IDs found in DB");
             this.comboSelectInstance.SelectedValueChanged += new System.EventHandler(this.comboSelectInstance_SelectedValueChanged);
             // 
-            // comboSelectEpochWorld
-            // 
-            this.comboSelectEpochWorld.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboSelectEpochWorld.FormattingEnabled = true;
-            this.comboSelectEpochWorld.Location = new System.Drawing.Point(125, 19);
-            this.comboSelectEpochWorld.Name = "comboSelectEpochWorld";
-            this.comboSelectEpochWorld.Size = new System.Drawing.Size(57, 21);
-            this.comboSelectEpochWorld.TabIndex = 109;
-            this.toolTip1.SetToolTip(this.comboSelectEpochWorld, "Effective next launch");
-            this.comboSelectEpochWorld.SelectedValueChanged += new System.EventHandler(this.comboSelectEpochWorld_SelectedValueChanged);
-            // 
             // cbCartographer
             // 
             this.cbCartographer.AutoSize = true;
@@ -562,6 +550,16 @@
             this.toolTip1.SetToolTip(this.cbCartographer, "internal use, will be removed later");
             this.cbCartographer.UseVisualStyleBackColor = true;
             this.cbCartographer.CheckedChanged += new System.EventHandler(this.cbCartographer_CheckedChanged);
+            // 
+            // comboSelectMapHelperWorld
+            // 
+            this.comboSelectMapHelperWorld.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboSelectMapHelperWorld.FormattingEnabled = true;
+            this.comboSelectMapHelperWorld.Location = new System.Drawing.Point(80, 19);
+            this.comboSelectMapHelperWorld.Name = "comboSelectMapHelperWorld";
+            this.comboSelectMapHelperWorld.Size = new System.Drawing.Size(102, 21);
+            this.comboSelectMapHelperWorld.TabIndex = 109;
+            this.comboSelectMapHelperWorld.SelectedValueChanged += new System.EventHandler(this.comboSelectEpochWorld_SelectedValueChanged);
             // 
             // openFileDialog1
             // 
@@ -605,6 +603,7 @@
             this.statusStrip1.ImageScalingSize = new System.Drawing.Size(32, 32);
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripStatusWorld,
+            this.toolStripStatusMapHelper,
             this.toolStripStatusOnline,
             this.toolStripStatusAlive,
             this.toolStripStatusDead,
@@ -612,7 +611,6 @@
             this.toolStripStatusSpawn,
             this.toolStripStatusDeployable,
             this.toolStripStatusTraders,
-            this.toolStripStatusMapHelper,
             this.toolStripStatusTrail,
             this.toolStripStatusChat,
             this.toolStripStatusCoordMap,
@@ -639,6 +637,19 @@
             this.toolStripStatusWorld.Size = new System.Drawing.Size(48, 36);
             this.toolStripStatusWorld.ToolTipText = "Set maps for each world";
             this.toolStripStatusWorld.Click += new System.EventHandler(this.toolStripStatusWorld_Click);
+            // 
+            // toolStripStatusMapHelper
+            // 
+            this.toolStripStatusMapHelper.AutoSize = false;
+            this.toolStripStatusMapHelper.AutoToolTip = true;
+            this.toolStripStatusMapHelper.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
+            this.toolStripStatusMapHelper.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
+            this.toolStripStatusMapHelper.Image = global::DBAccess.Properties.Resources.Tool_MapHelper;
+            this.toolStripStatusMapHelper.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            this.toolStripStatusMapHelper.Name = "toolStripStatusMapHelper";
+            this.toolStripStatusMapHelper.Size = new System.Drawing.Size(48, 36);
+            this.toolStripStatusMapHelper.ToolTipText = "Set link between bitmap and the database coordinates";
+            this.toolStripStatusMapHelper.Click += new System.EventHandler(this.toolStripStatusMapHelper_Click);
             // 
             // toolStripStatusOnline
             // 
@@ -737,19 +748,6 @@
             this.toolStripStatusTraders.Size = new System.Drawing.Size(48, 36);
             this.toolStripStatusTraders.ToolTipText = "Show traders";
             this.toolStripStatusTraders.Click += new System.EventHandler(this.toolStripStatusTraders_Click);
-            // 
-            // toolStripStatusMapHelper
-            // 
-            this.toolStripStatusMapHelper.AutoSize = false;
-            this.toolStripStatusMapHelper.AutoToolTip = true;
-            this.toolStripStatusMapHelper.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
-            this.toolStripStatusMapHelper.BorderStyle = System.Windows.Forms.Border3DStyle.Sunken;
-            this.toolStripStatusMapHelper.Image = global::DBAccess.Properties.Resources.Tool_MapHelper;
-            this.toolStripStatusMapHelper.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
-            this.toolStripStatusMapHelper.Name = "toolStripStatusMapHelper";
-            this.toolStripStatusMapHelper.Size = new System.Drawing.Size(48, 36);
-            this.toolStripStatusMapHelper.ToolTipText = "Set link between bitmap and the database coordinates";
-            this.toolStripStatusMapHelper.Click += new System.EventHandler(this.toolStripStatusMapHelper_Click);
             // 
             // toolStripStatusTrail
             // 
@@ -963,13 +961,13 @@
             // 
             this.toolStripContainer2.ContentPanel.AutoScroll = true;
             this.toolStripContainer2.ContentPanel.Controls.Add(this.toolStripContainer1);
-            this.toolStripContainer2.ContentPanel.Size = new System.Drawing.Size(933, 401);
+            this.toolStripContainer2.ContentPanel.Size = new System.Drawing.Size(933, 460);
             this.toolStripContainer2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.toolStripContainer2.LeftToolStripPanelVisible = false;
             this.toolStripContainer2.Location = new System.Drawing.Point(0, 0);
             this.toolStripContainer2.Name = "toolStripContainer2";
             this.toolStripContainer2.RightToolStripPanelVisible = false;
-            this.toolStripContainer2.Size = new System.Drawing.Size(933, 401);
+            this.toolStripContainer2.Size = new System.Drawing.Size(933, 460);
             this.toolStripContainer2.TabIndex = 4;
             this.toolStripContainer2.Text = "toolStripContainer2";
             this.toolStripContainer2.TopToolStripPanelVisible = false;
@@ -981,13 +979,13 @@
             // 
             this.toolStripContainer1.ContentPanel.AutoScroll = true;
             this.toolStripContainer1.ContentPanel.Controls.Add(this.splitContainerGlobal);
-            this.toolStripContainer1.ContentPanel.Size = new System.Drawing.Size(933, 401);
+            this.toolStripContainer1.ContentPanel.Size = new System.Drawing.Size(933, 460);
             this.toolStripContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.toolStripContainer1.LeftToolStripPanelVisible = false;
             this.toolStripContainer1.Location = new System.Drawing.Point(0, 0);
             this.toolStripContainer1.Name = "toolStripContainer1";
             this.toolStripContainer1.RightToolStripPanelVisible = false;
-            this.toolStripContainer1.Size = new System.Drawing.Size(933, 401);
+            this.toolStripContainer1.Size = new System.Drawing.Size(933, 460);
             this.toolStripContainer1.TabIndex = 3;
             this.toolStripContainer1.Text = "toolStripContainer1";
             this.toolStripContainer1.TopToolStripPanelVisible = false;
@@ -1006,8 +1004,8 @@
             // splitContainerGlobal.Panel2
             // 
             this.splitContainerGlobal.Panel2.Controls.Add(this.splitContainerChat);
-            this.splitContainerGlobal.Size = new System.Drawing.Size(933, 401);
-            this.splitContainerGlobal.SplitterDistance = 313;
+            this.splitContainerGlobal.Size = new System.Drawing.Size(933, 460);
+            this.splitContainerGlobal.SplitterDistance = 359;
             this.splitContainerGlobal.TabIndex = 2;
             // 
             // splitContainer1
@@ -1022,7 +1020,6 @@
             this.splitContainer1.Panel1.BackColor = System.Drawing.Color.White;
             this.splitContainer1.Panel1.Controls.Add(this.panelCnx);
             this.splitContainer1.Panel1.Controls.Add(this.dataGridViewTraders);
-            this.splitContainer1.Panel1.Controls.Add(this.dataGridViewMaps);
             this.splitContainer1.Panel1.SizeChanged += new System.EventHandler(this.splitContainer1_Panel1_SizeChanged);
             this.splitContainer1.Panel1.Paint += new System.Windows.Forms.PaintEventHandler(this.Panel1_Paint);
             this.splitContainer1.Panel1.MouseClick += new System.Windows.Forms.MouseEventHandler(this.Panel1_MouseClick);
@@ -1034,20 +1031,54 @@
             // 
             this.splitContainer1.Panel2.Controls.Add(this.tabControl1);
             this.splitContainer1.Panel2MinSize = 220;
-            this.splitContainer1.Size = new System.Drawing.Size(933, 313);
+            this.splitContainer1.Size = new System.Drawing.Size(933, 359);
             this.splitContainer1.SplitterDistance = 591;
             this.splitContainer1.TabIndex = 1;
             // 
             // panelCnx
             // 
-            this.panelCnx.Controls.Add(this.groupBoxrCon);
-            this.panelCnx.Controls.Add(this.groupBoxDB);
-            this.panelCnx.Controls.Add(this.buttonConnect);
-            this.panelCnx.Location = new System.Drawing.Point(124, 48);
+            this.panelCnx.Controls.Add(this.groupBox4);
+            this.panelCnx.Location = new System.Drawing.Point(9, 9);
             this.panelCnx.Margin = new System.Windows.Forms.Padding(2);
             this.panelCnx.Name = "panelCnx";
-            this.panelCnx.Size = new System.Drawing.Size(376, 251);
+            this.panelCnx.Size = new System.Drawing.Size(392, 298);
             this.panelCnx.TabIndex = 10;
+            // 
+            // groupBox4
+            // 
+            this.groupBox4.Controls.Add(this.buttonAddConfigFile);
+            this.groupBox4.Controls.Add(this.buttonConnect);
+            this.groupBox4.Controls.Add(this.groupBoxrCon);
+            this.groupBox4.Controls.Add(this.comboBoxConfigFile);
+            this.groupBox4.Controls.Add(this.groupBoxDB);
+            this.groupBox4.Location = new System.Drawing.Point(14, 4);
+            this.groupBox4.Name = "groupBox4";
+            this.groupBox4.Size = new System.Drawing.Size(364, 282);
+            this.groupBox4.TabIndex = 11;
+            this.groupBox4.TabStop = false;
+            this.groupBox4.Text = "Config File";
+            // 
+            // buttonAddConfigFile
+            // 
+            this.buttonAddConfigFile.DialogResult = System.Windows.Forms.DialogResult.OK;
+            this.buttonAddConfigFile.Location = new System.Drawing.Point(330, 17);
+            this.buttonAddConfigFile.Name = "buttonAddConfigFile";
+            this.buttonAddConfigFile.Size = new System.Drawing.Size(26, 23);
+            this.buttonAddConfigFile.TabIndex = 12;
+            this.buttonAddConfigFile.Text = "+";
+            this.buttonAddConfigFile.UseVisualStyleBackColor = true;
+            this.buttonAddConfigFile.Click += new System.EventHandler(this.buttonAddConfigFile_Click);
+            // 
+            // buttonConnect
+            // 
+            this.buttonConnect.DialogResult = System.Windows.Forms.DialogResult.OK;
+            this.buttonConnect.Location = new System.Drawing.Point(147, 250);
+            this.buttonConnect.Name = "buttonConnect";
+            this.buttonConnect.Size = new System.Drawing.Size(70, 23);
+            this.buttonConnect.TabIndex = 10;
+            this.buttonConnect.Text = "Connect";
+            this.buttonConnect.UseVisualStyleBackColor = true;
+            this.buttonConnect.Click += new System.EventHandler(this.buttonConnect_Click);
             // 
             // groupBoxrCon
             // 
@@ -1057,7 +1088,7 @@
             this.groupBoxrCon.Controls.Add(this.textBoxrConURL);
             this.groupBoxrCon.Controls.Add(this.label9);
             this.groupBoxrCon.Controls.Add(this.label7);
-            this.groupBoxrCon.Location = new System.Drawing.Point(14, 138);
+            this.groupBoxrCon.Location = new System.Drawing.Point(8, 172);
             this.groupBoxrCon.Margin = new System.Windows.Forms.Padding(2);
             this.groupBoxrCon.Name = "groupBoxrCon";
             this.groupBoxrCon.Padding = new System.Windows.Forms.Padding(2);
@@ -1124,6 +1155,16 @@
             this.label7.TabIndex = 110;
             this.label7.Text = "Port";
             // 
+            // comboBoxConfigFile
+            // 
+            this.comboBoxConfigFile.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboBoxConfigFile.FormattingEnabled = true;
+            this.comboBoxConfigFile.Location = new System.Drawing.Point(6, 18);
+            this.comboBoxConfigFile.Name = "comboBoxConfigFile";
+            this.comboBoxConfigFile.Size = new System.Drawing.Size(318, 21);
+            this.comboBoxConfigFile.TabIndex = 0;
+            this.comboBoxConfigFile.SelectedIndexChanged += new System.EventHandler(this.comboBoxConfigFile_SelectedIndexChanged);
+            // 
             // groupBoxDB
             // 
             this.groupBoxDB.Controls.Add(this.numericUpDownDBPort);
@@ -1139,7 +1180,7 @@
             this.groupBoxDB.Controls.Add(this.label5);
             this.groupBoxDB.Controls.Add(this.textBoxDBBaseName);
             this.groupBoxDB.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.groupBoxDB.Location = new System.Drawing.Point(14, 11);
+            this.groupBoxDB.Location = new System.Drawing.Point(8, 46);
             this.groupBoxDB.Name = "groupBoxDB";
             this.groupBoxDB.Size = new System.Drawing.Size(348, 121);
             this.groupBoxDB.TabIndex = 9;
@@ -1177,7 +1218,7 @@
             // 
             this.numericUpDownInstanceId.Location = new System.Drawing.Point(292, 95);
             this.numericUpDownInstanceId.Maximum = new decimal(new int[] {
-            20,
+            99,
             0,
             0,
             0});
@@ -1265,17 +1306,6 @@
             this.label5.TabIndex = 103;
             this.label5.Text = "User";
             // 
-            // buttonConnect
-            // 
-            this.buttonConnect.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.buttonConnect.Location = new System.Drawing.Point(160, 216);
-            this.buttonConnect.Name = "buttonConnect";
-            this.buttonConnect.Size = new System.Drawing.Size(70, 23);
-            this.buttonConnect.TabIndex = 10;
-            this.buttonConnect.Text = "Connect";
-            this.buttonConnect.UseVisualStyleBackColor = true;
-            this.buttonConnect.Click += new System.EventHandler(this.buttonConnect_Click);
-            // 
             // dataGridViewTraders
             // 
             this.dataGridViewTraders.AllowUserToAddRows = false;
@@ -1289,63 +1319,9 @@
             this.dataGridViewTraders.MultiSelect = false;
             this.dataGridViewTraders.Name = "dataGridViewTraders";
             this.dataGridViewTraders.RowHeadersVisible = false;
-            this.dataGridViewTraders.Size = new System.Drawing.Size(587, 309);
+            this.dataGridViewTraders.Size = new System.Drawing.Size(587, 355);
             this.dataGridViewTraders.TabIndex = 11;
             this.dataGridViewTraders.Visible = false;
-            // 
-            // dataGridViewMaps
-            // 
-            this.dataGridViewMaps.AllowUserToAddRows = false;
-            this.dataGridViewMaps.AllowUserToDeleteRows = false;
-            this.dataGridViewMaps.AllowUserToOrderColumns = true;
-            this.dataGridViewMaps.AllowUserToResizeRows = false;
-            this.dataGridViewMaps.AutoGenerateColumns = false;
-            this.dataGridViewMaps.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
-            this.dataGridViewMaps.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
-            this.dataGridViewMaps.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.ColGVMID,
-            this.ColGVMName,
-            this.ColGVMChoosePath,
-            this.ColGVMPath});
-            this.dataGridViewMaps.DataSource = this.dataSetBindingSource;
-            this.dataGridViewMaps.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.dataGridViewMaps.Location = new System.Drawing.Point(0, 0);
-            this.dataGridViewMaps.MultiSelect = false;
-            this.dataGridViewMaps.Name = "dataGridViewMaps";
-            this.dataGridViewMaps.RowHeadersVisible = false;
-            this.dataGridViewMaps.Size = new System.Drawing.Size(587, 309);
-            this.dataGridViewMaps.TabIndex = 0;
-            this.dataGridViewMaps.Visible = false;
-            this.dataGridViewMaps.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewMaps_CellClick);
-            // 
-            // ColGVMID
-            // 
-            this.ColGVMID.FillWeight = 10F;
-            this.ColGVMID.HeaderText = "World ID";
-            this.ColGVMID.Name = "ColGVMID";
-            this.ColGVMID.ReadOnly = true;
-            // 
-            // ColGVMName
-            // 
-            this.ColGVMName.FillWeight = 30F;
-            this.ColGVMName.HeaderText = "Name";
-            this.ColGVMName.Name = "ColGVMName";
-            this.ColGVMName.ReadOnly = true;
-            // 
-            // ColGVMChoosePath
-            // 
-            this.ColGVMChoosePath.FillWeight = 8F;
-            this.ColGVMChoosePath.HeaderText = "Select";
-            this.ColGVMChoosePath.Name = "ColGVMChoosePath";
-            this.ColGVMChoosePath.Text = "...";
-            this.ColGVMChoosePath.ToolTipText = "Select your file on disk";
-            this.ColGVMChoosePath.UseColumnTextForButtonValue = true;
-            // 
-            // ColGVMPath
-            // 
-            this.ColGVMPath.FillWeight = 45F;
-            this.ColGVMPath.HeaderText = "Path";
-            this.ColGVMPath.Name = "ColGVMPath";
             // 
             // tabControl1
             // 
@@ -1359,7 +1335,7 @@
             this.tabControl1.Location = new System.Drawing.Point(0, 0);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(334, 309);
+            this.tabControl1.Size = new System.Drawing.Size(334, 355);
             this.tabControl1.TabIndex = 4;
             // 
             // tabPageDisplay
@@ -1375,7 +1351,7 @@
             this.tabPageDisplay.Location = new System.Drawing.Point(4, 22);
             this.tabPageDisplay.Name = "tabPageDisplay";
             this.tabPageDisplay.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageDisplay.Size = new System.Drawing.Size(326, 283);
+            this.tabPageDisplay.Size = new System.Drawing.Size(326, 329);
             this.tabPageDisplay.TabIndex = 1;
             this.tabPageDisplay.Text = "Display";
             // 
@@ -1425,7 +1401,7 @@
             this.groupBoxInfo.Controls.Add(this.propertyGrid1);
             this.groupBoxInfo.Location = new System.Drawing.Point(3, 79);
             this.groupBoxInfo.Name = "groupBoxInfo";
-            this.groupBoxInfo.Size = new System.Drawing.Size(317, 197);
+            this.groupBoxInfo.Size = new System.Drawing.Size(317, 243);
             this.groupBoxInfo.TabIndex = 3;
             this.groupBoxInfo.TabStop = false;
             this.groupBoxInfo.Text = "Info";
@@ -1437,7 +1413,7 @@
             this.propertyGrid1.Location = new System.Drawing.Point(3, 16);
             this.propertyGrid1.Name = "propertyGrid1";
             this.propertyGrid1.PropertySort = System.Windows.Forms.PropertySort.Categorized;
-            this.propertyGrid1.Size = new System.Drawing.Size(311, 178);
+            this.propertyGrid1.Size = new System.Drawing.Size(311, 224);
             this.propertyGrid1.TabIndex = 0;
             this.propertyGrid1.ToolbarVisible = false;
             this.propertyGrid1.ViewBackColor = System.Drawing.SystemColors.Control;
@@ -1463,7 +1439,7 @@
             this.tabPageScripts.Location = new System.Drawing.Point(4, 22);
             this.tabPageScripts.Name = "tabPageScripts";
             this.tabPageScripts.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageScripts.Size = new System.Drawing.Size(326, 283);
+            this.tabPageScripts.Size = new System.Drawing.Size(326, 329);
             this.tabPageScripts.TabIndex = 2;
             this.tabPageScripts.Text = "Scripts";
             // 
@@ -1480,7 +1456,7 @@
             this.textBoxCmdStatus.Name = "textBoxCmdStatus";
             this.textBoxCmdStatus.ReadOnly = true;
             this.textBoxCmdStatus.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.textBoxCmdStatus.Size = new System.Drawing.Size(313, 51);
+            this.textBoxCmdStatus.Size = new System.Drawing.Size(313, 97);
             this.textBoxCmdStatus.TabIndex = 8;
             // 
             // buttonSpawnNew
@@ -1520,7 +1496,7 @@
             this.tabPageVehicles.Location = new System.Drawing.Point(4, 22);
             this.tabPageVehicles.Name = "tabPageVehicles";
             this.tabPageVehicles.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageVehicles.Size = new System.Drawing.Size(326, 283);
+            this.tabPageVehicles.Size = new System.Drawing.Size(326, 329);
             this.tabPageVehicles.TabIndex = 4;
             this.tabPageVehicles.Text = "Vehicles";
             // 
@@ -1541,7 +1517,7 @@
             this.dataGridViewVehicleTypes.Name = "dataGridViewVehicleTypes";
             this.dataGridViewVehicleTypes.RowHeadersVisible = false;
             this.dataGridViewVehicleTypes.ShowEditingIcon = false;
-            this.dataGridViewVehicleTypes.Size = new System.Drawing.Size(320, 277);
+            this.dataGridViewVehicleTypes.Size = new System.Drawing.Size(320, 323);
             this.dataGridViewVehicleTypes.TabIndex = 0;
             this.dataGridViewVehicleTypes.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewVehicleTypes_CellContentClick);
             this.dataGridViewVehicleTypes.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewVehicleTypes_CellValueChanged);
@@ -1576,7 +1552,7 @@
             this.tabPageDeployables.Location = new System.Drawing.Point(4, 22);
             this.tabPageDeployables.Name = "tabPageDeployables";
             this.tabPageDeployables.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageDeployables.Size = new System.Drawing.Size(326, 283);
+            this.tabPageDeployables.Size = new System.Drawing.Size(326, 329);
             this.tabPageDeployables.TabIndex = 5;
             this.tabPageDeployables.Text = "Deployables";
             // 
@@ -1599,7 +1575,7 @@
             this.dataGridViewDeployableTypes.RowHeadersVisible = false;
             this.dataGridViewDeployableTypes.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
             this.dataGridViewDeployableTypes.ShowEditingIcon = false;
-            this.dataGridViewDeployableTypes.Size = new System.Drawing.Size(320, 277);
+            this.dataGridViewDeployableTypes.Size = new System.Drawing.Size(320, 323);
             this.dataGridViewDeployableTypes.TabIndex = 0;
             this.dataGridViewDeployableTypes.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewDeployableTypes_CellContentClick);
             this.dataGridViewDeployableTypes.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewDeployableTypes_CellValueChanged);
@@ -1633,7 +1609,7 @@
             this.tabPagePlayers.Location = new System.Drawing.Point(4, 22);
             this.tabPagePlayers.Name = "tabPagePlayers";
             this.tabPagePlayers.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPagePlayers.Size = new System.Drawing.Size(326, 283);
+            this.tabPagePlayers.Size = new System.Drawing.Size(326, 329);
             this.tabPagePlayers.TabIndex = 6;
             this.tabPagePlayers.Text = "Online";
             this.tabPagePlayers.UseVisualStyleBackColor = true;
@@ -1652,8 +1628,8 @@
             // splitContainer2.Panel2
             // 
             this.splitContainer2.Panel2.Controls.Add(this.dataGridViewAdmins);
-            this.splitContainer2.Size = new System.Drawing.Size(320, 277);
-            this.splitContainer2.SplitterDistance = 200;
+            this.splitContainer2.Size = new System.Drawing.Size(320, 323);
+            this.splitContainer2.SplitterDistance = 233;
             this.splitContainer2.TabIndex = 0;
             // 
             // dataGridViewPlayers
@@ -1672,7 +1648,7 @@
             this.dataGridViewPlayers.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
             this.dataGridViewPlayers.RowTemplate.ContextMenuStrip = this.contextMenuPlayersOnline;
             this.dataGridViewPlayers.ShowEditingIcon = false;
-            this.dataGridViewPlayers.Size = new System.Drawing.Size(320, 200);
+            this.dataGridViewPlayers.Size = new System.Drawing.Size(320, 233);
             this.dataGridViewPlayers.TabIndex = 0;
             // 
             // contextMenuPlayersOnline
@@ -1711,7 +1687,7 @@
             this.dataGridViewAdmins.RowHeadersVisible = false;
             this.dataGridViewAdmins.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
             this.dataGridViewAdmins.ShowEditingIcon = false;
-            this.dataGridViewAdmins.Size = new System.Drawing.Size(320, 73);
+            this.dataGridViewAdmins.Size = new System.Drawing.Size(320, 86);
             this.dataGridViewAdmins.TabIndex = 0;
             // 
             // tabPageSetup
@@ -1723,7 +1699,7 @@
             this.tabPageSetup.Location = new System.Drawing.Point(4, 22);
             this.tabPageSetup.Name = "tabPageSetup";
             this.tabPageSetup.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageSetup.Size = new System.Drawing.Size(326, 283);
+            this.tabPageSetup.Size = new System.Drawing.Size(326, 329);
             this.tabPageSetup.TabIndex = 7;
             this.tabPageSetup.Text = "Setup";
             // 
@@ -1861,7 +1837,7 @@
             // 
             // groupBox1
             // 
-            this.groupBox1.Controls.Add(this.comboSelectEpochWorld);
+            this.groupBox1.Controls.Add(this.comboSelectMapHelperWorld);
             this.groupBox1.Controls.Add(this.label14);
             this.groupBox1.Location = new System.Drawing.Point(6, 200);
             this.groupBox1.Margin = new System.Windows.Forms.Padding(6);
@@ -1869,16 +1845,16 @@
             this.groupBox1.Size = new System.Drawing.Size(188, 51);
             this.groupBox1.TabIndex = 111;
             this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "Epoch";
+            this.groupBox1.Text = "Map Helper";
             // 
             // label14
             // 
             this.label14.AutoSize = true;
-            this.label14.Location = new System.Drawing.Point(16, 22);
+            this.label14.Location = new System.Drawing.Point(6, 22);
             this.label14.Name = "label14";
-            this.label14.Size = new System.Drawing.Size(103, 13);
+            this.label14.Size = new System.Drawing.Size(68, 13);
             this.label14.TabIndex = 109;
-            this.label14.Text = "Select World Bitmap";
+            this.label14.Text = "Select World";
             // 
             // splitContainerChat
             // 
@@ -1896,8 +1872,8 @@
             // splitContainerChat.Panel2
             // 
             this.splitContainerChat.Panel2.Controls.Add(this.textBoxChatInput);
-            this.splitContainerChat.Size = new System.Drawing.Size(933, 84);
-            this.splitContainerChat.SplitterDistance = 55;
+            this.splitContainerChat.Size = new System.Drawing.Size(933, 97);
+            this.splitContainerChat.SplitterDistance = 68;
             this.splitContainerChat.TabIndex = 2;
             // 
             // richTextBoxChat
@@ -1907,7 +1883,7 @@
             this.richTextBoxChat.Name = "richTextBoxChat";
             this.richTextBoxChat.ReadOnly = true;
             this.richTextBoxChat.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
-            this.richTextBoxChat.Size = new System.Drawing.Size(933, 55);
+            this.richTextBoxChat.Size = new System.Drawing.Size(933, 68);
             this.richTextBoxChat.TabIndex = 1;
             this.richTextBoxChat.Text = "";
             this.richTextBoxChat.TextChanged += new System.EventHandler(this.richTextBoxChat_TextChanged);
@@ -1934,13 +1910,13 @@
             // 
             this.toolStripContainer3.ContentPanel.AutoScroll = true;
             this.toolStripContainer3.ContentPanel.Controls.Add(this.toolStripContainer2);
-            this.toolStripContainer3.ContentPanel.Size = new System.Drawing.Size(933, 401);
+            this.toolStripContainer3.ContentPanel.Size = new System.Drawing.Size(933, 460);
             this.toolStripContainer3.Dock = System.Windows.Forms.DockStyle.Fill;
             this.toolStripContainer3.LeftToolStripPanelVisible = false;
             this.toolStripContainer3.Location = new System.Drawing.Point(0, 0);
             this.toolStripContainer3.Name = "toolStripContainer3";
             this.toolStripContainer3.RightToolStripPanelVisible = false;
-            this.toolStripContainer3.Size = new System.Drawing.Size(933, 442);
+            this.toolStripContainer3.Size = new System.Drawing.Size(933, 501);
             this.toolStripContainer3.TabIndex = 5;
             this.toolStripContainer3.Text = "toolStripContainer3";
             this.toolStripContainer3.TopToolStripPanelVisible = false;
@@ -2010,11 +1986,15 @@
             this.toolStripMenuItemRevivePlayer.Text = "Revive player";
             this.toolStripMenuItemRevivePlayer.Click += new System.EventHandler(this.toolStripMenuItemRevivePlayer_Click);
             // 
+            // openFileDialog2
+            // 
+            this.openFileDialog2.FileName = "openFileDialog2";
+            // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(933, 442);
+            this.ClientSize = new System.Drawing.Size(933, 501);
             this.Controls.Add(this.toolStripContainer3);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MinimumSize = new System.Drawing.Size(770, 480);
@@ -2045,6 +2025,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
             this.panelCnx.ResumeLayout(false);
+            this.groupBox4.ResumeLayout(false);
             this.groupBoxrCon.ResumeLayout(false);
             this.groupBoxrCon.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownrConPort)).EndInit();
@@ -2053,7 +2034,6 @@
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownDBPort)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownInstanceId)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewTraders)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewMaps)).EndInit();
             this.tabControl1.ResumeLayout(false);
             this.tabPageDisplay.ResumeLayout(false);
             this.tabPageDisplay.PerformLayout();
@@ -2133,7 +2113,6 @@
         private System.Windows.Forms.Button buttonRemoveTents;
         private System.Windows.Forms.ToolTip toolTip1;
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
-        private System.Windows.Forms.DataGridView dataGridViewMaps;
         private System.Windows.Forms.ContextMenuStrip contextMenuStripVehicle;
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemDeleteVehicle;
         private System.Windows.Forms.ContextMenuStrip contextMenuStripSpawn;
@@ -2151,11 +2130,6 @@
         private System.Windows.Forms.Button buttonCustom2;
         private System.Windows.Forms.Button buttonCustom1;
         private System.Windows.Forms.Button buttonBackup;
-        //
-        private System.Windows.Forms.DataGridViewTextBoxColumn ColGVMID;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ColGVMName;
-        private System.Windows.Forms.DataGridViewButtonColumn ColGVMChoosePath;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ColGVMPath;
         //
         //
         private System.Windows.Forms.SaveFileDialog saveFileDialog1;
@@ -2245,7 +2219,7 @@
         private System.Windows.Forms.Label label12;
         private System.Windows.Forms.ComboBox comboSelectInstance;
         private System.Windows.Forms.GroupBox groupBox1;
-        private System.Windows.Forms.ComboBox comboSelectEpochWorld;
+        private System.Windows.Forms.ComboBox comboSelectMapHelperWorld;
         private System.Windows.Forms.Label label14;
         private System.Windows.Forms.CheckBox cbCartographer;
         private System.Windows.Forms.NumericUpDown numericDBRefreshRate;
@@ -2265,6 +2239,10 @@
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemRestorePlayerState;
         private System.Windows.Forms.ContextMenuStrip contextMenuStripDeadMenu;
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemRevivePlayer;
+        private System.Windows.Forms.GroupBox groupBox4;
+        private System.Windows.Forms.ComboBox comboBoxConfigFile;
+        private System.Windows.Forms.OpenFileDialog openFileDialog2;
+        private System.Windows.Forms.Button buttonAddConfigFile;
     }
 }
 

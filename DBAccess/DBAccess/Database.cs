@@ -32,7 +32,6 @@ namespace DBAccess
         public int InstanceId = 0;
         public string WorldName = "";
         public int FilterLastUpdated = 0;
-        public int OnlineTimeLimit = 0;
 
         public DBSchema(myDatabase db) { this.db = db; }
 
@@ -91,7 +90,7 @@ namespace DBAccess
             public string Username { get; set; }
             public string Password { get; set; }
             public int InstanceId { get; set; }
-            public myConfig Cfg { get; set; }
+            public myServerConfig Cfg { get; set; }
         }
 
         public myDatabase()
@@ -126,15 +125,6 @@ namespace DBAccess
             }
         }
 
-        //public int InstanceId { get { return schema.InstanceId; } }
-        //public int WorldId { get { return schema.WorldId; } }
-        //public string WorldName { get { return schema.WorldName; } }
-        //public string GameType { get { return schema.Type; } }
-        
-        //public DataSet WorldDefs { get { return dsWorldDefs; } }
-        //public DataSet VehicleTypes { get { return dsVehicleTypes; } }
-        //public DataSet DeployableTypes { get { return dsDeployableTypes; } }
-        //public DataSet Instances { get { return dsInstances; } }
         public DataSet Deployables  { get { return schema.dsDeployables; } }
         public DataSet PlayersAlive { get { return schema.dsAlivePlayers; } }
         public DataSet PlayersDead  { get { return schema.dsDeadPlayers; } }
@@ -177,11 +167,9 @@ namespace DBAccess
 
                 schema.WorldId = login.Cfg.world_id;
                 schema.InstanceId = login.InstanceId;
-                schema.dsWorldDefs = login.Cfg.worlds_def;
                 schema.dsVehicleTypes = login.Cfg.vehicle_types;
                 schema.dsDeployableTypes = login.Cfg.deployable_types;
                 schema.FilterLastUpdated = login.Cfg.filter_last_updated;
-                schema.OnlineTimeLimit = int.Parse(login.Cfg.online_time_limit);
                 schema.dsPlayerStates = login.Cfg.player_state;
 
                 this.Connected = true;

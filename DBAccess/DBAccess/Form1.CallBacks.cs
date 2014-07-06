@@ -58,7 +58,7 @@ namespace DBAccess
                 var row = dataGridViewVehicleTypes.Rows[dataGridViewVehicleTypes.SelectedCells[0].RowIndex];
                 string classname = row.Cells["ColGVVTClassName"].Value as string;
 
-                var rowT = mycfg.vehicle_types.Tables[0].Rows.Find(classname);
+                var rowT = mySrvCfg.vehicle_types.Tables[0].Rows.Find(classname);
                 if (rowT != null)
                 {
                     var vehicle_id = rowT.Field<UInt16>("Id");
@@ -230,6 +230,9 @@ namespace DBAccess
         private void toolStripStatusWorld_Click(object sender, EventArgs e)
         {
             currentMode = displayMode.SetMaps;
+            
+            SelectBitmap();
+            SetCurrentMap();
         }
         private void cb_toolStripStatusTrail_MouseDown(object sender, MouseEventArgs e)
         {
@@ -289,7 +292,7 @@ namespace DBAccess
                 // Will release the bgWorkerMapZoom thread
                 eventMapZoomBgWorker.Set();
 
-                SaveConfigFile();
+                SaveConfigFiles();
 
                 CloseConnection();
 
@@ -327,7 +330,7 @@ namespace DBAccess
 
                 toolStripMenuItemHeal.Enabled = playerIsOffline;
                 toolStripMenuItemSavePlayerState.Enabled = playerIsOffline;
-                toolStripMenuItemRestorePlayerState.Enabled = playerIsOffline && (mycfg.player_state.Tables[0].Rows.Find(survivor.uid) != null);
+                toolStripMenuItemRestorePlayerState.Enabled = playerIsOffline && (mySrvCfg.player_state.Tables.Count > 0) && (mySrvCfg.player_state.Tables[0].Rows.Find(survivor.uid) != null);
             }
             else
             {
@@ -633,7 +636,8 @@ namespace DBAccess
             if (!recPanel.IntersectsWith(recMouse))
                 return;
 
-            splitContainer1.Panel1.Focus();
+            if(myDB.Connected)
+                splitContainer1.Panel1.Focus();
 
             if (e.Button.HasFlag(MouseButtons.Right) && (mapHelper != null))
             {
@@ -858,6 +862,38 @@ namespace DBAccess
         #endregion
 
         #region PanelConnection
+        private void cb_comboBoxConfigFile_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (comboBoxConfigFile.SelectedIndex >= 0 && comboBoxConfigFile.SelectedIndex < comboBoxConfigFile.Items.Count)
+            {
+                configServerFileName = comboBoxConfigFile.SelectedItem as string;
+                LoadServerConfigFile();
+            }
+        }
+        private void cb_buttonAddConfigFile_Click(object sender, EventArgs e)
+        {
+            if (diagSelectCfgName.ShowDialog() == DialogResult.OK)
+            {
+                string cfgName = diagSelectCfgName.textBoxMsgToPlayer.Text;
+                string filename = "cfgServer_" + cfgName + ".xml";
+                FileInfo fi = new FileInfo(configPath + "\\" + filename);
+
+                if(fi.Exists)
+                {
+                    MessageBox.Show("This config name already exists, please choose a new one");
+                }
+                else
+                {
+                    configServerFileName = cfgName;
+
+                    comboBoxConfigFile.Items.Add(cfgName);
+                    comboBoxConfigFile.SelectedItem = comboBoxConfigFile.Items[comboBoxConfigFile.Items.Count - 1];
+
+                    // will fail to load and set default parameters
+                    LoadServerConfigFile();
+                }
+            }
+        }
         private void cb_buttonConnect_Click(object sender, EventArgs e)
         {
             this.Cursor = Cursors.WaitCursor;
@@ -871,7 +907,7 @@ namespace DBAccess
                 login.Username = textBoxDBUser.Text;
                 login.Password = textBoxDBPassword.Text;
                 login.InstanceId = int.Parse(numericUpDownInstanceId.Text);
-                login.Cfg = mycfg;
+                login.Cfg = mySrvCfg;
             myDB.Connect(login);
 
             if ((int.Parse(numericUpDownrConPort.Text) != 0) && (textBoxrConPassword.Text != ""))
@@ -935,30 +971,7 @@ namespace DBAccess
 
             if (myDB.Connected && resultBE != BattlEyeConnectionResult.ConnectionFailed)
             {
-                mycfg.instance_id = myDB.Schema.InstanceId.ToString();
-
-                if (IsEpochSchema == false)
-                {
-                    mycfg.world_id = myDB.Schema.WorldId;
-                    comboSelectEpochWorld.Enabled = false;
-                }
-                else
-                {
-                    comboSelectEpochWorld.Enabled = true;
-                    comboSelectEpochWorld.Items.Clear();
-                    for (int i = 0; i < mycfg.worlds_def.Tables[0].Rows.Count; i++)
-                        comboSelectEpochWorld.Items.Add(i + 1);
-
-                    if (mycfg.world_id < 1 && comboSelectEpochWorld.Items.Count > 0)
-                    {
-                        // will set mycfg.world_id from CB
-                        comboSelectEpochWorld.SelectedIndex = 0;
-                    }
-                    else if (mycfg.world_id <= comboSelectEpochWorld.Items.Count)
-                    {
-                        comboSelectEpochWorld.SelectedIndex = mycfg.world_id - 1;
-                    }
-                }
+                mySrvCfg.instance_id = myDB.Schema.InstanceId.ToString();
 
                 List<int> instances = myDB.GetInstanceList();
                 bool bInstanceFound = myDB.Schema.InstanceId == instances.Find(x => (x == myDB.Schema.InstanceId));
@@ -989,7 +1002,19 @@ namespace DBAccess
                 Enable(true);
 
                 this.textBoxCmdStatus.Text = "";
-                this.toolStripStatusWorld.ToolTipText = myDB.Schema.WorldName;
+
+                //
+                string fullPath = configPath + "\\World" + mySrvCfg.BitmapName;
+                if (Directory.Exists(fullPath))
+                {
+                    LoadBitmapConfigFile();
+                }
+                else
+                {
+                    MessageBox.Show("Please select a bitmap for your world, and don't forget to adjust the map to your bitmap with the map helper...", "No bitmap selected");
+
+                    SelectBitmap();
+                }
 
                 SetCurrentMap();
 
@@ -1008,8 +1033,8 @@ namespace DBAccess
 
             labelLastUpdate.Text = (track.Value == track.Maximum) ? "-" : track.Value.ToString();
 
-            mycfg.filter_last_updated = (track.Value == track.Maximum) ? 999 : track.Value;
-            myDB.Schema.FilterLastUpdated = mycfg.filter_last_updated;
+            mySrvCfg.filter_last_updated = (track.Value == track.Maximum) ? 999 : track.Value;
+            myDB.Schema.FilterLastUpdated = mySrvCfg.filter_last_updated;
 
             RefreshDB();
         }
@@ -1019,7 +1044,7 @@ namespace DBAccess
 
             labelMagLevel.Text = (1 << track.Value).ToString();
 
-            mycfg.bitmap_mag_level = track.Value;
+            mySrvCfg.bitmap_mag_level = track.Value;
             virtualMap.nfo.mag_depth = virtualMap.nfo.max_depth + track.Value;
         }
         #endregion
@@ -1036,6 +1061,8 @@ namespace DBAccess
             saveFileDialog1.CheckFileExists = false;
             saveFileDialog1.CheckPathExists = true;
             saveFileDialog1.Filter = "SQL file|*.sql";
+            saveFileDialog1.DefaultExt = "sql";
+            saveFileDialog1.Title = "Save SQL file...";
 
             if (saveFileDialog1.ShowDialog() == DialogResult.OK)
             {
@@ -1050,7 +1077,7 @@ namespace DBAccess
         }
         private void cb_buttonRemoveDestroyed_Click(object sender, EventArgs e)
         {
-            int res = myDB.ExecuteSqlNonQuery("DELETE FROM instance_vehicle WHERE instance_id=" + mycfg.instance_id + " AND damage=1");
+            int res = myDB.ExecuteSqlNonQuery("DELETE FROM instance_vehicle WHERE instance_id=" + mySrvCfg.instance_id + " AND damage=1");
             if (res > 0)
             {
                 RefreshDB();
@@ -1087,7 +1114,7 @@ namespace DBAccess
 
             string query = "DELETE FROM id using instance_deployable id inner join deployable d on id.deployable_id = d.id"
                          + " inner join survivor s on id.owner_id = s.id and s.is_dead=1"
-                         + " WHERE id.instance_id=" + mycfg.instance_id + " AND d.class_name = 'TentStorage' AND id.last_updated < now() - interval " + limit + " day";
+                         + " WHERE id.instance_id=" + mySrvCfg.instance_id + " AND d.class_name = 'TentStorage' AND id.last_updated < now() - interval " + limit + " day";
             int res = myDB.ExecuteSqlNonQuery(query);
             if (res > 0)
             {
@@ -1109,9 +1136,9 @@ namespace DBAccess
                 Button btExe = null;
                 switch (btSel.Name)
                 {
-                    case "buttonSelectCustom1": btExe = this.buttonCustom1; mycfg.customscript1 = openFileDialog1.FileName; break;
-                    case "buttonSelectCustom2": btExe = this.buttonCustom2; mycfg.customscript2 = openFileDialog1.FileName; break;
-                    case "buttonSelectCustom3": btExe = this.buttonCustom3; mycfg.customscript3 = openFileDialog1.FileName; break;
+                    case "buttonSelectCustom1": btExe = this.buttonCustom1; myComCfg.customscript1 = openFileDialog1.FileName; break;
+                    case "buttonSelectCustom2": btExe = this.buttonCustom2; myComCfg.customscript2 = openFileDialog1.FileName; break;
+                    case "buttonSelectCustom3": btExe = this.buttonCustom3; myComCfg.customscript3 = openFileDialog1.FileName; break;
                 }
                 if (btExe != null)
                 {
@@ -1128,9 +1155,9 @@ namespace DBAccess
             string fullpath = null;
             switch (bt.Name)
             {
-                case "buttonCustom1": fullpath = mycfg.customscript1; break;
-                case "buttonCustom2": fullpath = mycfg.customscript2; break;
-                case "buttonCustom3": fullpath = mycfg.customscript3; break;
+                case "buttonCustom1": fullpath = myComCfg.customscript1; break;
+                case "buttonCustom2": fullpath = myComCfg.customscript2; break;
+                case "buttonCustom3": fullpath = myComCfg.customscript3; break;
             }
 
             if (Tool.NullOrEmpty(fullpath))
@@ -1180,28 +1207,28 @@ namespace DBAccess
                     {
                         // Remove every unused types
                         List<DataRow> toRemove = new List<DataRow>();
-                        foreach (DataRow row in mycfg.vehicle_types.Tables[0].Rows)
+                        foreach (DataRow row in mySrvCfg.vehicle_types.Tables[0].Rows)
                         {
                             if (myDB.Vehicles.Tables[0].Rows.FindFrom("class_name", row.Field<string>("ClassName")) == null)
                                 toRemove.Add(row);
                         }
 
                         foreach (DataRow row in toRemove)
-                            mycfg.vehicle_types.Tables[0].Rows.Remove(row);
+                            mySrvCfg.vehicle_types.Tables[0].Rows.Remove(row);
                     }
                     break;
                 case "dataGridViewDeployableTypes":
                     {
                         // Remove every unused types
                         List<DataRow> toRemove = new List<DataRow>();
-                        foreach (DataRow row in mycfg.deployable_types.Tables[0].Rows)
+                        foreach (DataRow row in mySrvCfg.deployable_types.Tables[0].Rows)
                         {
                             if (myDB.Deployables.Tables[0].Rows.FindFrom("class_name", row.Field<string>("ClassName")) == null)
                                 toRemove.Add(row);
                         }
 
                         foreach (DataRow row in toRemove)
-                            mycfg.deployable_types.Tables[0].Rows.Remove(row);
+                            mySrvCfg.deployable_types.Tables[0].Rows.Remove(row);
                     }
                     break;
             }
@@ -1226,7 +1253,7 @@ namespace DBAccess
 
             bool bState = (bool)dataGridViewVehicleTypes["ColGVVTShow", e.RowIndex].Value;
 
-            DataRow row = mycfg.vehicle_types.Tables[0].Rows.Find(dataGridViewVehicleTypes["ColGVVTClassName", e.RowIndex].Value);
+            DataRow row = mySrvCfg.vehicle_types.Tables[0].Rows.Find(dataGridViewVehicleTypes["ColGVVTClassName", e.RowIndex].Value);
 
             row.SetField<bool>("Show", bState);
         }
@@ -1237,7 +1264,7 @@ namespace DBAccess
             {
                 GVVT_bCurrentState = !GVVT_bCurrentState;
 
-                foreach (DataRow row in mycfg.vehicle_types.Tables[0].Rows)
+                foreach (DataRow row in mySrvCfg.vehicle_types.Tables[0].Rows)
                     row.SetField<bool>("Show", GVVT_bCurrentState);
             }
         }
@@ -1262,7 +1289,7 @@ namespace DBAccess
 
             bool bState = (bool)dataGridViewDeployableTypes["ColGVDTShow", e.RowIndex].Value;
 
-            DataRow row = mycfg.deployable_types.Tables[0].Rows.Find(dataGridViewDeployableTypes["ColGVDTClassName", e.RowIndex].Value);
+            DataRow row = mySrvCfg.deployable_types.Tables[0].Rows.Find(dataGridViewDeployableTypes["ColGVDTClassName", e.RowIndex].Value);
 
             row.SetField<bool>("Show", bState);
         }
@@ -1273,7 +1300,7 @@ namespace DBAccess
             {
                 GVDT_bCurrentState = !GVDT_bCurrentState;
 
-                foreach (DataRow row in mycfg.deployable_types.Tables[0].Rows)
+                foreach (DataRow row in mySrvCfg.deployable_types.Tables[0].Rows)
                     row.SetField<bool>("Show", GVDT_bCurrentState);
             }
         }
@@ -1293,8 +1320,8 @@ namespace DBAccess
                 if (diagMsgToPlayer.ShowDialog() == DialogResult.OK)
                 {
                     int id = (int)dataGridViewPlayers.CurrentRow.Cells["Id"].Value;
-                    
-                    rCon.SendCommand(BattlEyeCommand.Say, id + " [" + mycfg.rcon_adminname + "] : " + diagMsgToPlayer.textBoxMsgToPlayer.Text);
+
+                    rCon.SendCommand(BattlEyeCommand.Say, id + " [" + mySrvCfg.rcon_adminname + "] : " + diagMsgToPlayer.textBoxMsgToPlayer.Text);
                 }
                 diagMsgToPlayer.textBoxMsgToPlayer.Text = "";
             }
@@ -1324,27 +1351,37 @@ namespace DBAccess
         {
             var numeric = sender as NumericUpDown;
 
-            mycfg.db_refreshrate = numeric.Value;
+            myComCfg.db_refreshrate = numeric.Value;
         }
         private void cb_numericBERefreshRate_ValueChanged(object sender, EventArgs e)
         {
             var numeric = sender as NumericUpDown;
 
-            mycfg.be_refreshrate = numeric.Value;
+            myComCfg.be_refreshrate = numeric.Value;
         }
         private void cb_comboSelectInstance_SelectedValueChanged(object sender, EventArgs e)
         {
             ComboBox cb = sender as ComboBox;
 
             myDB.Schema.InstanceId = (int)cb.SelectedItem;
-            mycfg.instance_id = myDB.Schema.InstanceId.ToString();
+            mySrvCfg.instance_id = myDB.Schema.InstanceId.ToString();
             numericUpDownInstanceId.Value = myDB.Schema.InstanceId;
         }
         private void cb_comboSelectEpochWorld_SelectedValueChanged(object sender, EventArgs e)
         {
             ComboBox cb = sender as ComboBox;
 
-            mycfg.world_id = (int)cb.SelectedItem;
+            foreach (KeyValuePair<string, List<Tool.Point[]>> pair in Tool.mapHelperDefs)
+            {
+                if(pair.Key == cb.SelectedItem as string)
+                {
+                    mySrvCfg.world_id = 0/*pair.Key*/;
+                    mySrvCfg.world_name = pair.Key;
+
+                    mapHelper = new MapHelper(virtualMap, mySrvCfg.world_name);
+                    break;
+                }
+            }
         }
         private void cb_cbCartographer_CheckedChanged(object sender, EventArgs e)
         {
@@ -1356,80 +1393,94 @@ namespace DBAccess
         #endregion
 
         #region ToolStrip
-        private void cb_dataGridViewMaps_CellClick(object sender, DataGridViewCellEventArgs e)
+        private void SelectBitmap()
         {
-            if ((e.RowIndex < 0) || (e.RowIndex >= dataGridViewMaps.Rows.Count))
-                return;
+            openFileDialog1.FileName = "";
+            openFileDialog1.CheckFileExists = true;
+            openFileDialog1.CheckPathExists = true;
+            openFileDialog1.Multiselect = false;
 
-            // Ignore clicks that are not on button cells.  
-            if (e.ColumnIndex == dataGridViewMaps.Columns["ColGVMChoosePath"].Index)
+            if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
-                openFileDialog1.FileName = "";
-                openFileDialog1.CheckFileExists = true;
-                openFileDialog1.CheckPathExists = true;
-                openFileDialog1.Multiselect = false;
-
-                if (openFileDialog1.ShowDialog() == DialogResult.OK)
+                try
                 {
-                    dataGridViewMaps["ColGVMPath", e.RowIndex].Value = openFileDialog1.FileName;
-
-                    try
+                    FileInfo fi = new FileInfo(openFileDialog1.FileName);
+                    if (fi.Exists)
                     {
-                        string filepath = openFileDialog1.FileName;
-                        int world_id = int.Parse(dataGridViewMaps["ColGVMID", e.RowIndex].Value.ToString());
+                        DirectoryInfo di = new DirectoryInfo(configPath + "\\World" + fi.Name);
+                        string tileBasePath = di.FullName + "\\LOD";
 
-                        if (File.Exists(filepath))
+                        if (di.Exists)
                         {
-                            string tileBasePath = configPath + "\\World" + world_id + "\\LOD";
+                            DialogResult res = MessageBox.Show("Tiles already exist, replace & regenerate from bitmap ? or keep existing tiles...", "Load bitmap", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
 
-                            MessageBox.Show("Please wait while generating tiles...\r\nThis is done once when selecting a new map.");
-
-                            mtxTileUpdate.WaitOne();
-                            tileCache.Clear();
-                            mtxTileUpdate.ReleaseMutex();
-
-                            this.Cursor = Cursors.WaitCursor;
-
-                            DirectoryInfo di = new DirectoryInfo(configPath + "\\World" + world_id);
-                            if (di.Exists)
+                            if (res == DialogResult.Yes)
+                            {
                                 di.Delete(true);
 
-                            Tuple<Tool.Size, Tool.Size, Tool.Size> sizes = Tool.CreateTiles(filepath, tileBasePath, 256);
-
-                            DataRow rowW = mycfg.worlds_def.Tables[0].Rows.Find(world_id);
-                            rowW.SetField<float>("RatioX", sizes.Item1.Width / sizes.Item2.Width);
-                            rowW.SetField<float>("RatioY", sizes.Item1.Height / sizes.Item2.Height);
-                            rowW.SetField<int>("TileSizeX", (int)sizes.Item3.Width);
-                            rowW.SetField<int>("TileSizeY", (int)sizes.Item3.Height);
-
-                            int tileCount = (int)(sizes.Item2.Width / 256);
-                            int depth = (int)Math.Log(tileCount, 2) + 1;
-
-                            rowW.SetField<int>("TileDepth", depth);
-
-                            this.Cursor = Cursors.Arrow;
-                            MessageBox.Show("Tiles generation done.");
+                                GenerateTilesForBitmap(fi, tileBasePath);
+                            }
+                            else
+                            {
+                                mySrvCfg.BitmapName = fi.Name;
+                            }
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show("Error while generating tiles !\r\nMaybe the bitmap is too large to be processed, max size is 16384*16384...");
-                        textBoxCmdStatus.Text += ex.ToString();
-                        this.Cursor = Cursors.Arrow;
-                    }
+                        else
+                        {
+                            GenerateTilesForBitmap(fi, tileBasePath);
+                        }
 
-                    if (dataGridViewMaps["ColGVMID", e.RowIndex].Value.ToString() == mycfg.world_id.ToString())
-                        SetCurrentMap();
+                        LoadBitmapConfigFile();
+
+                        // reset tile cache
+                        mtxTileUpdate.WaitOne();
+                        dicTileExistence = new Dictionary<int, bool>();
+                        mtxTileUpdate.ReleaseMutex();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error while generating tiles !\r\nMaybe the bitmap is too large to be processed, max size is 16384*16384...");
+                    textBoxCmdStatus.Text += ex.ToString();
+                    this.Cursor = Cursors.Arrow;
                 }
             }
         }
+
+        private void GenerateTilesForBitmap(FileInfo fi, string tileBasePath)
+        {
+            MessageBox.Show("Please wait while generating tiles...\r\nThis is done once when selecting a new map.");
+
+            mtxTileUpdate.WaitOne();
+            tileCache.Clear();
+            mtxTileUpdate.ReleaseMutex();
+
+            this.Cursor = Cursors.WaitCursor;
+
+            Tuple<Tool.Size, Tool.Size, Tool.Size> sizes = Tool.CreateTiles(fi.FullName, tileBasePath, 256);
+
+            myBmpCfg.RatioX = sizes.Item1.Width / sizes.Item2.Width;
+            myBmpCfg.RatioY = sizes.Item1.Height / sizes.Item2.Height;
+            myBmpCfg.TileSizeX = (int)sizes.Item3.Width;
+            myBmpCfg.TileSizeY = (int)sizes.Item3.Height;
+            int tileCount = (int)(sizes.Item2.Width / 256);
+            myBmpCfg.TileDepth = (int)Math.Log(tileCount, 2) + 1;
+
+            mySrvCfg.BitmapName = fi.Name;
+
+            SaveBitmapConfigFile();
+
+            this.Cursor = Cursors.Arrow;
+            MessageBox.Show("Tiles generation done.");
+        }
+        
         private void cb_textBoxChatInput_TextChanged(object sender, EventArgs e)
         {
             if (textBoxChatInput.Text.EndsWith("\n"))
             {
                 if ((rCon != null) && rCon.Connected)
                 {
-                    rCon.SendCommand(BattlEyeCommand.Say, "-1 [" + mycfg.rcon_adminname + "] : " + textBoxChatInput.Text.TrimEnd('\n'));
+                    rCon.SendCommand(BattlEyeCommand.Say, "-1 [" + mySrvCfg.rcon_adminname + "] : " + textBoxChatInput.Text.TrimEnd('\n'));
                 }
                 textBoxChatInput.Text = "";
             }
@@ -1754,7 +1805,7 @@ namespace DBAccess
 
                 if (remaining_ticks <= 0)
                 {
-                    remaining_ticks = (long)(10000000 * mycfg.db_refreshrate);
+                    remaining_ticks = (long)(10000000 * myComCfg.db_refreshrate);
 
                     RefreshDB();
                 }
@@ -1794,7 +1845,7 @@ namespace DBAccess
 
                 if (remaining_ticks <= 0)
                 {
-                    remaining_ticks = (long)(10000000 * mycfg.be_refreshrate);
+                    remaining_ticks = (long)(10000000 * myComCfg.be_refreshrate);
 
                     if ((rCon != null) && rCon.Connected)
                     {
@@ -1847,8 +1898,12 @@ namespace DBAccess
             while (!bw.CancellationPending)
             {
                 Thread.Sleep(250);
-                DelegateVoid dlg = FocusOnControlAtCursor;
-                this.Invoke(dlg);
+
+                if (myDB.Connected)
+                {
+                    DelegateVoid dlg = FocusOnControlAtCursor;
+                    this.Invoke(dlg);
+                }
             }
         }
         private Control lastFocusCtrl = null;

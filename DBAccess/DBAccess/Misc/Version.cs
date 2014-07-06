@@ -109,7 +109,9 @@ namespace DBAccess
         }
         public static bool operator ==(ModuleVersion v1, ModuleVersion v2)
         {
-            return v1.Equals(v2);
+            if (v1 is ModuleVersion)
+                return v1.Equals(v2);
+            return (object)v1 == (object)v2;
         }
         public static bool operator >(ModuleVersion v1, ModuleVersion v2)
         {

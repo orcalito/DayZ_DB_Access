@@ -24,13 +24,17 @@ namespace DBAccess
     {
         #region Fields
         public static bool IsDebug { get; private set; }
-        static ModuleVersion curCfgVersion = new ModuleVersion(5, 1);
+        static ModuleVersion curCfgVersion = new ModuleVersion(7, 0);
 
         private static int bUserAction = 0;
         //
-        private myConfig mycfg = new myConfig(curCfgVersion);
+        private myCommonConfig myComCfg = new myCommonConfig(curCfgVersion);
+        private myServerConfig mySrvCfg = new myServerConfig(curCfgVersion);
+        private myBitmapConfig myBmpCfg = new myBitmapConfig(curCfgVersion);
         private string configPath;
-        private string configFilePath;
+        private string configCommonFilePath;
+        private string configServerFileName;
+        private string configServerFilePath;
         private VirtualMap virtualMap = new VirtualMap();
         //
         private myDatabase myDB = new myDatabase();
@@ -43,6 +47,7 @@ namespace DBAccess
         //
         private AboutBox diagAbout = new AboutBox();
         private MessageToPlayer diagMsgToPlayer = null;
+        private SelectConfigName diagSelectCfgName = null;
         //
         private Dictionary<string, UIDGraph> dicUIDGraph = new Dictionary<string, UIDGraph>();
         private List<iconDB> listIcons = new List<iconDB>();
@@ -125,8 +130,6 @@ namespace DBAccess
                     {
                         ModeButtons[_currentMode].Select = true;
                     }
-
-                    dataGridViewMaps.Visible = (value == displayMode.SetMaps);
                 }
             }
         }
@@ -146,6 +149,14 @@ namespace DBAccess
         {
             InitializeComponent();
 
+            Tool.BuildMapHelperDefs();
+
+            foreach(var def in Tool.mapHelperDefs)
+            {
+                this.comboSelectMapHelperWorld.Items.Add(def.Key);
+            }
+            this.comboSelectMapHelperWorld.SelectedIndex = 0;
+
             //--- Fill ColGVVTType & ColGVDTType with compatible icon types ---
             foreach (IconType v in Enum.GetValues(typeof(IconType)))
             {
@@ -164,11 +175,46 @@ namespace DBAccess
                 }
             }
 
+            //---- Find every config files ----
+            {
+                configPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\DayZDBAccess";
+                configServerFileName = "cfgServer_Default.xml";
+                if (Directory.Exists(configPath) == false)
+                    Directory.CreateDirectory(configPath);
+
+                DirectoryInfo di = new DirectoryInfo(configPath);
+
+                var txtFiles = di.EnumerateFiles("cfgServer_*.xml", SearchOption.TopDirectoryOnly);
+
+                FileInfo mostRecent = null;
+                foreach (var currentFile in txtFiles)
+                {
+                    string cfgName = currentFile.Name.Substring(10, currentFile.Name.IndexOf(".xml")-10);
+
+                    comboBoxConfigFile.Items.Add(cfgName);
+
+                    if(mostRecent == null || mostRecent.LastWriteTime < currentFile.LastWriteTime)
+                        mostRecent = currentFile;
+                }
+
+                if (comboBoxConfigFile.Items.Count == 0)
+                    comboBoxConfigFile.Items.Add("Default");
+
+                if(mostRecent != null)
+                    comboBoxConfigFile.SelectedItem = mostRecent.Name.Substring(10, mostRecent.Name.IndexOf(".xml") - 10);
+                else
+                    comboBoxConfigFile.SelectedItem = comboBoxConfigFile.Items[comboBoxConfigFile.Items.Count - 1];
+
+                configServerFileName = comboBoxConfigFile.SelectedItem as string;
+            }
+
             //
             splitContainerGlobal.Panel2Collapsed = true;
 
             //
             diagMsgToPlayer = new MessageToPlayer(this);
+            //
+            diagSelectCfgName = new SelectConfigName(this);
 
             //
             ModeButtons.Add(displayMode.SetMaps, new ToolIcon(toolStripStatusWorld, global::DBAccess.Properties.Resources.Tool_World, global::DBAccess.Properties.Resources.Tool_World_S));
@@ -205,11 +251,11 @@ namespace DBAccess
                 new float[] {-0.2f,  0.5f,  -0.2f,  0,  1}  
             };
             attrSelected.SetColorMatrix(new System.Drawing.Imaging.ColorMatrix(colorMatrixSelected));
-                        
+
 
             //
             configPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\DayZDBAccess";
-            configFilePath = configPath + "\\config.xml";
+            configCommonFilePath = configPath + "\\config.xml";
             //
             currentMode = displayMode.InTheVoid;
             //
@@ -236,10 +282,10 @@ namespace DBAccess
             this.MouseWheel += cb_Form1_MouseWheel;
 
             //
-            LoadConfigFile();
+            LoadCommonConfigFile();
 
             //
-            myDB.ReconnectDelay = mycfg.db_refreshrate;
+            myDB.ReconnectDelay = myComCfg.db_refreshrate;
 
             //
             DataTable tablePn = PlayerNamesOnline.Tables.Add();
@@ -582,7 +628,7 @@ namespace DBAccess
             int idx = 0;
             foreach (DataRow row in myDB.Vehicles.Tables[0].Rows)
             {
-                DataRow rowT = mycfg.vehicle_types.Tables[0].Rows.Find(row.Field<string>("class_name"));
+                DataRow rowT = mySrvCfg.vehicle_types.Tables[0].Rows.Find(row.Field<string>("class_name"));
                 if (rowT.Field<bool>("Show"))
                 {
                     double damage = row.Field<double>("damage");
@@ -659,7 +705,7 @@ namespace DBAccess
             int idx = 0;
             foreach (DataRow row in myDB.SpawnPoints.Tables[0].Rows)
             {
-                DataRow rowT = mycfg.vehicle_types.Tables[0].Rows.Find(row.Field<string>("class_name"));
+                DataRow rowT = mySrvCfg.vehicle_types.Tables[0].Rows.Find(row.Field<string>("class_name"));
                 if (rowT.Field<bool>("Show"))
                 {
                     if (idx >= iconsDB.Count)
@@ -702,7 +748,7 @@ namespace DBAccess
             foreach (DataRow row in myDB.Deployables.Tables[0].Rows)
             {
                 string name = row.Field<string>("class_name");
-                DataRow rowT = mycfg.deployable_types.Tables[0].Rows.Find(name);
+                DataRow rowT = mySrvCfg.deployable_types.Tables[0].Rows.Find(name);
                 if (rowT.Field<bool>("Show"))
                 {
                     if (idx >= iconsDB.Count)
@@ -766,9 +812,9 @@ namespace DBAccess
             buttonSelectCustom1.Enabled = bState;
             buttonSelectCustom2.Enabled = bState;
             buttonSelectCustom3.Enabled = bState;
-            buttonCustom1.Enabled = (bState) ? !Tool.NullOrEmpty(mycfg.customscript1) : false;
-            buttonCustom2.Enabled = (bState) ? !Tool.NullOrEmpty(mycfg.customscript2) : false;
-            buttonCustom3.Enabled = (bState) ? !Tool.NullOrEmpty(mycfg.customscript3) : false;
+            buttonCustom1.Enabled = (bState) ? !Tool.NullOrEmpty(myComCfg.customscript1) : false;
+            buttonCustom2.Enabled = (bState) ? !Tool.NullOrEmpty(myComCfg.customscript2) : false;
+            buttonCustom3.Enabled = (bState) ? !Tool.NullOrEmpty(myComCfg.customscript3) : false;
 
             // Epoch disabled controls...
             if (bEpochGameType)
@@ -797,242 +843,290 @@ namespace DBAccess
                 toolStripStatusDeployable.Text = "-";
             }
         }
-        private void LoadConfigFile()
+        private void LoadCommonConfigFile()
         {
             try
             {
                 if (Directory.Exists(configPath) == false)
                     Directory.CreateDirectory(configPath);
 
-                XmlSerializer xs = new XmlSerializer(typeof(myConfig));
-                using (StreamReader re = new StreamReader(configFilePath))
+                XmlSerializer xs = new XmlSerializer(typeof(myCommonConfig));
+                using (StreamReader re = new StreamReader(configCommonFilePath))
                 {
-                    mycfg = xs.Deserialize(re) as myConfig;
+                    myComCfg = xs.Deserialize(re) as myCommonConfig;
                 }
             }
-            catch (Exception /*ex*/)
+            catch
             {
-                //MessageBox.Show(ex.Message, "Exception found");
                 Enable(false);
             }
 
-            if (mycfg.cfgVersion == null) mycfg.cfgVersion = new ModuleVersion();
-            if (Tool.NullOrEmpty(mycfg.url)) mycfg.url = "my.database.url";
-            if (Tool.NullOrEmpty(mycfg.port)) mycfg.port = "3306";
-            if (Tool.NullOrEmpty(mycfg.basename)) mycfg.basename = "basename";
-            if (Tool.NullOrEmpty(mycfg.username)) mycfg.username = "username";
-            if (Tool.NullOrEmpty(mycfg.password)) mycfg.password = "password";
-            if (Tool.NullOrEmpty(mycfg.instance_id)) mycfg.instance_id = "1";
-            if (Tool.NullOrEmpty(mycfg.vehicle_limit)) mycfg.vehicle_limit = "50";
-            if (Tool.NullOrEmpty(mycfg.body_time_limit)) mycfg.body_time_limit = "7";
-            if (Tool.NullOrEmpty(mycfg.tent_time_limit)) mycfg.tent_time_limit = "7";
-            if (Tool.NullOrEmpty(mycfg.online_time_limit)) mycfg.online_time_limit = "5";
-            if (Tool.NullOrEmpty(mycfg.rcon_port)) mycfg.rcon_port = "2302";
-            if (Tool.NullOrEmpty(mycfg.rcon_url)) mycfg.rcon_url = "";
-            if (Tool.NullOrEmpty(mycfg.rcon_password)) mycfg.rcon_password = "";
-            if (Tool.NullOrEmpty(mycfg.rcon_adminname)) mycfg.rcon_adminname = "Change Me";
-            if (mycfg.filter_last_updated == 0) mycfg.filter_last_updated = 7;
-            if (mycfg.bitmap_mag_level == 0) mycfg.bitmap_mag_level = 4;
-            if (mycfg.db_refreshrate == 0) mycfg.db_refreshrate = 5.0M;
-            if (mycfg.be_refreshrate == 0) mycfg.be_refreshrate = 10.0M;
+            if (myComCfg.cfgVersion == null) myComCfg.cfgVersion = new ModuleVersion();
+            if (Tool.NullOrEmpty(myComCfg.vehicle_limit)) myComCfg.vehicle_limit = "50";
+            if (Tool.NullOrEmpty(myComCfg.body_time_limit)) myComCfg.body_time_limit = "7";
+            if (Tool.NullOrEmpty(myComCfg.tent_time_limit)) myComCfg.tent_time_limit = "7";
+            if (myComCfg.db_refreshrate == 0) myComCfg.db_refreshrate = 5.0M;
+            if (myComCfg.be_refreshrate == 0) myComCfg.be_refreshrate = 10.0M;
 
             // Custom scripts
-            if (!Tool.NullOrEmpty(mycfg.customscript1))
+            if (!Tool.NullOrEmpty(myComCfg.customscript1))
             {
-                FileInfo fi = new FileInfo(mycfg.customscript1);
+                FileInfo fi = new FileInfo(myComCfg.customscript1);
                 if (fi.Exists)
                     buttonCustom1.Text = fi.Name;
             }
-            if (!Tool.NullOrEmpty(mycfg.customscript2))
+            if (!Tool.NullOrEmpty(myComCfg.customscript2))
             {
-                FileInfo fi = new FileInfo(mycfg.customscript2);
+                FileInfo fi = new FileInfo(myComCfg.customscript2);
                 if (fi.Exists)
                     buttonCustom2.Text = fi.Name;
             }
-            if (!Tool.NullOrEmpty(mycfg.customscript3))
+            if (!Tool.NullOrEmpty(myComCfg.customscript3))
             {
-                FileInfo fi = new FileInfo(mycfg.customscript3);
+                FileInfo fi = new FileInfo(myComCfg.customscript3);
                 if (fi.Exists)
                     buttonCustom3.Text = fi.Name;
             }
 
-            if (mycfg.worlds_def.Tables.Count == 0)
-            {
-                DataTable table = mycfg.worlds_def.Tables.Add();
-                table.Columns.Add(new DataColumn("World ID", typeof(UInt16)));
-                table.Columns.Add(new DataColumn("World Name", typeof(string)));
-                table.Columns.Add(new DataColumn("Filepath", typeof(string)));
-                table.Columns.Add(new DataColumn("RatioX", typeof(float), "", MappingType.Hidden));
-                table.Columns.Add(new DataColumn("RatioY", typeof(float), "", MappingType.Hidden));
-                table.Columns.Add(new DataColumn("TileSizeX", typeof(int), "", MappingType.Hidden));
-                table.Columns.Add(new DataColumn("TileSizeY", typeof(int), "", MappingType.Hidden));
-                table.Columns.Add(new DataColumn("TileDepth", typeof(int), "", MappingType.Hidden));
-                table.Columns.Add(new DataColumn("DB_X", typeof(int), "", MappingType.Hidden));
-                table.Columns.Add(new DataColumn("DB_Y", typeof(int), "", MappingType.Hidden));
-                table.Columns.Add(new DataColumn("DB_Width", typeof(UInt32), "", MappingType.Hidden));
-                table.Columns.Add(new DataColumn("DB_Height", typeof(UInt32), "", MappingType.Hidden));
-                table.Columns.Add(new DataColumn("DB_refWidth", typeof(UInt32), "", MappingType.Hidden));
-                table.Columns.Add(new DataColumn("DB_refHeight", typeof(UInt32), "", MappingType.Hidden));
-
-                DataColumn[] keys = new DataColumn[1];
-                keys[0] = mycfg.worlds_def.Tables[0].Columns[0];
-                mycfg.worlds_def.Tables[0].PrimaryKey = keys;
-
-                System.Data.DataColumn col = new DataColumn();
-
-                table.Rows.Add(1, "Chernarus", "", 0, 0, 0, 0, 0, 0, 0, 14700, 15360, 14700, 15360);
-                table.Rows.Add(2, "Lingor", "", 0, 0, 0, 0, 0, 0, 0, 10000, 10000, 10000, 10000);
-                table.Rows.Add(3, "Utes", "", 0, 0, 0, 0, 0, 0, 0, 5100, 5100, 5100, 5100);
-                table.Rows.Add(4, "Takistan", "", 0, 0, 0, 0, 0, 0, 0, 14000, 14000, 14000, 14000);
-                table.Rows.Add(5, "Panthera2", "", 0, 0, 0, 0, 0, 0, 0, 10200, 10200, 10200, 10200);
-                table.Rows.Add(6, "Fallujah", "", 0, 0, 0, 0, 0, 0, 0, 10200, 10200, 10200, 10200);
-                table.Rows.Add(7, "Zargabad", "", 0, 0, 0, 0, 0, 0, 0, 8000, 8000, 8000, 8000);
-                table.Rows.Add(8, "Namalsk", "", 0, 0, 0, 0, 0, 0, 0, 12000, 12000, 12000, 12000);
-                table.Rows.Add(9, "Celle2", "", 0, 0, 0, 0, 0, 0, 0, 13000, 13000, 13000, 13000);
-                table.Rows.Add(10, "Taviana", "", 0, 0, 0, 0, 0, 0, 0, 25600, 25600, 25600, 25600);
-            }
-
-            if (mycfg.vehicle_types.Tables.Count == 0)
-            {
-                DataTable table = mycfg.vehicle_types.Tables.Add();
-                table.Columns.Add(new DataColumn("ClassName", typeof(string)));
-                table.Columns.Add(new DataColumn("Type", typeof(string)));
-                table.Columns.Add(new DataColumn("Show", typeof(bool)));
-                table.Columns.Add(new DataColumn("Id", typeof(UInt16), "", MappingType.Hidden));
-                DataColumn[] keys = new DataColumn[1];
-                keys[0] = mycfg.vehicle_types.Tables[0].Columns["ClassName"];
-                mycfg.vehicle_types.Tables[0].PrimaryKey = keys;
-            }
-
-            // -> v3.0
-            if (mycfg.vehicle_types.Tables[0].Columns.Contains("Show") == false)
-            {
-                DataColumnCollection cols;
-
-                // Add Column 'Show' to vehicle_types
-                cols = mycfg.vehicle_types.Tables[0].Columns;
-                cols.Add(new DataColumn("Show", typeof(bool)));
-                foreach (DataRow row in mycfg.vehicle_types.Tables[0].Rows)
-                    row.SetField<bool>("Show", true);
-
-                // Add Column 'Show' to deployable_types
-                cols = mycfg.deployable_types.Tables[0].Columns;
-                cols.Add(new DataColumn("Show", typeof(bool)));
-                foreach (DataRow row in mycfg.deployable_types.Tables[0].Rows)
-                    row.SetField<bool>("Show", true);
-            }
-
-            // -> v4.0
-            if (mycfg.vehicle_types.Tables[0].Columns.Contains("Id") == false)
-            {
-                DataColumnCollection cols;
-                // Add Column 'Id' to vehicle_types
-                cols = mycfg.vehicle_types.Tables[0].Columns;
-                cols.Add(new DataColumn("Id", typeof(UInt16), "", MappingType.Hidden));
-            }
-
-            if (mycfg.deployable_types.Tables.Count == 0)
-            {
-                DataTable table = mycfg.deployable_types.Tables.Add();
-                table.Columns.Add(new DataColumn("ClassName", typeof(string)));
-                table.Columns.Add(new DataColumn("Type", typeof(string)));
-                table.Columns.Add(new DataColumn("Show", typeof(bool)));
-                DataColumn[] keys = new DataColumn[1];
-                keys[0] = table.Columns[0];
-                mycfg.deployable_types.Tables[0].PrimaryKey = keys;
-            }
-
-            foreach (DataRow row in mycfg.vehicle_types.Tables[0].Rows)
-                row.SetField<bool>("Show", true);
-
-            foreach (DataRow row in mycfg.deployable_types.Tables[0].Rows)
-                row.SetField<bool>("Show", true);
-
-            // -> v5.0
-            if (mycfg.cfgVersion < new ModuleVersion(5,0))
-            {
-                mycfg.player_state = new DataSet();
-                DataTable table = mycfg.player_state.Tables.Add();
-                table.Columns.Add(new DataColumn("UID", typeof(string)));
-                table.Columns.Add(new DataColumn("Inventory", typeof(string)));
-                table.Columns.Add(new DataColumn("Backpack", typeof(string)));
-                DataColumn[] keys = new DataColumn[1];
-                keys[0] = table.Columns[0];
-                mycfg.player_state.Tables[0].PrimaryKey = keys;
-            }
-            if (mycfg.cfgVersion < new ModuleVersion(5, 1))
-            {
-                DataTable table = mycfg.player_state.Tables[0];
-                table.Columns.Add(new DataColumn("State", typeof(string)));
-                table.Columns.Add(new DataColumn("Model", typeof(string)));
-            }
-
             try
             {
-                textBoxDBURL.Text = mycfg.url;
-                numericUpDownDBPort.Text = mycfg.port;
-                textBoxDBBaseName.Text = mycfg.basename;
-                textBoxDBUser.Text = mycfg.username;
-                textBoxDBPassword.Text = mycfg.password;
-                numericUpDownInstanceId.Text = mycfg.instance_id;
-                textBoxVehicleMax.Text = mycfg.vehicle_limit;
-                textBoxOldBodyLimit.Text = mycfg.body_time_limit;
-                textBoxOldTentLimit.Text = mycfg.tent_time_limit;
-                numericUpDownrConPort.Text = mycfg.rcon_port;
-                textBoxrConURL.Text = mycfg.rcon_url;
-                textBoxrConPassword.Text = mycfg.rcon_password;
-                textBoxrConAdminName.Text = mycfg.rcon_adminname;
-                trackBarLastUpdated.Value = Math.Min(trackBarLastUpdated.Maximum, Math.Max(trackBarLastUpdated.Minimum, mycfg.filter_last_updated));
-                trackBarMagLevel.Value = Math.Min(trackBarMagLevel.Maximum, Math.Max(trackBarMagLevel.Minimum, mycfg.bitmap_mag_level));
-                numericDBRefreshRate.Value = Math.Min(numericDBRefreshRate.Maximum, Math.Max(numericDBRefreshRate.Minimum, mycfg.db_refreshrate));
-                numericBERefreshRate.Value = Math.Min(numericBERefreshRate.Maximum, Math.Max(numericBERefreshRate.Minimum, mycfg.be_refreshrate));
-
-                dataGridViewMaps.Columns["ColGVMID"].DataPropertyName = "World ID";
-                dataGridViewMaps.Columns["ColGVMName"].DataPropertyName = "World Name";
-                dataGridViewMaps.Columns["ColGVMPath"].DataPropertyName = "Filepath";
-                dataGridViewMaps.DataSource = mycfg.worlds_def.Tables[0];
-                dataGridViewMaps.Sort(dataGridViewMaps.Columns["ColGVMID"], ListSortDirection.Ascending);
-
-                dataGridViewVehicleTypes.Columns["ColGVVTShow"].DataPropertyName = "Show";
-                dataGridViewVehicleTypes.Columns["ColGVVTClassName"].DataPropertyName = "ClassName";
-                dataGridViewVehicleTypes.Columns["ColGVVTType"].DataPropertyName = "Type";
-                dataGridViewVehicleTypes.DataSource = mycfg.vehicle_types.Tables[0];
-                dataGridViewVehicleTypes.Sort(dataGridViewVehicleTypes.Columns["ColGVVTClassName"], ListSortDirection.Ascending);
-
-                dataGridViewDeployableTypes.Columns["ColGVDTShow"].DataPropertyName = "Show";
-                dataGridViewDeployableTypes.Columns["ColGVDTClassName"].DataPropertyName = "ClassName";
-                dataGridViewDeployableTypes.Columns["ColGVDTType"].DataPropertyName = "Type";
-                dataGridViewDeployableTypes.DataSource = mycfg.deployable_types.Tables[0];
-                dataGridViewDeployableTypes.Sort(dataGridViewDeployableTypes.Columns["ColGVDTClassName"], ListSortDirection.Ascending);
+                textBoxVehicleMax.Text = myComCfg.vehicle_limit;
+                textBoxOldBodyLimit.Text = myComCfg.body_time_limit;
+                textBoxOldTentLimit.Text = myComCfg.tent_time_limit;
+                numericDBRefreshRate.Value = Math.Min(numericDBRefreshRate.Maximum, Math.Max(numericDBRefreshRate.Minimum, myComCfg.db_refreshrate));
+                numericBERefreshRate.Value = Math.Min(numericBERefreshRate.Maximum, Math.Max(numericBERefreshRate.Minimum, myComCfg.be_refreshrate));
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "Exception found");
             }
         }
-        private void SaveConfigFile()
+        private void LoadServerConfigFile()
         {
             try
             {
-                mycfg.url = textBoxDBURL.Text;
-                mycfg.port = numericUpDownDBPort.Text;
-                mycfg.basename = textBoxDBBaseName.Text;
-                mycfg.username = textBoxDBUser.Text;
-                mycfg.password = textBoxDBPassword.Text;
-                mycfg.instance_id = numericUpDownInstanceId.Text;
-                mycfg.cfgVersion = curCfgVersion;
-                mycfg.vehicle_limit = textBoxVehicleMax.Text;
-                mycfg.body_time_limit = textBoxOldBodyLimit.Text;
-                mycfg.tent_time_limit = textBoxOldTentLimit.Text;
-                mycfg.rcon_port = numericUpDownrConPort.Text;
-                mycfg.rcon_url = textBoxrConURL.Text;
-                mycfg.rcon_password = textBoxrConPassword.Text;
-                mycfg.rcon_adminname = textBoxrConAdminName.Text;
+                configServerFilePath = configPath + "\\" + "cfgServer_" + configServerFileName+".xml";
 
-                XmlSerializer xs = new XmlSerializer(typeof(myConfig));
-                using (StreamWriter wr = new StreamWriter(configFilePath))
+                if (Directory.Exists(configPath) == false)
+                    Directory.CreateDirectory(configPath);
+
+                XmlSerializer xs = new XmlSerializer(typeof(myServerConfig));
+                using (StreamReader re = new StreamReader(configServerFilePath))
                 {
-                    xs.Serialize(wr, mycfg);
+                    mySrvCfg = xs.Deserialize(re) as myServerConfig;
+                }
+            }
+            catch
+            {
+                mySrvCfg = new myServerConfig(new ModuleVersion());
+                Enable(false);
+            }
+
+            if (mySrvCfg.cfgVersion == null) mySrvCfg.cfgVersion = new ModuleVersion();
+            if (Tool.NullOrEmpty(mySrvCfg.url)) mySrvCfg.url = "my.database.url";
+            if (Tool.NullOrEmpty(mySrvCfg.port)) mySrvCfg.port = "3306";
+            if (Tool.NullOrEmpty(mySrvCfg.basename)) mySrvCfg.basename = "basename";
+            if (Tool.NullOrEmpty(mySrvCfg.username)) mySrvCfg.username = "username";
+            if (Tool.NullOrEmpty(mySrvCfg.password)) mySrvCfg.password = "password";
+            if (Tool.NullOrEmpty(mySrvCfg.instance_id)) mySrvCfg.instance_id = "1";
+            if (Tool.NullOrEmpty(mySrvCfg.rcon_port)) mySrvCfg.rcon_port = "2302";
+            if (Tool.NullOrEmpty(mySrvCfg.rcon_url)) mySrvCfg.rcon_url = "";
+            if (Tool.NullOrEmpty(mySrvCfg.rcon_password)) mySrvCfg.rcon_password = "";
+            if (Tool.NullOrEmpty(mySrvCfg.rcon_adminname)) mySrvCfg.rcon_adminname = "Change Me";
+            if (Tool.NullOrEmpty(mySrvCfg.world_name)) mySrvCfg.world_name = "Chernarus";
+            if (mySrvCfg.filter_last_updated == 0) mySrvCfg.filter_last_updated = 7;
+            if (mySrvCfg.bitmap_mag_level == 0) mySrvCfg.bitmap_mag_level = 4;
+
+            if (mySrvCfg.vehicle_types.Tables.Count == 0)
+            {
+                DataTable table = mySrvCfg.vehicle_types.Tables.Add();
+                table.Columns.Add(new DataColumn("ClassName", typeof(string)));
+                table.Columns.Add(new DataColumn("Type", typeof(string)));
+                table.Columns.Add(new DataColumn("Show", typeof(bool)));
+                table.Columns.Add(new DataColumn("Id", typeof(UInt16), "", MappingType.Hidden));
+                DataColumn[] keys = new DataColumn[1];
+                keys[0] = mySrvCfg.vehicle_types.Tables[0].Columns["ClassName"];
+                mySrvCfg.vehicle_types.Tables[0].PrimaryKey = keys;
+            }
+
+            // -> v3.0
+            if (mySrvCfg.vehicle_types.Tables[0].Columns.Contains("Show") == false)
+            {
+                DataColumnCollection cols;
+
+                // Add Column 'Show' to vehicle_types
+                cols = mySrvCfg.vehicle_types.Tables[0].Columns;
+                cols.Add(new DataColumn("Show", typeof(bool)));
+                foreach (DataRow row in mySrvCfg.vehicle_types.Tables[0].Rows)
+                    row.SetField<bool>("Show", true);
+
+                // Add Column 'Show' to deployable_types
+                cols = mySrvCfg.deployable_types.Tables[0].Columns;
+                cols.Add(new DataColumn("Show", typeof(bool)));
+                foreach (DataRow row in mySrvCfg.deployable_types.Tables[0].Rows)
+                    row.SetField<bool>("Show", true);
+            }
+
+            // -> v4.0
+            if (mySrvCfg.vehicle_types.Tables[0].Columns.Contains("Id") == false)
+            {
+                DataColumnCollection cols;
+                // Add Column 'Id' to vehicle_types
+                cols = mySrvCfg.vehicle_types.Tables[0].Columns;
+                cols.Add(new DataColumn("Id", typeof(UInt16), "", MappingType.Hidden));
+            }
+
+            if (mySrvCfg.deployable_types.Tables.Count == 0)
+            {
+                DataTable table = mySrvCfg.deployable_types.Tables.Add();
+                table.Columns.Add(new DataColumn("ClassName", typeof(string)));
+                table.Columns.Add(new DataColumn("Type", typeof(string)));
+                table.Columns.Add(new DataColumn("Show", typeof(bool)));
+                DataColumn[] keys = new DataColumn[1];
+                keys[0] = table.Columns[0];
+                mySrvCfg.deployable_types.Tables[0].PrimaryKey = keys;
+            }
+
+            foreach (DataRow row in mySrvCfg.vehicle_types.Tables[0].Rows)
+                row.SetField<bool>("Show", true);
+
+            foreach (DataRow row in mySrvCfg.deployable_types.Tables[0].Rows)
+                row.SetField<bool>("Show", true);
+
+            // -> v5.0
+            if (mySrvCfg.cfgVersion < new ModuleVersion(5, 0))
+            {
+                mySrvCfg.player_state = new DataSet();
+                DataTable table = mySrvCfg.player_state.Tables.Add();
+                table.Columns.Add(new DataColumn("UID", typeof(string)));
+                table.Columns.Add(new DataColumn("Inventory", typeof(string)));
+                table.Columns.Add(new DataColumn("Backpack", typeof(string)));
+                DataColumn[] keys = new DataColumn[1];
+                keys[0] = table.Columns[0];
+                mySrvCfg.player_state.Tables[0].PrimaryKey = keys;
+            }
+            if (mySrvCfg.cfgVersion < new ModuleVersion(5, 1))
+            {
+                DataTable table = mySrvCfg.player_state.Tables[0];
+                table.Columns.Add(new DataColumn("State", typeof(string)));
+                table.Columns.Add(new DataColumn("Model", typeof(string)));
+            }
+
+            try
+            {
+                textBoxDBURL.Text = mySrvCfg.url;
+                numericUpDownDBPort.Text = mySrvCfg.port;
+                textBoxDBBaseName.Text = mySrvCfg.basename;
+                textBoxDBUser.Text = mySrvCfg.username;
+                textBoxDBPassword.Text = mySrvCfg.password;
+                numericUpDownInstanceId.Text = mySrvCfg.instance_id;
+                numericUpDownrConPort.Text = mySrvCfg.rcon_port;
+                textBoxrConURL.Text = mySrvCfg.rcon_url;
+                textBoxrConPassword.Text = mySrvCfg.rcon_password;
+                textBoxrConAdminName.Text = mySrvCfg.rcon_adminname;
+                trackBarLastUpdated.Value = Math.Min(trackBarLastUpdated.Maximum, Math.Max(trackBarLastUpdated.Minimum, mySrvCfg.filter_last_updated));
+                trackBarMagLevel.Value = Math.Min(trackBarMagLevel.Maximum, Math.Max(trackBarMagLevel.Minimum, mySrvCfg.bitmap_mag_level));
+
+                dataGridViewVehicleTypes.Columns["ColGVVTShow"].DataPropertyName = "Show";
+                dataGridViewVehicleTypes.Columns["ColGVVTClassName"].DataPropertyName = "ClassName";
+                dataGridViewVehicleTypes.Columns["ColGVVTType"].DataPropertyName = "Type";
+                dataGridViewVehicleTypes.DataSource = mySrvCfg.vehicle_types.Tables[0];
+                dataGridViewVehicleTypes.Sort(dataGridViewVehicleTypes.Columns["ColGVVTClassName"], ListSortDirection.Ascending);
+
+                dataGridViewDeployableTypes.Columns["ColGVDTShow"].DataPropertyName = "Show";
+                dataGridViewDeployableTypes.Columns["ColGVDTClassName"].DataPropertyName = "ClassName";
+                dataGridViewDeployableTypes.Columns["ColGVDTType"].DataPropertyName = "Type";
+                dataGridViewDeployableTypes.DataSource = mySrvCfg.deployable_types.Tables[0];
+                dataGridViewDeployableTypes.Sort(dataGridViewDeployableTypes.Columns["ColGVDTClassName"], ListSortDirection.Ascending);
+
+                if(comboSelectMapHelperWorld.Items.Contains(mySrvCfg.world_name))
+                    this.comboSelectMapHelperWorld.SelectedItem = mySrvCfg.world_name;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Exception found");
+            }
+        }
+        private void LoadBitmapConfigFile()
+        {
+            try
+            {
+                string filepath = configPath + "\\World" + mySrvCfg.BitmapName;
+
+                if (Directory.Exists(filepath) == false)
+                    return;
+
+                XmlSerializer xs = new XmlSerializer(typeof(myBitmapConfig));
+                using (StreamReader re = new StreamReader(filepath + "\\config.xml"))
+                {
+                    myBmpCfg = xs.Deserialize(re) as myBitmapConfig;
+                }
+            }
+            catch
+            {
+            }
+
+            if (myBmpCfg.cfgVersion == null) myBmpCfg.cfgVersion = new ModuleVersion();
+
+            if (myBmpCfg.DB_Width == 0)
+            {
+                myBmpCfg.DB_Width = 14700;
+                myBmpCfg.DB_Height = 15360;
+                myBmpCfg.DB_refWidth = 14700;
+                myBmpCfg.DB_refHeight = 15360;
+            }
+        }
+        private void SaveBitmapConfigFile()
+        {
+            try
+            {
+                string filepath = configPath + "\\World" + mySrvCfg.BitmapName;
+
+                XmlSerializer xs = new XmlSerializer(typeof(myBitmapConfig));
+                using (StreamWriter wr = new StreamWriter(filepath + "\\config.xml"))
+                {
+                    xs.Serialize(wr, myBmpCfg);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Exception found");
+            }
+        }
+        private void SaveConfigFiles()
+        {
+            try
+            {
+                myComCfg.cfgVersion = curCfgVersion;
+                myComCfg.vehicle_limit = textBoxVehicleMax.Text;
+                myComCfg.body_time_limit = textBoxOldBodyLimit.Text;
+                myComCfg.tent_time_limit = textBoxOldTentLimit.Text;
+
+                mySrvCfg.cfgVersion = curCfgVersion;
+                mySrvCfg.url = textBoxDBURL.Text;
+                mySrvCfg.port = numericUpDownDBPort.Text;
+                mySrvCfg.basename = textBoxDBBaseName.Text;
+                mySrvCfg.username = textBoxDBUser.Text;
+                mySrvCfg.password = textBoxDBPassword.Text;
+                mySrvCfg.instance_id = numericUpDownInstanceId.Text;
+                mySrvCfg.rcon_port = numericUpDownrConPort.Text;
+                mySrvCfg.rcon_url = textBoxrConURL.Text;
+                mySrvCfg.rcon_password = textBoxrConPassword.Text;
+                mySrvCfg.rcon_adminname = textBoxrConAdminName.Text;
+
+                {
+                    XmlSerializer xs = new XmlSerializer(typeof(myCommonConfig));
+                    using (StreamWriter wr = new StreamWriter(configCommonFilePath))
+                    {
+                        xs.Serialize(wr, myComCfg);
+                    }
+                }
+                {
+                    XmlSerializer xs = new XmlSerializer(typeof(myServerConfig));
+                    using (StreamWriter wr = new StreamWriter(configServerFilePath))
+                    {
+                        xs.Serialize(wr, mySrvCfg);
+                    }
                 }
             }
             catch (Exception ex)
@@ -1065,45 +1159,32 @@ namespace DBAccess
         {
             try
             {
+                string fullPath = configPath + "\\World" + mySrvCfg.BitmapName;
+
                 mapHelper = null;
 
-                DataRow rowW = mycfg.worlds_def.Tables[0].Rows.Find(mycfg.world_id);
-                if (rowW != null)
-                {
-                    toolStripStatusWorld.ToolTipText = rowW.Field<string>("World Name");
+                virtualMap.nfo.tileBasePath = fullPath + "\\LOD";
+                virtualMap.Calibrate();
 
-                    string filepath = rowW.Field<string>("Filepath");
+                toolStripStatusWorld.ToolTipText = mySrvCfg.BitmapName;
 
-                    if (File.Exists(filepath) && Directory.Exists(configPath + "\\World" + mycfg.world_id))
-                    {
-                        virtualMap.nfo.tileBasePath = configPath + "\\World" + mycfg.world_id + "\\LOD";
-                        virtualMap.Calibrate();
-                    }
-                    else
-                    {
-                        MessageBox.Show("Please select a bitmap for your world, and don't forget to adjust the map to your bitmap with the map helper...", "No bitmap selected");
-                        //tabControl1.SelectedTab = tabPageMaps;
-                        currentMode = displayMode.SetMaps;
-                    }
+                virtualMap.nfo.defTileSize = new Tool.Size(myBmpCfg.TileSizeX, myBmpCfg.TileSizeY);
+                virtualMap.nfo.max_depth = myBmpCfg.TileDepth;
+                virtualMap.nfo.mag_depth = virtualMap.nfo.max_depth + mySrvCfg.bitmap_mag_level;
+                tileReq.max_depth = virtualMap.nfo.max_depth;
+                virtualMap.SetRatio(new Tool.Size(myBmpCfg.RatioX, myBmpCfg.RatioY));
 
-                    virtualMap.nfo.defTileSize = new Tool.Size(rowW.Field<int>("TileSizeX"), rowW.Field<int>("TileSizeY"));
-                    virtualMap.nfo.max_depth = rowW.Field<int>("TileDepth");
-                    virtualMap.nfo.mag_depth = virtualMap.nfo.max_depth + mycfg.bitmap_mag_level;
-                    tileReq.max_depth = virtualMap.nfo.max_depth;
-                    virtualMap.SetRatio(new Tool.Size(rowW.Field<float>("RatioX"), rowW.Field<float>("RatioY")));
-                    virtualMap.nfo.dbMapSize = new Tool.Size(rowW.Field<UInt32>("DB_Width"), rowW.Field<UInt32>("DB_Height"));
-                    virtualMap.nfo.dbRefMapSize = new Tool.Size(rowW.Field<UInt32>("DB_refWidth"), rowW.Field<UInt32>("DB_refHeight"));
-                    virtualMap.nfo.dbMapOffsetUnit = new Tool.Point(rowW.Field<int>("DB_X") / virtualMap.nfo.dbRefMapSize.Width,
-                                                                    rowW.Field<int>("DB_Y") / virtualMap.nfo.dbRefMapSize.Height);
-                }
-
+                virtualMap.nfo.dbMapSize = new Tool.Size(myBmpCfg.DB_Width, myBmpCfg.DB_Height);
+                virtualMap.nfo.dbRefMapSize = new Tool.Size(myBmpCfg.DB_refWidth, myBmpCfg.DB_refHeight);
+                virtualMap.nfo.dbMapOffsetUnit = new Tool.Point(myBmpCfg.DB_X / virtualMap.nfo.dbRefMapSize.Width,
+                                                                myBmpCfg.DB_Y / virtualMap.nfo.dbRefMapSize.Height);
                 if (virtualMap.Enabled)
                     mapZoom.currDepth = Math.Log(virtualMap.ResizeFromZoom((float)Math.Pow(2, mapZoom.currDepth)), 2);
 
                 Tool.Size sizePanel = splitContainer1.Panel1.Size;
                 virtualMap.Position = (Tool.Point)((sizePanel - virtualMap.SizeCorrected) * 0.5f);
 
-                mapHelper = new MapHelper(virtualMap, mycfg.world_id);
+                mapHelper = new MapHelper(virtualMap, mySrvCfg.world_name);
 
                 ApplyMapChanges();
             }
@@ -1131,11 +1212,7 @@ namespace DBAccess
             if (mapHelper.enabled)
             {
                 // Apply map helper's new size
-                DataRow row = mycfg.worlds_def.Tables[0].Rows.Find(mycfg.world_id);
-
-                Tool.Size refSize = new Tool.Size(row.Field<UInt32>("DB_refWidth"),
-                                                  row.Field<UInt32>("DB_refHeight"));
-
+                Tool.Size refSize = new Tool.Size(myBmpCfg.DB_refWidth, myBmpCfg.DB_refHeight);
                 Tool.Point offUnit = mapHelper.boundaries[0];
                 Tool.Size sizeUnit = mapHelper.boundaries[1] - mapHelper.boundaries[0];
                 Tool.Point offset = offUnit * refSize;
@@ -1145,12 +1222,14 @@ namespace DBAccess
                 virtualMap.nfo.dbMapSize = size;
                 virtualMap.nfo.dbRefMapSize = refSize;
 
-                row.SetField<int>("DB_X", (int)offset.X);
-                row.SetField<int>("DB_Y", (int)offset.Y);
-                row.SetField<UInt32>("DB_Width", (UInt32)size.Width);
-                row.SetField<UInt32>("DB_Height", (UInt32)size.Height);
+                myBmpCfg.DB_X = (int)offset.X;
+                myBmpCfg.DB_Y = (int)offset.Y;
+                myBmpCfg.DB_Width = (UInt32)size.Width;
+                myBmpCfg.DB_Height = (UInt32)size.Height;
 
                 splitContainer1.Panel1.Invalidate();
+
+                SaveBitmapConfigFile();
             }
         }
 
@@ -1169,21 +1248,27 @@ namespace DBAccess
         {
             new Thread(new ThreadStart(delegate
                 {
-                    WebClient wc = new WebClient();
-                    string strIP = wc.DownloadString("http://checkip.dyndns.org");
-                    strIP = (new Regex(@"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b")).Match(strIP).Value;
-                    wc.Dispose();
+                    try
+                    {
+                        WebClient wc = new WebClient();
+                        string strIP = wc.DownloadString("http://checkip.dyndns.org");
+                        strIP = (new Regex(@"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b")).Match(strIP).Value;
+                        wc.Dispose();
 
-                    localIP = strIP;
+                        localIP = strIP;
+                    }
+                    catch
+                    {
+                    }
                 })).Start();
         }
         private string LocalResolveIP(string ip)
         {
             DataRow found;
 
-            if (ip.CompareTo(mycfg.url) == 0)
+            if (ip.CompareTo(mySrvCfg.url) == 0)
                 ip = "server IP";
-            else if (ip.CompareTo(mycfg.rcon_url) == 0)
+            else if (ip.CompareTo(mySrvCfg.rcon_url) == 0)
                 ip = "rCon IP";
             else if((found = PlayersOnline.Tables[0].Rows.FindFrom("IP", ip)) != null)
                 ip = found.Field<string>("Name");
@@ -1220,11 +1305,6 @@ namespace DBAccess
         private void buttonConnect_Click(object sender, EventArgs e)
         {
             cb_buttonConnect_Click(sender, e);
-        }
-
-        private void dataGridViewMaps_CellClick(object sender, DataGridViewCellEventArgs e)
-        {
-            cb_dataGridViewMaps_CellClick(sender, e);
         }
 
         private void splitContainer1_Panel1_SizeChanged(object sender, EventArgs e)
@@ -1384,7 +1464,7 @@ namespace DBAccess
 
         private void textBoxrConAdminName_TextChanged(object sender, EventArgs e)
         {
-            mycfg.rcon_adminname = textBoxrConAdminName.Text;
+            mySrvCfg.rcon_adminname = textBoxrConAdminName.Text;
         }
 
         private void toolStripMenuItemHealPlayer_Click(object sender, EventArgs e)
@@ -1530,6 +1610,16 @@ namespace DBAccess
         private void toolStripStatusTrail_MouseDown(object sender, MouseEventArgs e)
         {
             cb_toolStripStatusTrail_MouseDown(sender, e);
+        }
+
+        private void buttonAddConfigFile_Click(object sender, EventArgs e)
+        {
+            cb_buttonAddConfigFile_Click(sender, e);
+        }
+
+        private void comboBoxConfigFile_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            cb_comboBoxConfigFile_SelectedIndexChanged(sender, e);
         }
     }
 }
